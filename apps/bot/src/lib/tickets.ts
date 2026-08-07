@@ -95,6 +95,8 @@ export function buildTicketOverwrites(
 
   const overwrites: OverwriteResolvable[] = [
     { id: guild.roles.everyone.id, deny: PermissionFlagsBits.ViewChannel },
+    // Le bot garde toujours l'accès (lecture pour la transcription, suppression…)
+    { id: guild.client.user.id, allow: allow | PermissionFlagsBits.ManageChannels },
     { id: openerId, allow },
   ];
 
