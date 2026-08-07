@@ -1,12 +1,15 @@
 import {
   ChannelType,
   MessageFlags,
+  EmbedBuilder,
+  AttachmentBuilder,
   type StringSelectMenuInteraction,
   type ButtonInteraction,
   type TextChannel,
 } from 'discord.js';
 import type { ComponentHandler } from '../types.js';
 import { db, hasDatabase } from '@xo/db';
+import { CHANNELS, BRAND_COLOR } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../lib/embeds.js';
 import {
   findCategory,
@@ -84,7 +87,7 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
   },
 };
 
-/** Bouton Fermer -> supprime le salon */
+/** Bouton Fermer -> archive (récap + transcription) puis supprime le salon */
 export const ticketClose: ComponentHandler<ButtonInteraction> = {
   prefix: 'ticket:close',
   async execute(interaction) {
@@ -92,14 +95,58 @@ export const ticketClose: ComponentHandler<ButtonInteraction> = {
     if (!channel) return;
 
     await interaction.reply({
-      embeds: [successEmbed('Fermeture…', 'Ce ticket sera supprimé dans 5 secondes.')],
+      embeds: [
+        successEmbed(
+          'Fermeture…',
+          'Archivage en cours, le ticket sera supprimé dans quelques secondes.',
+        ),
+      ],
     });
 
+    // Infos du ticket (si base configurée)
+    let info: {
+      category_id: string;
+      space: string;
+      opener_tag: string;
+    } | null = null;
     if (hasDatabase()) {
+      const rows = await db()<
+        { category_id: string; space: string; opener_tag: string }[]
+      >`
+        select category_id, space, opener_tag from tickets where channel_id = ${channel.id}
+      `.catch(() => [] as { category_id: string; space: string; opener_tag: string }[]);
+      info = rows[0] ?? null;
       await db()`
         update tickets set status = 'closed', closed_by = ${interaction.user.tag}, closed_at = now()
         where channel_id = ${channel.id}
       `.catch(() => {});
+    }
+
+    // Transcription + envoi dans le salon archives
+    try {
+      const transcript = await buildTranscript(channel);
+      const archive = await interaction.client.channels.fetch(CHANNELS.archivesTicket);
+      if (archive?.isTextBased()) {
+        const embed = new EmbedBuilder()
+          .setColor(BRAND_COLOR)
+          .setTitle('📦 Ticket archivé')
+          .setDescription(
+            `**Salon :** #${channel.name}\n` +
+              (info
+                ? `**Ouvert par :** ${info.opener_tag}\n` +
+                  `**Catégorie :** ${info.category_id}\n` +
+                  `**Espace :** ${info.space}\n`
+                : '') +
+              `**Fermé par :** ${interaction.user.tag}`,
+          )
+          .setTimestamp();
+        const file = new AttachmentBuilder(Buffer.from(transcript, 'utf8'), {
+          name: `transcript-${channel.name}.txt`,
+        });
+        await (archive as TextChannel).send({ embeds: [embed], files: [file] });
+      }
+    } catch (err) {
+      console.error('[ticket] archivage échoué:', err);
     }
 
     setTimeout(() => {
@@ -107,3 +154,29 @@ export const ticketClose: ComponentHandler<ButtonInteraction> = {
     }, 5000);
   },
 };
+
+/** Construit une transcription texte des messages du ticket */
+async function buildTranscript(channel: TextChannel): Promise<string> {
+  const lines: string[] = [
+    `Transcription du ticket #${channel.name}`,
+    `Généré le ${new Date().toLocaleString('fr-FR')}`,
+    '='.repeat(50),
+  ];
+  try {
+    const messages = await channel.messages.fetch({ limit: 100 });
+    const sorted = [...messages.values()].reverse();
+    for (const m of sorted) {
+      const time = new Date(m.createdTimestamp).toLocaleString('fr-FR');
+      let content = m.content || '';
+      if (m.embeds.length) content += ` [${m.embeds.length} embed(s)]`;
+      if (m.attachments.size) {
+        content +=
+          ' ' + [...m.attachments.values()].map((a) => `[fichier: ${a.url}]`).join(' ');
+      }
+      lines.push(`[${time}] ${m.author.tag}: ${content}`);
+    }
+  } catch {
+    lines.push('(impossible de récupérer les messages)');
+  }
+  return lines.join('\n');
+}

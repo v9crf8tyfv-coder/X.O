@@ -13,6 +13,7 @@ export const CHANNELS = {
   accueil: '1535380217257005148',
   ticketStaff: '1535383806452965376',
   ticketNormal: '1535383613263183883',
+  archivesTicket: '1535421887121985566',
 } as const;
 
 /**
