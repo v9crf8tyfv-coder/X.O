@@ -1,0 +1,21 @@
+{
+  "name": "xo-panel",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Bot Discord X.O + panel de gestion staff (site) pour le serveur Minecraft",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "start": "npm run start -w apps/bot",
+    "bot:dev": "npm run dev -w apps/bot",
+    "bot:start": "npm run start -w apps/bot",
+    "bot:deploy": "npm run deploy -w apps/bot",
+    "db:init": "tsx scripts/init-db.ts",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
