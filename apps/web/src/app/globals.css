@@ -218,11 +218,25 @@ html, body {
 .site-user { display: flex; align-items: center; gap: 12px; }
 .site-username { font-weight: 700; display: flex; align-items: center; gap: 7px; }
 .site-meta { color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
-.site-grade-select {
-  padding: 8px 12px; border: 1px solid var(--border); border-radius: 9px;
-  background: var(--bg); color: var(--text); font-weight: 600; cursor: pointer;
+.site-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 62%; }
+.chip {
+  padding: 5px 11px; border-radius: 999px; border: 1.5px solid; background: transparent;
+  font-size: 0.76rem; font-weight: 700; cursor: pointer; transition: transform 0.1s;
 }
-.site-grade-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.chip.active { color: #fff; }
+.chip:not(.locked):hover { transform: translateY(-1px); }
+.chip.locked { opacity: 0.4; cursor: not-allowed; }
+.site-joueur { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+.site-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.give-yellow {
+  padding: 6px 12px; border-radius: 999px; border: 1.5px solid #6b5e00;
+  background: transparent; color: #a88f00; font-weight: 700; font-size: 0.75rem; cursor: pointer;
+}
+.give-yellow:hover { background: rgba(107, 94, 0, 0.15); }
+
+/* profil : plusieurs grades */
+.grade-tag { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.profile-grade { flex-wrap: wrap; gap: 12px; }
 
 .soon-card {
   display: flex; flex-direction: column; align-items: center; justify-content: center;

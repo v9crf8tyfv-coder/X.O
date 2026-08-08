@@ -16,8 +16,10 @@ create table if not exists accounts (
   password_hash   text not null,                     -- hash bcrypt/argon2 — jamais en clair
   minecraft_pseudo text,                             -- pseudo Minecraft (obligatoire à l'inscription) — lien vers l'IG
   -- Grade d'ACCÈS AU SITE (attribué via "Gestion Site" par les fonda).
-  -- 'joueur' par défaut = aucun accès au panel.
+  -- site_grade = grade principal (le plus haut) ; site_grades = tous les rôles.
+  -- 'joueur' / tableau vide = aucun accès au panel.
   site_grade      text not null default 'joueur',
+  site_grades     text[] not null default '{}',
   is_founder_chief boolean not null default false,   -- la couronne "fonda chef" (1 seul)
   avatar_url      text,                              -- photo de profil (Supabase Storage)
   -- liens optionnels vers les autres identités

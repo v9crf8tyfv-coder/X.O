@@ -23,6 +23,7 @@ interface Props {
   account: {
     username: string;
     site_grade: string;
+    site_grades: string[];
     is_founder_chief: boolean;
     minecraft_pseudo: string | null;
     avatar_url: string | null;
@@ -41,20 +42,20 @@ export default function PanelClient({ account }: Props) {
   const founder = isFounderTier(account.site_grade);
   const level = grade.level;
 
-  // Sections visibles selon le grade
-  const sections: Section[] = [{ id: 'profil', label: 'Profil', icon: '👤' }];
+  // Sections visibles selon le grade (émojis gardés seulement pour Staff & Site)
+  const sections: Section[] = [{ id: 'profil', label: 'Profil', icon: '' }];
   if (level >= getGrade('admin').level) {
     sections.push({ id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', soon: true });
   }
   if (founder) {
-    sections.push({ id: 'serveurs', label: 'Gestion Serveurs', icon: '🖥️', soon: true });
-    sections.push({ id: 'reseaux', label: 'Gestion Réseaux', icon: '🌐', soon: true });
+    sections.push({ id: 'serveurs', label: 'Gestion Serveurs', icon: '', soon: true });
+    sections.push({ id: 'reseaux', label: 'Gestion Réseaux', icon: '', soon: true });
   }
   if (level >= getGrade('admin').level) {
-    sections.push({ id: 'sanctions', label: 'Gestion Sanction(s)', icon: '⚖️', soon: true });
+    sections.push({ id: 'sanctions', label: 'Gestion Sanction(s)', icon: '', soon: true });
   }
   if (founder) {
-    sections.push({ id: 'site', label: 'Gestion Site', icon: '🔐', soon: true });
+    sections.push({ id: 'site', label: 'Gestion Site', icon: '🔐' });
   }
 
   const [active, setActive] = useState('profil');
@@ -72,7 +73,7 @@ export default function PanelClient({ account }: Props) {
               className={`nav-item ${active === s.id ? 'active' : ''}`}
               onClick={() => setActive(s.id)}
             >
-              <span className="nav-icon">{s.icon}</span>
+              {s.icon && <span className="nav-icon">{s.icon}</span>}
               <span>{s.label}</span>
             </button>
           ))}
@@ -107,7 +108,6 @@ export default function PanelClient({ account }: Props) {
 }
 
 function ProfileCard({ account }: Props) {
-  const grade = getGrade(account.site_grade);
   const initial = account.username.charAt(0).toUpperCase();
 
   return (
@@ -129,14 +129,23 @@ function ProfileCard({ account }: Props) {
           <div className="profile-mc">⛏️ {account.minecraft_pseudo}</div>
         )}
         <div className="profile-grade">
-          <span
-            className="grade-bubble"
-            style={{ backgroundColor: `#${grade.color}`, color: `#${grade.color}` }}
-          />
+          {(account.site_grades.length ? account.site_grades : ['joueur']).map((gk) => {
+            const gg = getGrade(gk);
+            const color = gk === 'joueur' ? 'ffffff' : gg.color;
+            const label = gk === 'joueur' ? 'Joueur' : gg.label;
+            return (
+              <span className="grade-tag" key={gk}>
+                <span
+                  className="grade-bubble"
+                  style={{ backgroundColor: `#${color}`, color: `#${color}` }}
+                />
+                {label}
+              </span>
+            );
+          })}
           {account.is_founder_chief && (
             <span className="chief-dot" title="Fondateur principal" />
           )}
-          <span>{grade.label}</span>
         </div>
       </div>
     </div>
