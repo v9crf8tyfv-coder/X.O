@@ -59,6 +59,13 @@ function buildModal(id: string | null, prefill?: Partial<AbsenceRecord>): ModalB
     .setCustomId(id ? `absence:editsubmit:${id}` : 'absence:create')
     .setTitle(id ? 'Modifier une absence' : 'Poser une absence');
 
+  const pseudo = new TextInputBuilder()
+    .setCustomId('pseudo')
+    .setLabel('Ton pseudo')
+    .setStyle(TextInputStyle.Short)
+    .setPlaceholder('TonPseudo')
+    .setRequired(true);
+
   const start = new TextInputBuilder()
     .setCustomId('start')
     .setLabel('Début (JJ/MM/AAAA)')
@@ -80,12 +87,14 @@ function buildModal(id: string | null, prefill?: Partial<AbsenceRecord>): ModalB
     .setRequired(true);
 
   if (prefill) {
+    if (prefill.discord_tag) pseudo.setValue(prefill.discord_tag);
     if (prefill.start_date) start.setValue(prefill.start_date.split('-').reverse().join('/'));
     if (prefill.end_date) end.setValue(prefill.end_date.split('-').reverse().join('/'));
     if (prefill.reason) reason.setValue(prefill.reason);
   }
 
   return modal.addComponents(
+    new ActionRowBuilder<TextInputBuilder>().addComponents(pseudo),
     new ActionRowBuilder<TextInputBuilder>().addComponents(start),
     new ActionRowBuilder<TextInputBuilder>().addComponents(end),
     new ActionRowBuilder<TextInputBuilder>().addComponents(reason),
@@ -93,12 +102,13 @@ function buildModal(id: string | null, prefill?: Partial<AbsenceRecord>): ModalB
 }
 
 function parseModalDates(interaction: ModalSubmitInteraction) {
+  const pseudo = interaction.fields.getTextInputValue('pseudo');
   const startStr = interaction.fields.getTextInputValue('start');
   const endStr = interaction.fields.getTextInputValue('end');
   const reason = interaction.fields.getTextInputValue('reason');
   const start = parseFrDate(startStr);
   const end = parseFrDate(endStr);
-  return { start, end, reason };
+  return { pseudo, start, end, reason };
 }
 
 // ---------- handlers ----------
@@ -123,7 +133,7 @@ export const absenceCreate: ComponentHandler<ModalSubmitInteraction> = {
   prefix: 'absence:create',
   async execute(interaction) {
     if (!(await needDb(interaction))) return;
-    const { start, end, reason } = parseModalDates(interaction);
+    const { pseudo, start, end, reason } = parseModalDates(interaction);
     if (!start || !end) {
       await interaction.reply({
         embeds: [errorEmbed('Date invalide', 'Format attendu : `JJ/MM/AAAA`.')],
@@ -134,7 +144,7 @@ export const absenceCreate: ComponentHandler<ModalSubmitInteraction> = {
 
     const rows = await db()<{ id: string }[]>`
       insert into absences (discord_id, discord_tag, reason, start_date, end_date, status)
-      values (${interaction.user.id}, ${interaction.user.tag}, ${reason},
+      values (${interaction.user.id}, ${pseudo}, ${reason},
               ${toIsoDate(start)}, ${toIsoDate(end)}, 'active')
       returning id
     `;
@@ -275,7 +285,7 @@ export const absenceEditSubmit: ComponentHandler<ModalSubmitInteraction> = {
   async execute(interaction) {
     if (!(await needDb(interaction))) return;
     const id = interaction.customId.split(':')[2]!;
-    const { start, end, reason } = parseModalDates(interaction);
+    const { pseudo, start, end, reason } = parseModalDates(interaction);
     if (!start || !end) {
       await interaction.reply({
         embeds: [errorEmbed('Date invalide', 'Format attendu : `JJ/MM/AAAA`.')],
@@ -286,7 +296,8 @@ export const absenceEditSubmit: ComponentHandler<ModalSubmitInteraction> = {
 
     await db()`
       update absences
-      set start_date = ${toIsoDate(start)}, end_date = ${toIsoDate(end)}, reason = ${reason}
+      set discord_tag = ${pseudo}, start_date = ${toIsoDate(start)},
+          end_date = ${toIsoDate(end)}, reason = ${reason}
       where id = ${id}
     `;
     const absence = await getAbsence(id);

@@ -27,6 +27,7 @@ export default function Accueil() {
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [mcPseudo, setMcPseudo] = useState('');
   const [loading, setLoading] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [error, setError] = useState('');
@@ -46,7 +47,11 @@ export default function Accueil() {
       const res = await fetch(`/api/auth/${tab}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(
+          tab === 'register'
+            ? { username, password, minecraftPseudo: mcPseudo }
+            : { username, password },
+        ),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -137,6 +142,20 @@ export default function Accueil() {
                   placeholder="••••••••"
                 />
               </div>
+              {tab === 'register' && (
+                <div className="field">
+                  <label>Pseudo Minecraft</label>
+                  <input
+                    value={mcPseudo}
+                    onChange={(e) => setMcPseudo(e.target.value)}
+                    placeholder="TonPseudoMC"
+                  />
+                  <span className="field-hint">
+                    Mets bien le pseudo Minecraft que tu utiliseras — sinon les grades ne
+                    pourront pas t’être appliqués en jeu.
+                  </span>
+                </div>
+              )}
               <button className="btn-submit" onClick={submit} disabled={loading}>
                 {loading ? (
                   <span className="spinner" />

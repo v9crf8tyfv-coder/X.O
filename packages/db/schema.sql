@@ -14,6 +14,7 @@ create table if not exists accounts (
   id              uuid primary key default gen_random_uuid(),
   username        text not null unique,              -- pseudo de connexion au SITE
   password_hash   text not null,                     -- hash bcrypt/argon2 — jamais en clair
+  minecraft_pseudo text,                             -- pseudo Minecraft (obligatoire à l'inscription) — lien vers l'IG
   -- Grade d'ACCÈS AU SITE (attribué via "Gestion Site" par les fonda).
   -- 'joueur' par défaut = aucun accès au panel.
   site_grade      text not null default 'joueur',
