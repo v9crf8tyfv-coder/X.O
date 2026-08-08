@@ -2,29 +2,21 @@ import {
   SlashCommandBuilder,
   PermissionFlagsBits,
   MessageFlags,
+  EmbedBuilder,
   type TextChannel,
 } from 'discord.js';
 import type { SlashCommand } from '../../types.js';
-import { CHANNELS, GRADES } from '@xo/shared';
+import { CHANNELS, GRADES, BRAND_COLOR } from '@xo/shared';
+import { db, hasDatabase } from '@xo/db';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
-// Emojis basiques par grade (à remplacer par les vraies icônes de rôle plus tard)
-const EMOJI: Record<string, string> = {
-  fondateur: '👑',
-  cofondateur: '⭐',
-  responsable: '🛡️',
-  admin: '🅰️',
-  dev: '💻',
-  buildeur: '🏗️',
-  com: '📢',
-};
-// Ordre d'affichage (du plus haut au plus bas)
+// Ordre d'affichage (du plus haut au plus bas). Logos/emojis : plus tard.
 const ORDER = ['fondateur', 'cofondateur', 'responsable', 'admin', 'dev', 'buildeur', 'com'];
 
 /**
- * Publie l'Effectif du staff dans le salon accueil.
- * Version actuelle : lit les rôles Discord en direct.
- * (Demain : branché sur la base + mise à jour temps réel via le site.)
+ * Publie l'Effectif du staff (embed) dans le salon accueil.
+ * Actifs = membres ayant le rôle. Absents = absences actives en base.
+ * (Demain : temps réel via le site.)
  */
 export const effectif: SlashCommand = {
   founderOnly: true,
@@ -41,18 +33,38 @@ export const effectif: SlashCommand = {
       return;
     }
 
-    await guild.members.fetch(); // s'assurer que tous les membres sont en cache
+    await guild.members.fetch();
 
-    const lines: string[] = ['# 📋 Effectif du staff', ''];
+    // Set des discord_id en absence (base)
+    const absentIds = new Set<string>();
+    if (hasDatabase()) {
+      const rows = await db()<{ discord_id: string }[]>`
+        select discord_id from absences where status = 'active'
+      `.catch(() => [] as { discord_id: string }[]);
+      for (const r of rows) absentIds.add(r.discord_id);
+    }
+
+    const lines: string[] = [];
     for (const key of ORDER) {
       const g = GRADES[key as keyof typeof GRADES];
       if (!g?.roleId) continue;
       const role = guild.roles.cache.get(g.roleId);
       const members = role ? [...role.members.values()] : [];
-      lines.push(`${EMOJI[key] ?? '•'} **${g.label} (${members.length}) :**`);
-      lines.push(members.length ? members.map((m) => m.displayName).join(', ') : '---');
+      const actifs = members.filter((m) => !absentIds.has(m.id));
+      const absents = members.filter((m) => absentIds.has(m.id));
+
+      lines.push(`**${g.label} (${members.length}) :**`);
+      lines.push(actifs.length ? actifs.map((m) => m.displayName).join(', ') : '---');
+      if (absents.length) {
+        lines.push(`⏰ **Absent :** ${absents.map((m) => m.displayName).join(', ')}`);
+      }
       lines.push('');
     }
+
+    const embed = new EmbedBuilder()
+      .setColor(BRAND_COLOR)
+      .setTitle('Effectif du staff')
+      .setDescription(lines.join('\n') || '*Aucun staff.*');
 
     const channel = await interaction.client.channels.fetch(CHANNELS.accueil).catch(() => null);
     if (!channel?.isTextBased()) {
@@ -62,7 +74,7 @@ export const effectif: SlashCommand = {
       return;
     }
 
-    await (channel as TextChannel).send({ content: lines.join('\n') });
+    await (channel as TextChannel).send({ embeds: [embed] });
     await interaction.editReply({
       embeds: [successEmbed('Effectif publié', "L'effectif a été posté dans le salon accueil.")],
     });
