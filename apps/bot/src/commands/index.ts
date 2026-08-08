@@ -7,6 +7,7 @@ import { warn } from './moderation/warn.js';
 import { panel } from './setup/panel.js';
 import { setupAbsence } from './setup/setup-absence.js';
 import { setupTicket } from './setup/setup-ticket.js';
+import { effectif } from './setup/effectif.js';
 
 export const commands: SlashCommand[] = [
   ban,
@@ -17,4 +18,5 @@ export const commands: SlashCommand[] = [
   panel,
   setupAbsence,
   setupTicket,
+  effectif,
 ];

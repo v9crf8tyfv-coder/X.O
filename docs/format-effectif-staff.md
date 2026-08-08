@@ -3,6 +3,10 @@
 Message maintenu **automatiquement** par le bot (mis à jour à chaque changement de
 rôle / absence). Sert aussi de base à la liste affichée sur le site (Gestion Staff).
 
+**Salon cible : `accueil` (CHANNELS.accueil = 1535380217257005148).**
+Le bot y poste UN message unique qu'il édite à chaque mise à jour (on stocke son
+message_id pour le retrouver et l'éditer au lieu d'en reposter un nouveau).
+
 ## Rendu cible (d'après capture de référence)
 
 ```
