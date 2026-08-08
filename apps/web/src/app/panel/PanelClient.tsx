@@ -2,6 +2,22 @@
 
 import { useState } from 'react';
 import { getGrade, isFounderTier } from '@xo/shared';
+import SiteSection from './SiteSection';
+
+/** Logo du grade (bouclier). Se cache si l'image n'existe pas encore. */
+function GradeLogo({ grade }: { grade: string }) {
+  const [ok, setOk] = useState(true);
+  if (!ok) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      className="grade-logo"
+      src={`/logos/${grade}.png`}
+      alt=""
+      onError={() => setOk(false)}
+    />
+  );
+}
 
 interface Props {
   account: {
@@ -76,6 +92,8 @@ export default function PanelClient({ account }: Props) {
       <main className="panel-main">
         {current.id === 'profil' ? (
           <ProfileCard account={account} />
+        ) : current.id === 'site' ? (
+          <SiteSection myGrade={account.site_grade} isChief={account.is_founder_chief} />
         ) : (
           <div className="soon-card">
             <div className="soon-emoji">{current.icon}</div>
@@ -105,7 +123,7 @@ function ProfileCard({ account }: Props) {
       <div className="profile-info">
         <div className="profile-name">
           {account.username}
-          {account.is_founder_chief && <span title="Fondateur chef">👑</span>}
+          <GradeLogo grade={account.site_grade} />
         </div>
         {account.minecraft_pseudo && (
           <div className="profile-mc">⛏️ {account.minecraft_pseudo}</div>
@@ -115,6 +133,9 @@ function ProfileCard({ account }: Props) {
             className="grade-bubble"
             style={{ backgroundColor: `#${grade.color}`, color: `#${grade.color}` }}
           />
+          {account.is_founder_chief && (
+            <span className="chief-dot" title="Fondateur principal" />
+          )}
           <span>{grade.label}</span>
         </div>
       </div>

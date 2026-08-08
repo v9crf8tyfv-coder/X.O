@@ -54,3 +54,21 @@ export async function createAccount(params: {
 export async function verifyPassword(plain: string, hash: string): Promise<boolean> {
   return bcrypt.compare(plain, hash);
 }
+
+/** Tous les comptes du site (pour la Gestion Site) */
+export async function listAllAccounts(): Promise<
+  (Account & { created_at: string })[]
+> {
+  return db()<(Account & { created_at: string })[]>`
+    select id, username, site_grade, is_founder_chief, minecraft_pseudo, avatar_url,
+           to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
+    from accounts
+    order by created_at asc
+  `;
+}
+
+/** Change le grade d'ACCÈS SITE d'un compte (ne touche ni Discord ni IG) */
+export async function setAccountGrade(id: string, grade: string): Promise<void> {
+  await db()`update accounts set site_grade = ${grade} where id = ${id}`;
+}
+
