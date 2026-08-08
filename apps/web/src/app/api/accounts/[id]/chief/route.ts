@@ -6,7 +6,7 @@ import { db } from '@xo/db';
 export const runtime = 'nodejs';
 
 // Code de transfert du fondateur principal (modifiable via .env)
-const TRANSFER_CODE = process.env.CHIEF_TRANSFER_CODE ?? '5866';
+const TRANSFER_CODE = process.env.CHIEF_TRANSFER_CODE ?? '5688';
 
 /**
  * Transfère le statut de "fondateur principal" (le point jaune) à un autre

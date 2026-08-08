@@ -113,5 +113,11 @@ export type TicketCategory =
   | (typeof TICKET_CATEGORIES_STAFF)[number]
   | (typeof TICKET_CATEGORIES_NORMAL)[number];
 
+// Rôle "transverse" du staff, en plus du grade. C'est l'UN OU l'AUTRE :
+/** Staff SOUS responsable (modo/dev/build/com/admin/beta) → ce rôle */
+export const STAFF_ROLE_ID = '1535321928477446196';
+/** Staff À PARTIR de responsable → ce rôle (à la place de STAFF_ROLE_ID) */
+export const RESP_PLUS_ROLE_ID = '1535324397768806500';
+
 /** Couleur de marque du bot X.O (embeds génériques) */
 export const BRAND_COLOR = 0x5865f2; // violet Discord — TODO: couleur finale du serveur

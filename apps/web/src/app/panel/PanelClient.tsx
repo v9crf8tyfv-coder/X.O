@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { getGrade, isFounderTier } from '@xo/shared';
 import SiteSection from './SiteSection';
+import StaffSection from './StaffSection';
 
 /** Logo du grade (bouclier). Se cache si l'image n'existe pas encore. */
 function GradeLogo({ grade }: { grade: string }) {
@@ -47,7 +48,7 @@ export default function PanelClient({ account }: Props) {
   if (level >= getGrade('admin').level) {
     sections.push({ id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', soon: true });
   }
-  if (founder) {
+  if (level >= getGrade('responsable').level) {
     sections.push({ id: 'serveurs', label: 'Gestion Serveurs', icon: '', soon: true });
     sections.push({ id: 'reseaux', label: 'Gestion Réseaux', icon: '', soon: true });
   }
@@ -95,6 +96,8 @@ export default function PanelClient({ account }: Props) {
           <ProfileCard account={account} />
         ) : current.id === 'site' ? (
           <SiteSection myGrade={account.site_grade} isChief={account.is_founder_chief} />
+        ) : current.id === 'staff' ? (
+          <StaffSection myGrade={account.site_grade} />
         ) : (
           <div className="soon-card">
             <div className="soon-emoji">{current.icon}</div>

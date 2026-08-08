@@ -96,10 +96,19 @@ export const GRADES = {
   modo: {
     key: 'modo',
     label: 'Modérateur',
-    color: '95a5a6',
-    roleId: null,
+    color: '9b59b6', // violet
+    roleId: '1535321625614880849',
     level: 30,
     surveillance: 'staff',
+  },
+  // Bêta-testeur : grade bas (accès panel minimal = profil). Pas du staff.
+  betatesteur: {
+    key: 'betatesteur',
+    label: 'Bêta-testeur',
+    color: '1abc9c',
+    roleId: '1535332321635344494',
+    level: 10,
+    surveillance: 'none',
   },
 } as const satisfies Record<string, GradeDef>;
 
@@ -141,7 +150,7 @@ export const GRADE_JOUEUR = {
   key: 'joueur',
   label: 'Joueur',
   color: 'ffffff',
-  roleId: null,
+  roleId: '1535320757301936138',
   level: 0,
   surveillance: 'none' as SurveillanceCategory,
 };

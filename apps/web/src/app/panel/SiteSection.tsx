@@ -22,6 +22,7 @@ const ROLE_OPTIONS = [
   'dev',
   'buildeur',
   'com',
+  'betatesteur',
 ];
 
 export default function SiteSection({ isChief }: { myGrade: string; isChief: boolean }) {

@@ -1,37 +1,126 @@
 import { db } from '@xo/db';
+import { highestGrade } from './accounts';
+
+export interface StaffRecord {
+  id: string;
+  type: string; // 'warn' | 'blame' | 'note'
+  reason: string | null;
+  issued_by: string | null;
+  created_at: string;
+}
 
 export interface Staff {
   id: string;
-  pseudo: string;
+  pseudo: string; // pseudo Minecraft (IG) — sert à l'effectif
   discord_tag: string;
-  discord_id: string | null;
-  primary_grade: string;
+  site_username: string | null;
+  grades: string[];
   is_absent: boolean;
-  join_count: number;
+  records: StaffRecord[];
 }
 
+/** Liste des staffs actifs, avec leurs dossiers (warns/blames/notes) */
 export async function listStaff(): Promise<Staff[]> {
-  return db()<Staff[]>`
-    select id, pseudo, discord_tag, discord_id, primary_grade, is_absent, join_count
+  const staff = await db()<Omit<Staff, 'records'>[]>`
+    select id, pseudo, discord_tag, site_username, grades, is_absent
     from staff where active = true
     order by created_at asc
   `;
+  if (staff.length === 0) return [];
+  const ids = staff.map((s) => s.id);
+  const records = await db()<(StaffRecord & { staff_id: string })[]>`
+    select id, staff_id, type, reason, issued_by,
+           to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
+    from staff_records where staff_id = any(${ids}) order by created_at desc
+  `;
+  return staff.map((s) => ({
+    ...s,
+    records: records.filter((r) => r.staff_id === s.id),
+  }));
 }
 
 export async function createStaff(params: {
-  pseudo: string;
+  minecraftPseudo: string;
   discordTag: string;
-  grade: string;
+  siteUsername: string | null;
+  grades: string[];
 }): Promise<Staff> {
-  const rows = await db()<Staff[]>`
-    insert into staff (pseudo, discord_tag, primary_grade)
-    values (${params.pseudo}, ${params.discordTag}, ${params.grade})
-    returning id, pseudo, discord_tag, discord_id, primary_grade, is_absent, join_count
+  const primary = highestGrade(params.grades);
+  const rows = await db()<Omit<Staff, 'records'>[]>`
+    insert into staff (pseudo, discord_tag, site_username, primary_grade, grades)
+    values (${params.minecraftPseudo}, ${params.discordTag}, ${params.siteUsername},
+            ${primary}, ${params.grades})
+    returning id, pseudo, discord_tag, site_username, grades, is_absent
   `;
-  return rows[0]!;
+  return { ...rows[0]!, records: [] };
 }
 
-/** Retrait "soft" : le staff disparaît de la liste mais l'historique reste */
-export async function removeStaff(id: string): Promise<void> {
-  await db()`update staff set active = false, removed_at = now() where id = ${id}`;
+/** Met à jour les grades d'un staff (recalcule primary_grade) */
+export async function setStaffGrades(id: string, grades: string[]): Promise<void> {
+  const primary = highestGrade(grades);
+  await db()`update staff set grades = ${grades}, primary_grade = ${primary} where id = ${id}`;
+}
+
+export async function getStaff(id: string): Promise<Staff | null> {
+  const rows = await db()<Omit<Staff, 'records'>[]>`
+    select id, pseudo, discord_tag, site_username, grades, is_absent
+    from staff where id = ${id} and active = true
+  `;
+  if (!rows[0]) return null;
+  const records = await db()<StaffRecord[]>`
+    select id, type, reason, issued_by,
+           to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
+    from staff_records where staff_id = ${id} order by created_at desc
+  `;
+  return { ...rows[0], records };
+}
+
+export async function addRecord(params: {
+  staffId: string;
+  type: 'warn' | 'blame' | 'note';
+  reason: string;
+  issuedBy: string;
+}): Promise<void> {
+  await db()`
+    insert into staff_records (staff_id, type, reason, issued_by)
+    values (${params.staffId}, ${params.type}, ${params.reason}, ${params.issuedBy})
+  `;
+}
+
+/** Retire quelqu'un du staff (soft) → l'historique reste */
+export async function removeStaff(id: string): Promise<Staff | null> {
+  const rows = await db()<Omit<Staff, 'records'>[]>`
+    update staff set active = false, removed_at = now()
+    where id = ${id} returning id, pseudo, discord_tag, site_username, grades, is_absent
+  `;
+  return rows[0] ? { ...rows[0], records: [] } : null;
+}
+
+/**
+ * Synchronise l'accès SITE du compte lié (par pseudo site) sur des grades.
+ * grades = [] → repasse joueur.
+ */
+export async function syncSiteAccess(siteUsername: string | null, grades: string[]): Promise<void> {
+  if (!siteUsername) return;
+  const primary = highestGrade(grades);
+  await db()`
+    update accounts set site_grades = ${grades}, site_grade = ${primary}
+    where lower(username) = lower(${siteUsername})
+  `;
+}
+
+/**
+ * Met une action en file pour que le BOT l'applique (rôles Discord, IG plus tard,
+ * effectif). type: 'staff.apply' | 'staff.remove'.
+ */
+export async function queueAction(params: {
+  type: 'staff.apply' | 'staff.remove';
+  discordTag: string;
+  minecraftPseudo: string;
+  grades: string[];
+}): Promise<void> {
+  await db()`
+    insert into pending_actions (type, discord_tag, minecraft_pseudo, grades)
+    values (${params.type}, ${params.discordTag}, ${params.minecraftPseudo}, ${params.grades})
+  `;
 }

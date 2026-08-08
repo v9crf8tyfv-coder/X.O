@@ -7,6 +7,7 @@ import { handleInteraction } from './events/interactionCreate.js';
 import { onReady } from './events/ready.js';
 import { onGuildMemberAdd } from './events/guildMemberAdd.js';
 import { onGuildMemberUpdate } from './events/guildMemberUpdate.js';
+import { startPendingActionsWorker } from './worker/pendingActions.js';
 
 const client = new Client({
   intents: [
@@ -27,7 +28,10 @@ client.roleSelects = roleSelects;
 client.modals = modals;
 
 // Événements
-client.once('clientReady', () => onReady(client));
+client.once('clientReady', () => {
+  onReady(client);
+  startPendingActionsWorker(client);
+});
 client.on('interactionCreate', (i) => handleInteraction(client, i));
 client.on('guildMemberAdd', (m) => onGuildMemberAdd(client, m));
 client.on('guildMemberUpdate', (oldM, newM) => onGuildMemberUpdate(client, oldM, newM));
