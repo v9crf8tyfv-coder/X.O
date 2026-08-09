@@ -22,6 +22,7 @@ const ROLE_OPTIONS = [
   'dev',
   'buildeur',
   'com',
+  'modo',
   'betatesteur',
 ];
 

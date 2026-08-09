@@ -87,6 +87,10 @@ export async function addRecord(params: {
   `;
 }
 
+export async function deleteRecord(recordId: string): Promise<void> {
+  await db()`delete from staff_records where id = ${recordId}`;
+}
+
 /** Retire quelqu'un du staff (soft) → l'historique reste */
 export async function removeStaff(id: string): Promise<Staff | null> {
   const rows = await db()<Omit<Staff, 'records'>[]>`

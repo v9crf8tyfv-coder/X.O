@@ -157,6 +157,15 @@ export default function StaffSection({ myGrade }: { myGrade: string }) {
     load();
   }
 
+  async function deleteRec(id: string) {
+    const res = await fetch(`/api/staff/record/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error ?? 'Suppression refusée.');
+    }
+    load();
+  }
+
   const selectedStaff = staff.find((s) => s.id === selected) ?? null;
 
   // ---------- Vue détail (fiche d'un staff) ----------
@@ -232,6 +241,13 @@ export default function StaffSection({ myGrade }: { myGrade: string }) {
                 <span className="record-meta">
                   {r.issued_by} · {r.created_at}
                 </span>
+                <button
+                  className="record-del"
+                  title="Supprimer"
+                  onClick={() => deleteRec(r.id)}
+                >
+                  ×
+                </button>
               </div>
             ))}
           </div>

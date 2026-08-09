@@ -20,6 +20,7 @@ import {
   type AbsenceRecord,
 } from '../lib/absence.js';
 import { parseFrDate, toIsoDate } from '../lib/dates.js';
+import { publishEffectif } from '../lib/effectifPublish.js';
 
 // ---------- helpers ----------
 
@@ -152,6 +153,7 @@ export const absenceCreate: ComponentHandler<ModalSubmitInteraction> = {
 
     // marque le staff "en absence" (si présent dans la liste)
     await db()`update staff set is_absent = true where discord_id = ${interaction.user.id}`;
+    await publishEffectif(interaction.client).catch(() => {});
 
     const absence = (await getAbsence(id))!;
     const channel = (await interaction.client.channels.fetch(CHANNELS.absences)) as TextChannel;
@@ -205,6 +207,7 @@ export const absenceArchive: ComponentHandler<ButtonInteraction> = {
       where id = ${id}
     `;
     await db()`update staff set is_absent = false where discord_id = ${absence.discord_id}`;
+    await publishEffectif(interaction.client).catch(() => {});
 
     // supprime le message original dans le salon absences
     await interaction.message.delete().catch(() => {});
@@ -239,6 +242,7 @@ export const absenceDelete: ComponentHandler<ButtonInteraction> = {
     }
 
     await db()`update staff set is_absent = false where discord_id = ${absence.discord_id}`;
+    await publishEffectif(interaction.client).catch(() => {});
     await db()`delete from absences where id = ${id}`;
     await interaction.message.delete().catch(() => {});
     await interaction.reply({

@@ -274,6 +274,11 @@ html, body {
 .record-type { font-weight: 800; text-transform: uppercase; font-size: 0.68rem; }
 .record-reason { flex: 1; }
 .record-meta { font-size: 0.72rem; color: var(--muted); }
+.record-del {
+  background: transparent; border: none; color: var(--muted); cursor: pointer;
+  font-size: 1.2rem; line-height: 1; padding: 0 4px;
+}
+.record-del:hover { color: #e74c3c; }
 .remove-staff { margin-top: 22px; padding: 10px 16px; border-radius: 10px; border: 1.5px solid #e74c3c; background: transparent; color: #e74c3c; font-weight: 700; cursor: pointer; }
 .remove-staff:hover { background: rgba(231, 76, 60, 0.12); }
 

@@ -31,6 +31,10 @@ export function startPendingActionsWorker(client: Client): void {
   setInterval(() => {
     tick(client).catch((e) => console.error('[worker]', e));
   }, 8000);
+  // Rafraîchit l'effectif régulièrement (absences, changements) — auto-actualisation
+  setInterval(() => {
+    publishEffectif(client).catch((e) => console.error('[effectif]', e));
+  }, 60_000);
 }
 
 async function tick(client: Client): Promise<void> {
@@ -77,6 +81,12 @@ async function findMember(guild: Guild, tag: string): Promise<GuildMember | null
 async function processAction(guild: Guild, a: PendingAction): Promise<void> {
   const member = await findMember(guild, a.discord_tag);
   if (!member) throw new Error(`Membre Discord introuvable: ${a.discord_tag}`);
+
+  // Mémorise le discord_id du staff (sert à lier les absences → effectif)
+  await db()`
+    update staff set discord_id = ${member.id}
+    where lower(discord_tag) = lower(${a.discord_tag}) and active = true
+  `.catch(() => {});
 
   const joueur = GRADE_JOUEUR.roleId;
 

@@ -1,19 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-// Couleurs de grade (hex sans #) — miroir de packages/shared/src/grades.ts.
-// TODO (prochaine session) : importer directement depuis @xo/shared pour rester DRY.
-const GRADE_COLORS: Record<string, string> = {
-  fondateur: '7cabca',
-  cofondateur: '1a6594',
-  responsable: '811010',
-  admin: 'dc1a1a',
-  dev: 'a84300',
-  buildeur: '3ba55d',
-  com: 'b14fd6',
-  joueur: 'ffffff',
-};
+import { getGrade } from '@xo/shared';
 
 interface Me {
   username: string;
@@ -82,7 +70,7 @@ export default function Accueil() {
     }, 1200);
   }
 
-  const gradeColor = me ? GRADE_COLORS[me.site_grade] ?? 'ffffff' : 'ffffff';
+  const gradeColor = me ? getGrade(me.site_grade).color : 'ffffff';
 
   return (
     <div className="accueil">
