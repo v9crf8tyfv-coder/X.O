@@ -152,7 +152,7 @@ export const absenceCreate: ComponentHandler<ModalSubmitInteraction> = {
     const id = rows[0]!.id;
 
     // marque le staff "en absence" (si présent dans la liste)
-    await db()`update staff set is_absent = true where discord_id = ${interaction.user.id}`;
+    await db()`update staff set is_absent = true where lower(pseudo) = lower(${pseudo})`;
     await publishEffectif(interaction.client).catch(() => {});
 
     const absence = (await getAbsence(id))!;
@@ -206,7 +206,7 @@ export const absenceArchive: ComponentHandler<ButtonInteraction> = {
       set status = 'finished', finished_at = now(), archive_message_id = ${archiveMsg.id}
       where id = ${id}
     `;
-    await db()`update staff set is_absent = false where discord_id = ${absence.discord_id}`;
+    await db()`update staff set is_absent = false where lower(pseudo) = lower(${absence.discord_tag})`;
     await publishEffectif(interaction.client).catch(() => {});
 
     // supprime le message original dans le salon absences
@@ -241,7 +241,7 @@ export const absenceDelete: ComponentHandler<ButtonInteraction> = {
       return;
     }
 
-    await db()`update staff set is_absent = false where discord_id = ${absence.discord_id}`;
+    await db()`update staff set is_absent = false where lower(pseudo) = lower(${absence.discord_tag})`;
     await publishEffectif(interaction.client).catch(() => {});
     await db()`delete from absences where id = ${id}`;
     await interaction.message.delete().catch(() => {});

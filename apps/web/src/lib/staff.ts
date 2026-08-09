@@ -122,9 +122,12 @@ export async function queueAction(params: {
   discordTag: string;
   minecraftPseudo: string;
   grades: string[];
+  actor: string; // pseudo SITE de celui qui fait l'action (surveillance)
+  actorGrade: string; // son grade site (détermine le salon de surveillance)
 }): Promise<void> {
   await db()`
-    insert into pending_actions (type, discord_tag, minecraft_pseudo, grades)
-    values (${params.type}, ${params.discordTag}, ${params.minecraftPseudo}, ${params.grades})
+    insert into pending_actions (type, discord_tag, minecraft_pseudo, grades, actor, actor_grade)
+    values (${params.type}, ${params.discordTag}, ${params.minecraftPseudo}, ${params.grades},
+            ${params.actor}, ${params.actorGrade})
   `;
 }

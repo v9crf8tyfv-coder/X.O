@@ -29,6 +29,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     discordTag: staff.discord_tag,
     minecraftPseudo: staff.pseudo,
     grades,
+    actor: g.account.username,
+    actorGrade: g.account.site_grade,
   });
   return NextResponse.json({ ok: true });
 }
@@ -47,6 +49,8 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     discordTag: removed.discord_tag,
     minecraftPseudo: removed.pseudo,
     grades: [],
+    actor: g.account.username,
+    actorGrade: g.account.site_grade,
   });
   return NextResponse.json({ ok: true });
 }

@@ -48,7 +48,14 @@ export async function POST(req: Request) {
 
   // Sync accès site (par pseudo site) + file d'attente Discord/IG (bot)
   await syncSiteAccess(siteUsername || null, grades);
-  await queueAction({ type: 'staff.apply', discordTag, minecraftPseudo, grades });
+  await queueAction({
+    type: 'staff.apply',
+    discordTag,
+    minecraftPseudo,
+    grades,
+    actor: g.account.username,
+    actorGrade: g.account.site_grade,
+  });
 
   return NextResponse.json(staff);
 }

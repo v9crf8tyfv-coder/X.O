@@ -108,7 +108,7 @@ export const GRADES = {
     color: '1abc9c',
     roleId: '1535332321635344494',
     level: 10,
-    surveillance: 'none',
+    surveillance: 'staff',
   },
 } as const satisfies Record<string, GradeDef>;
 

@@ -4,7 +4,7 @@ import {
   type GuildMember,
   type PartialGuildMember,
 } from 'discord.js';
-import { ALL_GRADES, GRADES, getGrade } from '@xo/shared';
+import { ALL_GRADES, getGrade, type SurveillanceCategory } from '@xo/shared';
 import { logSurveillance } from '../lib/surveillance.js';
 
 /** roleId -> clé de grade (uniquement les rôles-grades) */
@@ -13,10 +13,27 @@ for (const g of Object.values(ALL_GRADES)) {
   if (g.roleId) ROLE_TO_GRADE.set(g.roleId, g.key);
 }
 
+/** Catégorie de surveillance d'un membre = celle de son grade le plus élevé */
+function memberCategory(member: GuildMember): SurveillanceCategory {
+  let best: SurveillanceCategory = 'none';
+  let lvl = -1;
+  for (const roleId of member.roles.cache.keys()) {
+    const gk = ROLE_TO_GRADE.get(roleId);
+    if (!gk) continue;
+    const g = getGrade(gk);
+    if (g.level > lvl) {
+      lvl = g.level;
+      best = g.surveillance;
+    }
+  }
+  return best;
+}
+
 /**
- * Surveille les changements de rôles.
- * Chaque ajout/retrait de rôle-grade est loggé dans le bon salon,
- * SAUF si l'action a été faite par un fondateur.
+ * Surveille les changements de rôles faits DIRECTEMENT sur Discord.
+ * Le salon dépend du grade de l'AUTEUR (respo/admin/staff). On ignore :
+ *  - les changements faits par le BOT (le worker les logge déjà, avec le pseudo site) ;
+ *  - les actions des fonda/co-fonda (catégorie 'none').
  */
 export async function onGuildMemberUpdate(
   client: Client,
@@ -31,51 +48,41 @@ export async function onGuildMemberUpdate(
   const changed = [...added, ...removed].filter((id) => ROLE_TO_GRADE.has(id));
   if (changed.length === 0) return;
 
-  // Qui a fait le changement ? (audit log)
-  const executor = await fetchRoleUpdateExecutor(newMember);
+  const exec = await fetchExecutor(newMember);
+  if (!exec) return;
+  if (exec.id === client.user?.id) return; // fait par le bot → worker s'en charge
 
-  // Règle : les actions des fondateurs ne sont pas surveillées
-  if (executor?.founder) return;
-
-  const actorLabel = executor?.tag ?? 'Inconnu';
+  const category = memberCategory(exec);
+  if (category === 'none') return; // fonda/co-fonda ou non-staff → pas surveillé
 
   for (const roleId of added) {
     const gk = ROLE_TO_GRADE.get(roleId);
     if (!gk) continue;
-    const grade = getGrade(gk);
-    if (grade.surveillance === 'none') continue;
     await logSurveillance(client, {
-      category: grade.surveillance,
+      category,
       action: 'Ajout de rôle',
-      actor: actorLabel,
+      actor: exec.user.tag,
       target: newMember.user.tag,
       source: 'discord',
-      fields: [{ name: 'Rôle', value: grade.label }],
-      details: { roleId, grade: gk },
+      fields: [{ name: 'Rôle', value: getGrade(gk).label }],
     });
   }
-
   for (const roleId of removed) {
     const gk = ROLE_TO_GRADE.get(roleId);
     if (!gk) continue;
-    const grade = getGrade(gk);
-    if (grade.surveillance === 'none') continue;
     await logSurveillance(client, {
-      category: grade.surveillance,
+      category,
       action: 'Retrait de rôle',
-      actor: actorLabel,
+      actor: exec.user.tag,
       target: newMember.user.tag,
       source: 'discord',
-      fields: [{ name: 'Rôle', value: grade.label }],
-      details: { roleId, grade: gk },
+      fields: [{ name: 'Rôle', value: getGrade(gk).label }],
     });
   }
 }
 
-/** Récupère l'auteur du dernier changement de rôle sur ce membre */
-async function fetchRoleUpdateExecutor(
-  member: GuildMember,
-): Promise<{ tag: string; founder: boolean } | null> {
+/** Récupère le membre qui a fait le dernier changement de rôle */
+async function fetchExecutor(member: GuildMember): Promise<GuildMember | null> {
   try {
     const logs = await member.guild.fetchAuditLogs({
       type: AuditLogEvent.MemberRoleUpdate,
@@ -85,15 +92,7 @@ async function fetchRoleUpdateExecutor(
       (e) => e.target?.id === member.id && Date.now() - e.createdTimestamp < 10_000,
     );
     if (!entry?.executor) return null;
-
-    let founder = false;
-    if (GRADES.fondateur.roleId) {
-      const exec = await member.guild.members
-        .fetch(entry.executor.id)
-        .catch(() => null);
-      founder = exec?.roles.cache.has(GRADES.fondateur.roleId) ?? false;
-    }
-    return { tag: entry.executor.tag ?? 'Inconnu', founder };
+    return member.guild.members.fetch(entry.executor.id).catch(() => null);
   } catch {
     return null;
   }
