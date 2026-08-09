@@ -124,10 +124,11 @@ export async function queueAction(params: {
   grades: string[];
   actor: string; // pseudo SITE de celui qui fait l'action (surveillance)
   actorGrade: string; // son grade site (détermine le salon de surveillance)
+  announce?: boolean; // true = poste le message de félicitations (promotion/création)
 }): Promise<void> {
   await db()`
-    insert into pending_actions (type, discord_tag, minecraft_pseudo, grades, actor, actor_grade)
+    insert into pending_actions (type, discord_tag, minecraft_pseudo, grades, actor, actor_grade, announce)
     values (${params.type}, ${params.discordTag}, ${params.minecraftPseudo}, ${params.grades},
-            ${params.actor}, ${params.actorGrade})
+            ${params.actor}, ${params.actorGrade}, ${params.announce ?? false})
   `;
 }

@@ -55,6 +55,7 @@ export async function POST(req: Request) {
     grades,
     actor: g.account.username,
     actorGrade: g.account.site_grade,
+    announce: true, // nouveau staff → félicitations
   });
 
   return NextResponse.json(staff);

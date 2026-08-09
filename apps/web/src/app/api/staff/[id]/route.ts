@@ -24,6 +24,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   await setStaffGrades(params.id, grades);
   await syncSiteAccess(staff.site_username, grades);
+  // Félicitations seulement si le grade le plus haut MONTE (promotion)
+  const topLevel = (gs: string[]) => Math.max(0, ...gs.map((x) => getGrade(x).level));
+  const isPromotion = topLevel(grades) > topLevel(staff.grades);
   await queueAction({
     type: 'staff.apply',
     discordTag: staff.discord_tag,
@@ -31,6 +34,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     grades,
     actor: g.account.username,
     actorGrade: g.account.site_grade,
+    announce: isPromotion,
   });
   return NextResponse.json({ ok: true });
 }

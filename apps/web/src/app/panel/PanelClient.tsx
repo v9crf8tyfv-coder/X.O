@@ -1,9 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { getGrade, isFounderTier } from '@xo/shared';
+
+/** Charge une image, la recadre en carré `size`px, renvoie un data URL JPEG */
+async function resizeImage(file: File, size: number): Promise<string> {
+  const img = await new Promise<HTMLImageElement>((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = URL.createObjectURL(file);
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const scale = Math.max(size / img.width, size / img.height);
+  const w = img.width * scale;
+  const h = img.height * scale;
+  ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+  return canvas.toDataURL('image/jpeg', 0.82);
+}
 import SiteSection from './SiteSection';
 import StaffSection from './StaffSection';
+import ServeursSection from './ServeursSection';
 import { GradeBadge } from './GradeBadge';
 
 /** Logo du grade (bouclier). Se cache si l'image n'existe pas encore. */
@@ -49,8 +69,10 @@ export default function PanelClient({ account }: Props) {
   if (level >= getGrade('admin').level) {
     sections.push({ id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', soon: true });
   }
+  if (founder) {
+    sections.push({ id: 'serveurs', label: 'Gestion Serveurs', icon: '' });
+  }
   if (level >= getGrade('responsable').level) {
-    sections.push({ id: 'serveurs', label: 'Gestion Serveurs', icon: '', soon: true });
     sections.push({ id: 'reseaux', label: 'Gestion Réseaux', icon: '', soon: true });
   }
   if (level >= getGrade('admin').level) {
@@ -99,6 +121,8 @@ export default function PanelClient({ account }: Props) {
           <SiteSection myGrade={account.site_grade} isChief={account.is_founder_chief} />
         ) : current.id === 'staff' ? (
           <StaffSection myGrade={account.site_grade} />
+        ) : current.id === 'serveurs' ? (
+          <ServeursSection />
         ) : (
           <div className="soon-card">
             <div className="soon-emoji">{current.icon}</div>
@@ -113,21 +137,50 @@ export default function PanelClient({ account }: Props) {
 
 function ProfileCard({ account }: Props) {
   const initial = account.username.charAt(0).toUpperCase();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const dataUrl = await resizeImage(file, 256);
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrl }),
+      });
+      if (res.ok) window.location.reload();
+      else alert((await res.json().catch(() => ({}))).error ?? 'Échec de l’envoi.');
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <div className="profile-card">
-      <div className="profile-avatar">
+      <button
+        type="button"
+        className="profile-avatar avatar-edit"
+        onClick={() => fileRef.current?.click()}
+        title="Changer la photo"
+      >
         {account.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={account.avatar_url} alt={account.username} />
         ) : (
           <span>{initial}</span>
         )}
-      </div>
+        <span className="avatar-overlay">{uploading ? '…' : '📷'}</span>
+      </button>
+      <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
       <div className="profile-info">
         <div className="profile-name">
           {account.username}
-          <GradeLogo grade={account.site_grade} />
+          {['fondateur', 'cofondateur', 'responsable', 'dev'].includes(account.site_grade) && (
+            <GradeLogo grade={account.site_grade} />
+          )}
         </div>
         {account.minecraft_pseudo && (
           <div className="profile-mc">⛏️ {account.minecraft_pseudo}</div>

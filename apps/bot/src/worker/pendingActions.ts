@@ -22,6 +22,7 @@ interface PendingAction {
   grades: string[];
   actor: string | null; // pseudo site de l'auteur (surveillance)
   actor_grade: string | null; // grade site de l'auteur → salon de surveillance
+  announce: boolean; // true = poster les félicitations (promotion/création)
 }
 
 let running = false;
@@ -51,7 +52,7 @@ async function tick(client: Client): Promise<void> {
   running = true;
   try {
     const actions = await db()<PendingAction[]>`
-      select id, type, discord_tag, minecraft_pseudo, grades, actor, actor_grade
+      select id, type, discord_tag, minecraft_pseudo, grades, actor, actor_grade, announce
       from pending_actions where status = 'pending' order by created_at asc limit 10
     `;
     if (actions.length === 0) return;
@@ -139,6 +140,8 @@ async function processAction(guild: Guild, a: PendingAction): Promise<void> {
 
 /** Messages automatiques de rank / départ (taverne + général staff) */
 async function announceStaffChange(client: Client, a: PendingAction): Promise<void> {
+  // Apply : on n'annonce que sur une promotion/création (pas un simple retrait de grade)
+  if (a.type === 'staff.apply' && !a.announce) return;
   const pseudo = a.minecraft_pseudo;
   const taverne = await client.channels.fetch(CHANNELS.taverne).catch(() => null);
   const staffCh = await client.channels.fetch(CHANNELS.generalStaff).catch(() => null);
