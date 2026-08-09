@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createAccount, findByUsername, publicAccount } from '@/lib/accounts';
 import { setSession } from '@/lib/session';
+import { isSiteBlocked } from '@/lib/siteLock';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
+  if (await isSiteBlocked()) {
+    return NextResponse.json({ error: 'Site verrouillé. Réessaie plus tard.' }, { status: 503 });
+  }
   const { username, password, minecraftPseudo } = await req.json().catch(() => ({}));
 
   if (!username || username.length < 3 || username.length > 20) {

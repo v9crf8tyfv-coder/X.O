@@ -18,26 +18,44 @@ export interface AbsenceRecord {
   archive_message_id: string | null;
 }
 
-const COLOR_ACTIVE = 0x2ecc71; // vert — barre "En cours"
-const COLOR_FINISHED = 0xe67e22; // orange/rouge — barre "Terminé/Archivée"
+const COLOR_FUTURE = 0xe67e22; // orange — à venir
+const COLOR_ACTIVE = 0x2ecc71; // vert — en cours
+const COLOR_FINISHED = 0xe74c3c; // rouge — terminée
 
-/** Construit l'embed "Nouvelle absence" au format de référence */
+/** État d'une absence selon les dates (heure fr approx via UTC) */
+export function absenceState(
+  a: AbsenceRecord,
+  archived = false,
+): 'future' | 'active' | 'finished' {
+  if (archived || a.status === 'finished') return 'finished';
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  if (a.start_date && a.start_date > today) return 'future';
+  if (a.end_date && a.end_date < today) return 'finished';
+  return 'active';
+}
+
+/** Construit l'embed "Nouvelle absence" (3 états : à venir / en cours / terminée) */
 export function buildAbsenceEmbed(a: AbsenceRecord, archived = false): EmbedBuilder {
-  const finished = a.status === 'finished' || archived;
-  const jours = finished ? 0 : daysRemaining(a.end_date);
+  const state = absenceState(a, archived);
+  const jours = state === 'finished' ? 0 : daysRemaining(a.end_date);
   const pseudo = a.discord_tag ?? `<@${a.discord_id}>`;
+
+  const statusText =
+    state === 'future' ? '🕓 À venir' : state === 'active' ? '⏳ En cours...' : '❌ Terminé';
+  const color =
+    state === 'future' ? COLOR_FUTURE : state === 'active' ? COLOR_ACTIVE : COLOR_FINISHED;
 
   const lines = [
     `👤 **Pseudo :** ${pseudo} (${jours}j)`,
     `📅 **Début :** ${formatFrDate(a.start_date)}`,
     `📅 **Fin :** ${formatFrDate(a.end_date)}`,
-    `📊 **Statut :** ${finished ? '❌ Terminé' : '⏳ En cours...'}`,
+    `📊 **Statut :** ${statusText}`,
     `📝 **Raison :** ${a.reason ?? '—'}`,
   ];
   if (archived) lines.push('📦 **Archivée**');
 
   return new EmbedBuilder()
-    .setColor(finished ? COLOR_FINISHED : COLOR_ACTIVE)
+    .setColor(color)
     .setTitle('📅 Nouvelle absence')
     .setDescription(lines.join('\n'))
     .setTimestamp();

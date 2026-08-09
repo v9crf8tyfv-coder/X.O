@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getGrade } from '@xo/shared';
+import { GradeBadge } from './GradeBadge';
 
 interface Rec {
   id: string;
@@ -37,10 +38,7 @@ const CANDIDATE = [
   'betatesteur',
 ];
 
-function Bubble({ gk }: { gk: string }) {
-  const c = getGrade(gk).color;
-  return <span className="grade-bubble" style={{ backgroundColor: `#${c}`, color: `#${c}` }} />;
-}
+const Bubble = GradeBadge;
 
 export default function StaffSection({ myGrade }: { myGrade: string }) {
   const myLevel = getGrade(myGrade).level;

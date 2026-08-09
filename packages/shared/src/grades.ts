@@ -85,7 +85,7 @@ export const GRADES = {
   },
   com: {
     key: 'com',
-    label: 'Communication',
+    label: 'Communication / Graphiste',
     color: 'b14fd6', // TODO: couleur exacte du rôle Discord à confirmer
     roleId: '1535322033771118623',
     level: 40,

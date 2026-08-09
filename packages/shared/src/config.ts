@@ -119,5 +119,8 @@ export const STAFF_ROLE_ID = '1535321928477446196';
 /** Staff À PARTIR de responsable → ce rôle (à la place de STAFF_ROLE_ID) */
 export const RESP_PLUS_ROLE_ID = '1535324397768806500';
 
+/** ID Discord du propriétaire (ixtazzking) — seul autorisé pour /blockfull */
+export const OWNER_DISCORD_ID = '1098211189059756115';
+
 /** Couleur de marque du bot X.O (embeds génériques) */
 export const BRAND_COLOR = 0x5865f2; // violet Discord — TODO: couleur finale du serveur

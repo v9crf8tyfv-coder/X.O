@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { findByUsername, publicAccount, verifyPassword } from '@/lib/accounts';
 import { setSession } from '@/lib/session';
+import { isSiteBlocked } from '@/lib/siteLock';
 import { db } from '@xo/db';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
+  if (await isSiteBlocked()) {
+    return NextResponse.json({ error: 'Site verrouillé. Réessaie plus tard.' }, { status: 503 });
+  }
   const { username, password } = await req.json().catch(() => ({}));
   if (!username || !password) {
     return NextResponse.json({ error: 'Pseudo et mot de passe requis.' }, { status: 400 });

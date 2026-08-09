@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { getGrade, isFounderTier } from '@xo/shared';
 import SiteSection from './SiteSection';
 import StaffSection from './StaffSection';
+import { GradeBadge } from './GradeBadge';
 
 /** Logo du grade (bouclier). Se cache si l'image n'existe pas encore. */
 function GradeLogo({ grade }: { grade: string }) {
@@ -134,14 +135,10 @@ function ProfileCard({ account }: Props) {
         <div className="profile-grade">
           {(account.site_grades.length ? account.site_grades : ['joueur']).map((gk) => {
             const gg = getGrade(gk);
-            const color = gk === 'joueur' ? 'ffffff' : gg.color;
             const label = gk === 'joueur' ? 'Joueur' : gg.label;
             return (
               <span className="grade-tag" key={gk}>
-                <span
-                  className="grade-bubble"
-                  style={{ backgroundColor: `#${color}`, color: `#${color}` }}
-                />
+                <GradeBadge gk={gk} />
                 {label}
               </span>
             );

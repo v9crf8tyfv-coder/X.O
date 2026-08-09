@@ -193,6 +193,7 @@ html, body {
 
 /* Logo de grade (bouclier) + point "fondateur principal" */
 .grade-logo { height: 30px; width: auto; vertical-align: middle; }
+.grade-logo-sm { height: 22px; width: auto; vertical-align: middle; object-fit: contain; }
 .chief-dot {
   width: 11px; height: 11px; border-radius: 50%;
   background: #6b5e00; /* jaune très foncé = fondateur principal */

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getGrade, GRADES, ALL_GRADES } from '@xo/shared';
 import { getCurrentAccount } from './auth';
+import { isSiteBlocked } from './siteLock';
 import type { Account } from './accounts';
 
 export const ADMIN_LEVEL = GRADES.admin.level;
@@ -25,6 +26,9 @@ export function canAssignGrade(g: string, managerLevel: number): boolean {
 export async function requireLevel(
   minLevel: number,
 ): Promise<{ account: Account } | NextResponse> {
+  if (await isSiteBlocked()) {
+    return NextResponse.json({ error: 'Site verrouillé.' }, { status: 503 });
+  }
   const account = await getCurrentAccount();
   if (!account) {
     return NextResponse.json({ error: 'Non connecté.' }, { status: 401 });

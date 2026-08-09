@@ -11,6 +11,7 @@ import {
 import { ENV } from '../env.js';
 import { publishEffectif } from '../lib/effectifPublish.js';
 import { logSurveillance } from '../lib/surveillance.js';
+import { autoArchiveExpired } from '../lib/absenceArchive.js';
 
 interface PendingAction {
   id: string;
@@ -38,6 +39,10 @@ export function startPendingActionsWorker(client: Client): void {
   setInterval(() => {
     publishEffectif(client).catch((e) => console.error('[effectif]', e));
   }, 60_000);
+  // Archivage AUTOMATIQUE des absences expirées (toutes les 5 min + au démarrage)
+  const archive = () => autoArchiveExpired(client).catch((e) => console.error('[auto-archive]', e));
+  setTimeout(archive, 15_000);
+  setInterval(archive, 300_000);
 }
 
 async function tick(client: Client): Promise<void> {

@@ -7,6 +7,18 @@ import PanelClient from './PanelClient';
 export const dynamic = 'force-dynamic';
 
 export default async function PanelPage() {
+  const { isSiteBlocked } = await import('@/lib/siteLock');
+  if (await isSiteBlocked()) {
+    return (
+      <div className="denied">
+        <div className="denied-card">
+          <div className="denied-emoji">🔒</div>
+          <h1>Site verrouillé</h1>
+          <p>Le site est temporairement verrouillé par le propriétaire.</p>
+        </div>
+      </div>
+    );
+  }
   const account = await getCurrentAccount();
 
   // Accès refusé : pas connecté, ou pas de grade staff valide (joueur = pas d'accès)
