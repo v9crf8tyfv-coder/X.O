@@ -50,19 +50,18 @@ async function tick(client: Client): Promise<void> {
     const guild = await client.guilds.fetch(ENV.DISCORD_GUILD_ID).catch(() => null);
     if (!guild) return;
 
-    let changed = false;
     for (const a of actions) {
       try {
         await processAction(guild, a);
         await db()`update pending_actions set status='done', processed_at=now() where id=${a.id}`;
-        changed = true;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         await db()`update pending_actions set status='error', error=${msg}, processed_at=now() where id=${a.id}`;
         console.error('[worker] action échouée', a.id, msg);
       }
     }
-    if (changed) await publishEffectif(client).catch(() => {});
+    // Rafraîchit l'effectif après chaque lot traité (reflète les changements)
+    await publishEffectif(client).catch(() => {});
   } finally {
     running = false;
   }
