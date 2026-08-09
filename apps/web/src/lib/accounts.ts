@@ -79,7 +79,7 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
 export async function listAllAccounts(): Promise<(Account & { created_at: string })[]> {
   return db()<(Account & { created_at: string })[]>`
     select id, username, site_grade, site_grades, is_founder_chief, minecraft_pseudo, avatar_url,
-           to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
+           to_char(created_at at time zone 'Europe/Paris', 'DD/MM/YYYY HH24:MI') as created_at
     from accounts
     order by created_at asc
   `;

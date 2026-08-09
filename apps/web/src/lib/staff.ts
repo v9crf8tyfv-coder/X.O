@@ -30,7 +30,7 @@ export async function listStaff(): Promise<Staff[]> {
   const ids = staff.map((s) => s.id);
   const records = await db()<(StaffRecord & { staff_id: string })[]>`
     select id, staff_id, type, reason, issued_by,
-           to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
+           to_char(created_at at time zone 'Europe/Paris', 'DD/MM/YYYY HH24:MI') as created_at
     from staff_records where staff_id = any(${ids}) order by created_at desc
   `;
   return staff.map((s) => ({
@@ -69,7 +69,7 @@ export async function getStaff(id: string): Promise<Staff | null> {
   if (!rows[0]) return null;
   const records = await db()<StaffRecord[]>`
     select id, type, reason, issued_by,
-           to_char(created_at, 'YYYY-MM-DD HH24:MI') as created_at
+           to_char(created_at at time zone 'Europe/Paris', 'DD/MM/YYYY HH24:MI') as created_at
     from staff_records where staff_id = ${id} order by created_at desc
   `;
   return { ...rows[0], records };
