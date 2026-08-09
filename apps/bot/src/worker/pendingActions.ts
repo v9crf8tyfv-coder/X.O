@@ -1,4 +1,4 @@
-import type { Client, Guild, GuildMember } from 'discord.js';
+import type { Client, Guild, GuildMember, TextChannel } from 'discord.js';
 import { db, hasDatabase } from '@xo/db';
 import {
   ALL_GRADES,
@@ -6,6 +6,7 @@ import {
   GRADES,
   STAFF_ROLE_ID,
   RESP_PLUS_ROLE_ID,
+  CHANNELS,
   getGrade,
 } from '@xo/shared';
 import { ENV } from '../env.js';
@@ -63,6 +64,7 @@ async function tick(client: Client): Promise<void> {
         await processAction(guild, a);
         await db()`update pending_actions set status='done', processed_at=now() where id=${a.id}`;
         await logStaffSurveillance(client, a);
+        await announceStaffChange(client, a);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         await db()`update pending_actions set status='error', error=${msg}, processed_at=now() where id=${a.id}`;
@@ -133,6 +135,35 @@ async function processAction(guild: Guild, a: PendingAction): Promise<void> {
   const toRemove = managed.filter((id) => !desired.has(id) && member.roles.cache.has(id));
   if (toAdd.length) await member.roles.add(toAdd, 'Grade staff (site)');
   if (toRemove.length) await member.roles.remove(toRemove, 'MAJ staff (site)');
+}
+
+/** Messages automatiques de rank / départ (taverne + général staff) */
+async function announceStaffChange(client: Client, a: PendingAction): Promise<void> {
+  const pseudo = a.minecraft_pseudo;
+  const taverne = await client.channels.fetch(CHANNELS.taverne).catch(() => null);
+  const staffCh = await client.channels.fetch(CHANNELS.generalStaff).catch(() => null);
+
+  if (a.type === 'staff.remove') {
+    if (taverne?.isTextBased())
+      await (taverne as TextChannel).send(`Merci à **${pseudo}** pour son travail dans le staff.`);
+    if (staffCh?.isTextBased())
+      await (staffCh as TextChannel).send(
+        `Un grand merci à **${pseudo}** qui part vers de plus belles aventures !`,
+      );
+    return;
+  }
+
+  if (a.grades.length === 0) return;
+  let top = a.grades[0]!;
+  for (const g of a.grades) if (getGrade(g).level > getGrade(top).level) top = g;
+  const grade = getGrade(top).label;
+
+  if (taverne?.isTextBased())
+    await (taverne as TextChannel).send(`Félicitations à **${pseudo}** qui passe **${grade}** !`);
+  if (staffCh?.isTextBased())
+    await (staffCh as TextChannel).send(
+      `Félicitations à **${pseudo}** qui passe **${grade}**, accueillez-le comme il se doit !`,
+    );
 }
 
 /** Surveillance d'une action staff faite DEPUIS LE SITE (auteur = pseudo site). */

@@ -11,7 +11,7 @@ import type { SlashCommand } from '../../types.js';
 import { BRAND_COLOR } from '@xo/shared';
 
 // URL du site (Vercel). Configurable via .env → SITE_URL
-const SITE_URL = process.env.SITE_URL ?? 'https://xo-panel.vercel.app';
+const SITE_URL = process.env.SITE_URL ?? 'https://x-o-web.vercel.app';
 
 export const panel: SlashCommand = {
   founderOnly: true,

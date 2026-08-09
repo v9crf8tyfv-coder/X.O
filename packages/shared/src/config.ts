@@ -14,6 +14,8 @@ export const CHANNELS = {
   ticketStaff: '1535383806452965376',
   ticketNormal: '1535383613263183883',
   archivesTicket: '1535421887121985566',
+  taverne: '1535347207195328652', // annonces de rank (public)
+  generalStaff: '1535333104733003896', // annonces de rank (staff)
 } as const;
 
 /**

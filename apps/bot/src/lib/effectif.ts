@@ -12,10 +12,12 @@ const LABEL: Record<string, string> = {
   modo: 'Modérateur',
 };
 
-/** Emojis custom (logos Discord). Responsable & Buildeur : à venir. */
+/** Emojis custom (logos Discord). Buildeur : logo à venir. */
 const EMOJI: Record<string, string> = {
+  responsable: '<:LogoResp:1535977247880646656>',
   admin: '<:LogoAdmin:1535740524240175114>',
   dev: '<:LogoDev:1535740345684598835>',
+  modo: '<:LogoModo:1536109940098470010>',
 };
 
 /** Le grade "effectif" d'un staff = le plus haut parmi ORDER, ou null */
