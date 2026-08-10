@@ -17,7 +17,7 @@ interface Staff {
   grades: string[];
 }
 
-const EFFECTIF_GRADES = ['responsable', 'admin', 'dev', 'modo', 'buildeur'];
+const EFFECTIF_GRADES = ['responsable', 'admin', 'dev', 'modo', 'buildeur', 'com'];
 // Rôles proposables en auto (grades avec ID Discord + Joueur)
 const AUTO_ROLE_CHOICES = [
   ...Object.values(GRADES).filter((g) => g.roleId),

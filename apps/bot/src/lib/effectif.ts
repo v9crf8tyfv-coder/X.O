@@ -1,7 +1,7 @@
 import { GRADES } from '@xo/shared';
 
 /** Seuls ces grades apparaissent dans l'effectif (du plus haut au plus bas) */
-const ORDER = ['responsable', 'admin', 'dev', 'modo', 'buildeur'] as const;
+const ORDER = ['responsable', 'admin', 'dev', 'modo', 'buildeur', 'com'] as const;
 
 /** Noms affichés dans l'effectif */
 const LABEL: Record<string, string> = {
@@ -10,6 +10,7 @@ const LABEL: Record<string, string> = {
   dev: 'Développeur',
   buildeur: 'Buildeur',
   modo: 'Modérateur',
+  com: 'Communication / Graphiste',
 };
 
 /** Emojis custom (logos Discord). Buildeur : logo à venir. */
