@@ -1,15 +1,11 @@
-import {
-  SlashCommandBuilder,
-  MessageFlags,
-  PermissionFlagsBits,
-  type GuildMember,
-} from 'discord.js';
+import { SlashCommandBuilder, MessageFlags, type GuildMember } from 'discord.js';
+import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { recordSanction } from '../../lib/sanctions.js';
 
 export const kick: SlashCommand = {
-  founderOnly: true,
+  minLevel: GRADES.modo.level, // modo et au-dessus
   data: new SlashCommandBuilder()
     .setName('kick')
     .setDescription('Expulser un membre du serveur')
@@ -18,8 +14,7 @@ export const kick: SlashCommand = {
     )
     .addStringOption((o) =>
       o.setName('raison').setDescription("Raison de l'expulsion").setRequired(false),
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
+    ),
 
   async execute(interaction) {
     await interaction.deferReply();

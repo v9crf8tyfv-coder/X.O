@@ -21,6 +21,7 @@ import {
 } from '../lib/absence.js';
 import { parseFrDate, toIsoDate } from '../lib/dates.js';
 import { publishEffectif } from '../lib/effectifPublish.js';
+import { autoArchiveExpired } from '../lib/absenceArchive.js';
 
 // ---------- helpers ----------
 
@@ -167,6 +168,9 @@ export const absenceCreate: ComponentHandler<ModalSubmitInteraction> = {
       embeds: [successEmbed('Absence posée', 'Ton absence a été enregistrée.')],
       flags: MessageFlags.Ephemeral,
     });
+
+    // Si la date de fin est déjà passée → archive tout de suite
+    await autoArchiveExpired(interaction.client).catch(() => {});
   },
 };
 

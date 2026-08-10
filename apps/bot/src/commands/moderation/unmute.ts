@@ -1,21 +1,16 @@
-import {
-  SlashCommandBuilder,
-  MessageFlags,
-  PermissionFlagsBits,
-  type GuildMember,
-} from 'discord.js';
+import { SlashCommandBuilder, MessageFlags, type GuildMember } from 'discord.js';
+import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const unmute: SlashCommand = {
-  founderOnly: true,
+  minLevel: GRADES.responsable.level, // au-dessus d'admin
   data: new SlashCommandBuilder()
     .setName('unmute')
     .setDescription('Retirer le mute (timeout) d\'un membre')
     .addUserOption((o) =>
       o.setName('membre').setDescription('Le membre à démuter').setRequired(true),
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    ),
 
   async execute(interaction) {
     await interaction.deferReply();

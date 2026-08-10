@@ -1,9 +1,5 @@
-import {
-  SlashCommandBuilder,
-  MessageFlags,
-  PermissionFlagsBits,
-  type GuildMember,
-} from 'discord.js';
+import { SlashCommandBuilder, MessageFlags, type GuildMember } from 'discord.js';
+import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { recordSanction } from '../../lib/sanctions.js';
@@ -12,7 +8,7 @@ import { parseDuration } from '../../lib/duration.js';
 const MAX_TIMEOUT = 28 * 86_400_000; // 28 jours (limite Discord)
 
 export const mute: SlashCommand = {
-  founderOnly: true,
+  minLevel: GRADES.modo.level, // modo et au-dessus
   data: new SlashCommandBuilder()
     .setName('mute')
     .setDescription('Réduire au silence un membre (timeout)')
@@ -27,8 +23,7 @@ export const mute: SlashCommand = {
     )
     .addStringOption((o) =>
       o.setName('raison').setDescription('Raison du mute').setRequired(false),
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    ),
 
   async execute(interaction) {
     await interaction.deferReply();

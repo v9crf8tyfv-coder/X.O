@@ -16,6 +16,7 @@ export const CHANNELS = {
   archivesTicket: '1535421887121985566',
   taverne: '1535347207195328652', // annonces de rank (public)
   generalStaff: '1535333104733003896', // annonces de rank (staff)
+  lancerJeu: '1535350366382719037', // embed "lancer le jeu"
 } as const;
 
 /**

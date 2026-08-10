@@ -9,7 +9,6 @@ import { publishEffectif } from '../../lib/effectifPublish.js';
  * Basé sur la table `staff` (pseudos Minecraft reliés via le site).
  */
 export const effectif: SlashCommand = {
-  founderOnly: true,
   data: new SlashCommandBuilder()
     .setName('effectif')
     .setDescription("Publier / actualiser l'effectif du staff dans le salon accueil")

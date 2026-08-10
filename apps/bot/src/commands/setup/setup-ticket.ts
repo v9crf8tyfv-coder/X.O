@@ -10,7 +10,6 @@ import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { buildCategorySelect, buildTicketPanelEmbed, type TicketSpace } from '../../lib/tickets.js';
 
 export const setupTicket: SlashCommand = {
-  founderOnly: true,
   data: new SlashCommandBuilder()
     .setName('setup-ticket')
     .setDescription('Poster le panneau de tickets')

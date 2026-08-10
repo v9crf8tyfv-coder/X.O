@@ -8,7 +8,6 @@ import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const removeall: SlashCommand = {
-  founderOnly: true,
   data: new SlashCommandBuilder()
     .setName('removeall')
     .setDescription('Supprimer TOUS les messages récents (< 14 jours) de ce salon')

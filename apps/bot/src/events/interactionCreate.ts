@@ -4,8 +4,9 @@ import {
   type GuildMember,
   type InteractionReplyOptions,
 } from 'discord.js';
+import { GRADES } from '@xo/shared';
 import type { XOClient } from '../types.js';
-import { isFounder } from '../lib/permissions.js';
+import { highestGrade } from '../lib/permissions.js';
 import { errorEmbed } from '../lib/embeds.js';
 
 export async function handleInteraction(
@@ -18,16 +19,16 @@ export async function handleInteraction(
       const command = client.commands.get(interaction.commandName);
       if (!command) return;
 
-      // Toutes les commandes fonda sont réservées aux fondateurs
-      if (command.founderOnly) {
-        const member = interaction.member as GuildMember | null;
-        if (!member || !isFounder(member)) {
-          await interaction.reply({
-            embeds: [errorEmbed('Accès refusé', 'Réservé aux **Fondateurs**.')],
-            flags: MessageFlags.Ephemeral,
-          });
-          return;
-        }
+      // Contrôle d'accès par NIVEAU de grade (défaut : fondateur)
+      const min = command.minLevel ?? GRADES.fondateur.level;
+      const member = interaction.member as GuildMember | null;
+      const level = member ? highestGrade(member)?.level ?? 0 : 0;
+      if (level < min) {
+        await interaction.reply({
+          embeds: [errorEmbed('Accès refusé', 'Ton grade ne permet pas cette commande.')],
+          flags: MessageFlags.Ephemeral,
+        });
+        return;
       }
 
       await command.execute(interaction);

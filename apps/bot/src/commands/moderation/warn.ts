@@ -1,10 +1,11 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
+import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed } from '../../lib/embeds.js';
 import { recordSanction } from '../../lib/sanctions.js';
 
 export const warn: SlashCommand = {
-  founderOnly: true,
+  minLevel: GRADES.modo.level, // sanctions = modo et au-dessus
   data: new SlashCommandBuilder()
     .setName('warn')
     .setDescription('Avertir un membre')
@@ -13,8 +14,7 @@ export const warn: SlashCommand = {
     )
     .addStringOption((o) =>
       o.setName('raison').setDescription("Raison de l'avertissement").setRequired(true),
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    ),
 
   async execute(interaction) {
     await interaction.deferReply();

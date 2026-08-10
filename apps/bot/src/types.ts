@@ -13,8 +13,8 @@ import type {
 /** Une commande slash */
 export interface SlashCommand {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder;
-  /** true = réservée aux fondateurs (vérifié globalement) */
-  founderOnly?: boolean;
+  /** Niveau de grade MINIMUM requis (défaut : fondateur). Ex : GRADES.modo.level */
+  minLevel?: number;
   execute(interaction: ChatInputCommandInteraction): Promise<void> | void;
 }
 

@@ -8,7 +8,6 @@ import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const removemess: SlashCommand = {
-  founderOnly: true,
   data: new SlashCommandBuilder()
     .setName('removemess')
     .setDescription('Supprimer un certain nombre de messages dans ce salon')

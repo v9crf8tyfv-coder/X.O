@@ -13,7 +13,6 @@ import { CHANNELS, BRAND_COLOR } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const setupAbsence: SlashCommand = {
-  founderOnly: true,
   data: new SlashCommandBuilder()
     .setName('setup-absence')
     .setDescription('Poster le panneau des absences dans le salon absences')
