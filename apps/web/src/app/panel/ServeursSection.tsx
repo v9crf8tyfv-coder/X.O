@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { GRADES, getGrade } from '@xo/shared';
+import { GRADES, GRADE_JOUEUR, getGrade } from '@xo/shared';
 import { GradeBadge } from './GradeBadge';
 
 interface AutoRole {
@@ -17,20 +17,21 @@ interface Staff {
   grades: string[];
 }
 
-// Grades affichés dans l'éditeur d'effectif (comme sur Discord)
-const EFFECTIF_GRADES = ['responsable', 'admin', 'dev', 'buildeur', 'modo'];
-// Rôles proposables en "rôle auto" (ceux qui ont un ID Discord)
-const AUTO_ROLE_CHOICES = Object.values(GRADES).filter((g) => g.roleId);
+const EFFECTIF_GRADES = ['responsable', 'admin', 'dev', 'modo', 'buildeur'];
+// Rôles proposables en auto (grades avec ID Discord + Joueur)
+const AUTO_ROLE_CHOICES = [
+  ...Object.values(GRADES).filter((g) => g.roleId),
+  { key: 'joueur', label: 'Joueur', roleId: GRADE_JOUEUR.roleId },
+];
 
 export default function ServeursSection() {
-  const [tab, setTab] = useState<'discord' | 'ig'>('discord');
+  const [world, setWorld] = useState<null | 'discord'>(null);
+  const [sub, setSub] = useState<null | 'roles' | 'effectif'>(null);
+
   const [autoRoles, setAutoRoles] = useState<AutoRole[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [error, setError] = useState('');
-
-  // formulaire rôle auto
   const [pickGrade, setPickGrade] = useState('');
-  // formulaire ajout effectif
   const [addFor, setAddFor] = useState<string | null>(null);
   const [mc, setMc] = useState('');
   const [tag, setTag] = useState('');
@@ -41,25 +42,23 @@ export default function ServeursSection() {
       const [ar, st] = await Promise.all([fetch('/api/serveurs/autoroles'), fetch('/api/staff')]);
       if (ar.ok) setAutoRoles(await ar.json());
       if (st.ok) setStaff(await st.json());
-      setError('');
     } catch {
       setError('Impossible de contacter le serveur.');
     }
   }, []);
-
   useEffect(() => {
     load();
-    const t = setInterval(load, 5000);
+    const t = setInterval(load, 90_000); // refresh auto 1min30
     return () => clearInterval(t);
   }, [load]);
 
   async function addAutoRole() {
-    const g = getGrade(pickGrade);
-    if (!g.roleId) return;
+    const c = AUTO_ROLE_CHOICES.find((x) => x.key === pickGrade);
+    if (!c?.roleId) return;
     await fetch('/api/serveurs/autoroles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roleId: g.roleId, label: g.label }),
+      body: JSON.stringify({ roleId: c.roleId, label: c.label }),
     });
     setPickGrade('');
     load();
@@ -68,18 +67,12 @@ export default function ServeursSection() {
     await fetch(`/api/serveurs/autoroles?roleId=${roleId}`, { method: 'DELETE' });
     load();
   }
-
   async function addToEffectif(grade: string) {
     setError('');
     const res = await fetch('/api/staff', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        minecraftPseudo: mc,
-        discordTag: tag,
-        siteUsername: site,
-        grades: [grade],
-      }),
+      body: JSON.stringify({ minecraftPseudo: mc, discordTag: tag, siteUsername: site, grades: [grade], announce: false }),
     });
     if (!res.ok) {
       setError((await res.json().catch(() => ({}))).error ?? 'Ajout refusé.');
@@ -92,23 +85,62 @@ export default function ServeursSection() {
     load();
   }
 
+  // ---------- Accueil : 2 cartes ----------
+  if (world === null) {
+    return (
+      <div className="site-section">
+        <h2>Gestion Serveurs</h2>
+        <p className="site-sub">Configure les serveurs liés au panel.</p>
+        <div className="srv-cards">
+          <button className="srv-card" onClick={() => setWorld('discord')}>
+            <div className="srv-card-emoji">💬</div>
+            <strong>Discord</strong>
+            <span className="site-sub">Rôles auto + effectif</span>
+          </button>
+          <button className="srv-card disabled" disabled>
+            <div className="srv-card-emoji">🎮</div>
+            <strong>IG</strong>
+            <span className="site-sub">À venir (serveur Minecraft)</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- Discord : sous-catégories ----------
+  if (sub === null) {
+    return (
+      <div className="site-section">
+        <button className="back-btn" onClick={() => setWorld(null)}>
+          ← Retour
+        </button>
+        <h2>Discord</h2>
+        <div className="srv-cards">
+          <button className="srv-card" onClick={() => setSub('roles')}>
+            <div className="srv-card-emoji">🎭</div>
+            <strong>Rôles à l’arrivée</strong>
+            <span className="site-sub">Donnés automatiquement au join</span>
+          </button>
+          <button className="srv-card" onClick={() => setSub('effectif')}>
+            <div className="srv-card-emoji">📋</div>
+            <strong>Effectif Discord</strong>
+            <span className="site-sub">Ajouter / voir le staff</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="site-section">
-      <h2>Gestion Serveurs</h2>
-      <div className="tabs" style={{ maxWidth: 320, marginTop: 12 }}>
-        <button className={`tab ${tab === 'discord' ? 'active' : ''}`} onClick={() => setTab('discord')}>
-          Discord
-        </button>
-        <button className="tab" disabled title="À venir">
-          IG (à venir)
-        </button>
-      </div>
+      <button className="back-btn" onClick={() => setSub(null)}>
+        ← Retour
+      </button>
       {error && <div className="form-error">{error}</div>}
 
-      {tab === 'discord' && (
+      {sub === 'roles' && (
         <>
-          {/* Rôles automatiques */}
-          <h3 className="staff-h3">Rôles automatiques à l’arrivée</h3>
+          <h2>Rôles à l’arrivée</h2>
           <p className="site-sub">Ces rôles sont donnés à chaque membre qui rejoint le serveur.</p>
           <div className="record-add">
             <select value={pickGrade} onChange={(e) => setPickGrade(e.target.value)}>
@@ -134,12 +166,17 @@ export default function ServeursSection() {
               </div>
             ))}
           </div>
+        </>
+      )}
 
-          {/* Éditeur d'effectif (comme Discord) */}
-          <h3 className="staff-h3">Effectif (clique “+” pour ajouter à un grade)</h3>
+      {sub === 'effectif' && (
+        <>
+          <h2>Effectif Discord</h2>
           {EFFECTIF_GRADES.map((gk) => {
             const members = staff.filter(
-              (s) => s.grades.includes(gk) && !s.grades.some((x) => getGrade(x).level > getGrade(gk).level),
+              (s) =>
+                s.grades.includes(gk) &&
+                !s.grades.some((x) => getGrade(x).level > getGrade(gk).level),
             );
             return (
               <div className="eff-grade" key={gk}>
@@ -160,7 +197,7 @@ export default function ServeursSection() {
                     <input placeholder="Tag Discord" value={tag} onChange={(e) => setTag(e.target.value)} />
                     <input placeholder="Pseudo site" value={site} onChange={(e) => setSite(e.target.value)} />
                     <button className="btn-submit" onClick={() => addToEffectif(gk)}>
-                      Créer
+                      Ajouter
                     </button>
                   </div>
                 )}
@@ -168,13 +205,6 @@ export default function ServeursSection() {
             );
           })}
         </>
-      )}
-
-      {tab === 'ig' && (
-        <div className="soon-card">
-          <div className="soon-emoji">🎮</div>
-          <p>La configuration IG arrivera quand le serveur Minecraft sera prêt.</p>
-        </div>
       )}
     </div>
   );

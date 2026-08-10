@@ -296,6 +296,19 @@ html, body {
 .eff-grade-head .chip { margin-left: auto; }
 .eff-members { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
 
+/* Cartes Gestion Serveurs */
+.srv-cards { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
+.srv-card {
+  flex: 1; min-width: 200px; background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px; cursor: pointer; color: var(--text);
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
+  transition: transform 0.12s, border-color 0.12s;
+}
+.srv-card:hover:not(.disabled) { transform: translateY(-3px); border-color: var(--accent); }
+.srv-card.disabled { opacity: 0.5; cursor: not-allowed; }
+.srv-card strong { font-size: 1.15rem; }
+.srv-card-emoji { font-size: 2rem; }
+
 .soon-card {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 10px; height: 60vh; color: var(--muted);

@@ -70,7 +70,7 @@ export default function PanelClient({ account }: Props) {
     sections.push({ id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', soon: true });
   }
   if (founder) {
-    sections.push({ id: 'serveurs', label: 'Gestion Serveurs', icon: '' });
+    sections.push({ id: 'serveurs', label: 'Gestion Serveurs', icon: '🖥️' });
   }
   if (level >= getGrade('responsable').level) {
     sections.push({ id: 'reseaux', label: 'Gestion Réseaux', icon: '', soon: true });

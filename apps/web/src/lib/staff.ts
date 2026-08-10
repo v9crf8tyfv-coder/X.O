@@ -39,6 +39,18 @@ export async function listStaff(): Promise<Staff[]> {
   }));
 }
 
+/** Cherche un staff actif par tag Discord OU pseudo (pour éviter les doublons) */
+export async function findActiveStaff(discordTag: string, pseudo: string): Promise<Staff | null> {
+  const rows = await db()<Omit<Staff, 'records'>[]>`
+    select id, pseudo, discord_tag, site_username, grades, is_absent
+    from staff
+    where active = true
+      and (lower(discord_tag) = lower(${discordTag}) or lower(pseudo) = lower(${pseudo}))
+    limit 1
+  `;
+  return rows[0] ? { ...rows[0], records: [] } : null;
+}
+
 export async function createStaff(params: {
   minecraftPseudo: string;
   discordTag: string;
