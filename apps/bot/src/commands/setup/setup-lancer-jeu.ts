@@ -4,17 +4,24 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  AttachmentBuilder,
   PermissionFlagsBits,
   MessageFlags,
   type TextChannel,
 } from 'discord.js';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import type { SlashCommand } from '../../types.js';
 import { CHANNELS, BRAND_COLOR, GRADES } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
-// Bannière (image sous l'embed) + site du jeu — configurables via .env
+const __dirname = dirname(fileURLToPath(import.meta.url));
+// Dépose l'image ici : apps/bot/assets/game-banner.png (elle s'affichera sous l'embed)
+const BANNER_FILE = resolve(__dirname, '../../assets/game-banner.png');
 const BANNER_URL = process.env.GAME_BANNER_URL ?? '';
-const GAME_SITE_URL = process.env.GAME_SITE_URL ?? process.env.SITE_URL ?? 'https://x-o-web.vercel.app';
+// Site du jeu (PAS le panel). Bouton affiché seulement quand ce site existera.
+const GAME_SITE_URL = process.env.GAME_SITE_URL ?? '';
 const JOUEUR_EMOJI = '<:Logojoueur:1536109797114515518>';
 
 export const setupLancerJeu: SlashCommand = {
@@ -45,17 +52,30 @@ export const setupLancerJeu: SlashCommand = {
           "Lance le jeu Minecraft et connecte-toi au serveur grâce à l'IP ci-dessous en **1.21.1**.\n" +
           '```\nÀ venir ...\n```',
       );
-    if (BANNER_URL) embed.setImage(BANNER_URL);
 
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder()
-        .setLabel('SITE')
-        .setEmoji('🌐')
-        .setStyle(ButtonStyle.Link)
-        .setURL(GAME_SITE_URL),
-    );
+    // Image : fichier local prioritaire, sinon URL, sinon rien
+    const files: AttachmentBuilder[] = [];
+    if (existsSync(BANNER_FILE)) {
+      files.push(new AttachmentBuilder(BANNER_FILE, { name: 'banner.png' }));
+      embed.setImage('attachment://banner.png');
+    } else if (BANNER_URL) {
+      embed.setImage(BANNER_URL);
+    }
 
-    await (channel as TextChannel).send({ embeds: [embed], components: [row] });
+    // Bouton SITE : uniquement si le site du jeu est configuré (jamais le panel)
+    const components = GAME_SITE_URL
+      ? [
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel('SITE')
+              .setEmoji('🌐')
+              .setStyle(ButtonStyle.Link)
+              .setURL(GAME_SITE_URL),
+          ),
+        ]
+      : [];
+
+    await (channel as TextChannel).send({ embeds: [embed], files, components });
     await interaction.editReply({
       embeds: [successEmbed('Publié', 'L’embed « Lancer le jeu » a été posté.')],
     });
