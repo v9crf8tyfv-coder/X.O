@@ -170,9 +170,8 @@ function ProfileCard({ account }: Props) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={account.avatar_url} alt={account.username} />
         ) : (
-          <span>{initial}</span>
+          <span>{uploading ? '…' : initial}</span>
         )}
-        <span className="avatar-overlay">{uploading ? '…' : '📷'}</span>
       </button>
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
       <div className="profile-info">

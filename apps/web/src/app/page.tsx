@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getGrade } from '@xo/shared';
+import { GradeBadge } from './panel/GradeBadge';
 
 interface Me {
   username: string;
@@ -70,19 +70,12 @@ export default function Accueil() {
     }, 1200);
   }
 
-  const gradeColor = me ? getGrade(me.site_grade).color : 'ffffff';
 
   return (
     <div className="accueil">
       <div className="topbar">
         <div className="account-wrap">
-          {me && (
-            <span
-              className="grade-bubble"
-              style={{ backgroundColor: `#${gradeColor}`, color: `#${gradeColor}` }}
-              title={me.site_grade}
-            />
-          )}
+          {me && <GradeBadge gk={me.site_grade} />}
           <div className="account-box" onClick={() => setOpen((o) => !o)}>
             {me ? (
               <>
