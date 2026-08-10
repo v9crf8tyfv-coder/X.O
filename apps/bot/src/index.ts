@@ -7,6 +7,7 @@ import { handleInteraction } from './events/interactionCreate.js';
 import { onReady } from './events/ready.js';
 import { onGuildMemberAdd } from './events/guildMemberAdd.js';
 import { onGuildMemberUpdate } from './events/guildMemberUpdate.js';
+import { onMessageCreate } from './events/messageCreate.js';
 import { startPendingActionsWorker } from './worker/pendingActions.js';
 
 const client = new Client({
@@ -15,6 +16,7 @@ const client = new Client({
     GatewayIntentBits.GuildMembers, // requis : surveillance des rôles, join
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildModeration, // bans
+    GatewayIntentBits.MessageContent, // requis : mode annonce (lire les messages)
   ],
   partials: [Partials.GuildMember],
 }) as XOClient;
@@ -35,6 +37,7 @@ client.once('clientReady', () => {
 client.on('interactionCreate', (i) => handleInteraction(client, i));
 client.on('guildMemberAdd', (m) => onGuildMemberAdd(client, m));
 client.on('guildMemberUpdate', (oldM, newM) => onGuildMemberUpdate(client, oldM, newM));
+client.on('messageCreate', (m) => onMessageCreate(client, m));
 
 // Arrêt propre
 process.on('SIGINT', () => client.destroy().then(() => process.exit(0)));

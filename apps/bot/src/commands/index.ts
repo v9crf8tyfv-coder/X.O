@@ -13,6 +13,7 @@ import { setupTicket } from './setup/setup-ticket.js';
 import { effectif } from './setup/effectif.js';
 import { setupLancerJeu } from './setup/setup-lancer-jeu.js';
 import { blockfull, unblockfull } from './setup/blockfull.js';
+import { annonceStart, annonceStop } from './setup/annonce.js';
 
 export const commands: SlashCommand[] = [
   ban,
@@ -30,4 +31,6 @@ export const commands: SlashCommand[] = [
   setupLancerJeu,
   blockfull,
   unblockfull,
+  annonceStart,
+  annonceStop,
 ];
