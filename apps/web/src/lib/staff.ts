@@ -104,8 +104,14 @@ export async function removeStaff(id: string): Promise<Staff | null> {
  * Synchronise l'accès SITE du compte lié (par pseudo site) sur des grades.
  * grades = [] → repasse joueur.
  */
+// Comptes protégés : ne peuvent jamais être modifiés via la Gestion Staff/effectif
+const PROTECTED = ['ixtazzking'];
+export function isProtected(name: string | null | undefined): boolean {
+  return !!name && PROTECTED.includes(name.toLowerCase());
+}
+
 export async function syncSiteAccess(siteUsername: string | null, grades: string[]): Promise<void> {
-  if (!siteUsername) return;
+  if (!siteUsername || isProtected(siteUsername)) return; // proprio jamais deranké
   const primary = highestGrade(grades);
   await db()`
     update accounts set site_grades = ${grades}, site_grade = ${primary}

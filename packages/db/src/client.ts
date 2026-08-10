@@ -22,8 +22,10 @@ export function db(): ReturnType<typeof postgres> {
   if (!_sql) {
     _sql = postgres(process.env.DATABASE_URL, {
       ssl: 'require',
-      max: 5,
-      idle_timeout: 20,
+      max: 3, // peu de connexions (pooler Supabase limité)
+      idle_timeout: 15, // libère vite
+      connect_timeout: 10,
+      prepare: false, // requis pour le pooler "transaction" (port 6543)
     });
   }
   return _sql;

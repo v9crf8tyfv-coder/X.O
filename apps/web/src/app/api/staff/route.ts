@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getGrade } from '@xo/shared';
 import { requireLevel, ADMIN_LEVEL, RESP_LEVEL, canAssignGrade } from '@/lib/guard';
-import { listStaff, createStaff, syncSiteAccess, queueAction } from '@/lib/staff';
+import { listStaff, createStaff, syncSiteAccess, queueAction, isProtected } from '@/lib/staff';
 
 export const runtime = 'nodejs';
 
@@ -29,6 +29,12 @@ export async function POST(req: Request) {
   }
   if (!Array.isArray(grades) || grades.length === 0) {
     return NextResponse.json({ error: 'Choisis au moins un grade.' }, { status: 400 });
+  }
+  if (isProtected(minecraftPseudo) || isProtected(discordTag) || isProtected(siteUsername)) {
+    return NextResponse.json(
+      { error: 'Ce compte est protégé et ne peut pas être ajouté au staff.' },
+      { status: 403 },
+    );
   }
 
   const myLevel = getGrade(g.account.site_grade).level;
