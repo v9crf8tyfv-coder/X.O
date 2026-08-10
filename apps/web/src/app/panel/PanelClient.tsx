@@ -24,6 +24,7 @@ async function resizeImage(file: File, size: number): Promise<string> {
 import SiteSection from './SiteSection';
 import StaffSection from './StaffSection';
 import ServeursSection from './ServeursSection';
+import LiensSection from './LiensSection';
 import { GradeBadge } from './GradeBadge';
 
 /** Logo du grade (bouclier). Se cache si l'image n'existe pas encore. */
@@ -66,6 +67,7 @@ export default function PanelClient({ account }: Props) {
 
   // Sections visibles selon le grade (émojis gardés seulement pour Staff & Site)
   const sections: Section[] = [{ id: 'profil', label: 'Profil', icon: '' }];
+  sections.push({ id: 'liens', label: 'Liens utiles', icon: '🔗' });
   if (level >= getGrade('admin').level) {
     sections.push({ id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', soon: true });
   }
@@ -117,6 +119,8 @@ export default function PanelClient({ account }: Props) {
       <main className="panel-main">
         {current.id === 'profil' ? (
           <ProfileCard account={account} />
+        ) : current.id === 'liens' ? (
+          <LiensSection myGrade={account.site_grade} />
         ) : current.id === 'site' ? (
           <SiteSection myGrade={account.site_grade} isChief={account.is_founder_chief} />
         ) : current.id === 'staff' ? (

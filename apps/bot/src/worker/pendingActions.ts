@@ -65,7 +65,8 @@ async function tick(client: Client): Promise<void> {
         await processAction(guild, a);
         await db()`update pending_actions set status='done', processed_at=now() where id=${a.id}`;
         await logStaffSurveillance(client, a);
-        await announceStaffChange(client, a);
+        // Messages auto de félicitations/départ désactivés (demande du proprio)
+        void announceStaffChange;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         await db()`update pending_actions set status='error', error=${msg}, processed_at=now() where id=${a.id}`;

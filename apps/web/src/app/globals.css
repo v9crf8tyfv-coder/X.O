@@ -304,6 +304,16 @@ html, body {
 .srv-card strong { font-size: 1.15rem; }
 .srv-card-emoji { font-size: 2rem; }
 
+/* Liens utiles */
+.link-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+}
+.link-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.link-title { font-weight: 700; color: var(--accent); text-decoration: none; }
+.link-title:hover { text-decoration: underline; }
+.link-url { font-size: 0.75rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .soon-card {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 10px; height: 60vh; color: var(--muted);

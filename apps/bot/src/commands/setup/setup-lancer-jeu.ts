@@ -12,12 +12,13 @@ import type { SlashCommand } from '../../types.js';
 import { CHANNELS, BRAND_COLOR, GRADES } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
-// Image (bannière) affichée sous l'embed — configurable via .env → GAME_BANNER_URL
+// Bannière (image sous l'embed) + site du jeu — configurables via .env
 const BANNER_URL = process.env.GAME_BANNER_URL ?? '';
-const SITE_URL = process.env.SITE_URL ?? 'https://x-o-web.vercel.app';
+const GAME_SITE_URL = process.env.GAME_SITE_URL ?? process.env.SITE_URL ?? 'https://x-o-web.vercel.app';
+const JOUEUR_EMOJI = '<:Logojoueur:1536109797114515518>';
 
 export const setupLancerJeu: SlashCommand = {
-  minLevel: GRADES.fondateur.level, // fondateurs uniquement
+  minLevel: GRADES.fondateur.level,
   data: new SlashCommandBuilder()
     .setName('setup-lancer-lejeu')
     .setDescription('Poster l’embed « Lancer le jeu » dans le salon dédié')
@@ -36,15 +37,22 @@ export const setupLancerJeu: SlashCommand = {
 
     const embed = new EmbedBuilder()
       .setColor(BRAND_COLOR)
-      .setTitle('🎮 Lancer le jeu')
+      .setTitle('🎮 Jouer au serveur (PC)')
       .setDescription(
-        'Voici comment rejoindre le serveur.\n' +
-          '*(Les étapes exactes seront ajoutées quand le serveur Minecraft sera prêt.)*',
+        'La version Java est accessible depuis PC.\n' +
+          'Voici les étapes à suivre pour se connecter.\n\n' +
+          `${JOUEUR_EMOJI} **Connexion via PC**\n` +
+          "Lance le jeu Minecraft et connecte-toi au serveur grâce à l'IP ci-dessous en **1.21.1**.\n" +
+          '```\nÀ venir ...\n```',
       );
     if (BANNER_URL) embed.setImage(BANNER_URL);
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setLabel('Aller au site').setStyle(ButtonStyle.Link).setURL(SITE_URL),
+      new ButtonBuilder()
+        .setLabel('SITE')
+        .setEmoji('🌐')
+        .setStyle(ButtonStyle.Link)
+        .setURL(GAME_SITE_URL),
     );
 
     await (channel as TextChannel).send({ embeds: [embed], components: [row] });

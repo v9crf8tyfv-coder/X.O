@@ -5,7 +5,7 @@ import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { recordSanction } from '../../lib/sanctions.js';
 
 export const ban: SlashCommand = {
-  minLevel: GRADES.modo.level, // sanctions = modo et au-dessus
+  minLevel: GRADES.admin.level, // ban = admin et au-dessus
   data: new SlashCommandBuilder()
     .setName('ban')
     .setDescription('Bannir un membre du serveur')
