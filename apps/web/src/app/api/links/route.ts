@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getGrade, ALL_GRADES } from '@xo/shared';
-import { requireLevel, FOUNDER_LEVEL } from '@/lib/guard';
+import { requireLevel, FOUNDER_LEVEL, ADMIN_LEVEL } from '@/lib/guard';
 import { listLinks, addLink, removeLink } from '@/lib/links';
 
 export const runtime = 'nodejs';
 
-/** Liste les liens visibles : ceux destinés à SON grade ou EN DESSOUS */
+/** Liste les liens visibles : ceux destinés à SON grade ou EN DESSOUS (admin+) */
 export async function GET() {
-  const g = await requireLevel(1); // tout compte avec un grade (pas joueur)
+  const g = await requireLevel(ADMIN_LEVEL); // admin et au-dessus
   if (g instanceof NextResponse) return g;
   const myLevel = getGrade(g.account.site_grade).level;
   const links = await listLinks();

@@ -67,8 +67,9 @@ export default function PanelClient({ account }: Props) {
 
   // Sections visibles selon le grade (émojis gardés seulement pour Staff & Site)
   const sections: Section[] = [{ id: 'profil', label: 'Profil', icon: '' }];
-  sections.push({ id: 'liens', label: 'Liens utiles', icon: '🔗' });
+  // Liens utiles + Gestion Staff : à partir d'admin (en dessous = juste Profil)
   if (level >= getGrade('admin').level) {
+    sections.push({ id: 'liens', label: 'Liens utiles', icon: '🔗' });
     sections.push({ id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', soon: true });
   }
   if (founder) {
