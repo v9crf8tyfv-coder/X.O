@@ -15,6 +15,8 @@ import {
   absenceEditSubmit,
 } from './absence.js';
 import { ticketOpen, ticketClose } from './ticket.js';
+import { gameSiteSoon } from './game.js';
+import { bytenutRenew } from './bytenut.js';
 
 export const buttons: ComponentHandler<ButtonInteraction>[] = [
   absenceNew,
@@ -22,6 +24,8 @@ export const buttons: ComponentHandler<ButtonInteraction>[] = [
   absenceDelete,
   absenceEdit,
   ticketClose,
+  gameSiteSoon,
+  bytenutRenew,
 ];
 
 export const selectMenus: ComponentHandler<StringSelectMenuInteraction>[] = [ticketOpen];

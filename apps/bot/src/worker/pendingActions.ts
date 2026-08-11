@@ -13,6 +13,7 @@ import { ENV } from '../env.js';
 import { publishEffectif } from '../lib/effectifPublish.js';
 import { logSurveillance } from '../lib/surveillance.js';
 import { autoArchiveExpired } from '../lib/absenceArchive.js';
+import { reconcileServerTimer } from '../lib/serverTimer.js';
 
 interface PendingAction {
   id: string;
@@ -36,6 +37,8 @@ export function startPendingActionsWorker(client: Client): void {
   console.log('[worker] pending_actions démarré (8s)');
   setInterval(() => {
     tick(client).catch((e) => console.error('[worker]', e));
+    // Suit l'état du timer Bytenut en base (reset/modif depuis le site)
+    reconcileServerTimer(client).catch((e) => console.error('[bytenut]', e));
   }, 8000);
   // Rafraîchit l'effectif régulièrement (absences, changements) — auto-actualisation
   setInterval(() => {

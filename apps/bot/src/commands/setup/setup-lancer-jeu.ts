@@ -44,13 +44,16 @@ export const setupLancerJeu: SlashCommand = {
 
     const embed = new EmbedBuilder()
       .setColor(BRAND_COLOR)
-      .setTitle('🎮 Jouer au serveur (PC)')
       .setDescription(
-        'La version Java est accessible depuis PC.\n' +
-          'Voici les étapes à suivre pour se connecter.\n\n' +
-          `${JOUEUR_EMOJI} **Connexion via PC**\n` +
-          "Lance le jeu Minecraft et connecte-toi au serveur grâce à l'IP ci-dessous en **1.21.1**.\n" +
-          '```\nÀ venir ...\n```',
+        '__*🎮 **Jouer au serveur (PC)***__\n' +
+          'La version **Java** est accessible depuis un PC.\n' +
+          'Voici les étapes à suivre pour vous connecter au serveur.\n\n' +
+          `*__${JOUEUR_EMOJI} **Connexion via PC**__*\n` +
+          '1. **Télécharge PolyMC** depuis le site officiel.\n' +
+          '2. En haut à droite, **connecte-toi avec ton compte Microsoft** possédant Minecraft Java.\n' +
+          '3. **Lance l’instance** du serveur.\n' +
+          '4. **Entre l’IP ci-dessous**, puis profite du serveur ! 🎉\n' +
+          '`de2.bytenut.cc:9490`',
       );
 
     // Image : fichier local prioritaire, sinon URL, sinon rien
@@ -62,18 +65,19 @@ export const setupLancerJeu: SlashCommand = {
       embed.setImage(BANNER_URL);
     }
 
-    // Bouton SITE : uniquement si le site du jeu est configuré (jamais le panel)
-    const components = GAME_SITE_URL
-      ? [
-          new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-              .setLabel('SITE')
-              .setEmoji('🌐')
-              .setStyle(ButtonStyle.Link)
-              .setURL(GAME_SITE_URL),
-          ),
-        ]
-      : [];
+    // Bouton SITE : lien si le site du jeu est configuré, sinon bouton « à venir »
+    const siteButton = GAME_SITE_URL
+      ? new ButtonBuilder()
+          .setLabel('SITE')
+          .setEmoji('🌐')
+          .setStyle(ButtonStyle.Link)
+          .setURL(GAME_SITE_URL)
+      : new ButtonBuilder()
+          .setLabel('SITE')
+          .setEmoji('🌐')
+          .setStyle(ButtonStyle.Secondary)
+          .setCustomId('game:site:soon');
+    const components = [new ActionRowBuilder<ButtonBuilder>().addComponents(siteButton)];
 
     await (channel as TextChannel).send({ embeds: [embed], files, components });
     await interaction.editReply({

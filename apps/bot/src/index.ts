@@ -9,6 +9,7 @@ import { onGuildMemberAdd } from './events/guildMemberAdd.js';
 import { onGuildMemberUpdate } from './events/guildMemberUpdate.js';
 import { onMessageCreate } from './events/messageCreate.js';
 import { startPendingActionsWorker } from './worker/pendingActions.js';
+import { resumeServerTimer } from './lib/serverTimer.js';
 
 const client = new Client({
   intents: [
@@ -33,6 +34,7 @@ client.modals = modals;
 client.once('clientReady', () => {
   onReady(client);
   startPendingActionsWorker(client);
+  void resumeServerTimer(client);
 });
 client.on('interactionCreate', (i) => handleInteraction(client, i));
 client.on('guildMemberAdd', (m) => onGuildMemberAdd(client, m));

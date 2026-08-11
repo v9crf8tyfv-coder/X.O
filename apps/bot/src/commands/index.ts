@@ -14,6 +14,7 @@ import { effectif } from './setup/effectif.js';
 import { setupLancerJeu } from './setup/setup-lancer-jeu.js';
 import { blockfull, unblockfull } from './setup/blockfull.js';
 import { annonceStart, annonceStop } from './setup/annonce.js';
+import { setbytenut } from './setup/setbytenut.js';
 
 export const commands: SlashCommand[] = [
   ban,
@@ -33,4 +34,5 @@ export const commands: SlashCommand[] = [
   unblockfull,
   annonceStart,
   annonceStop,
+  setbytenut,
 ];
