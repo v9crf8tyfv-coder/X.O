@@ -26,10 +26,7 @@ const AUTO_ROLE_CHOICES = [
 
 export default function ServeursSection() {
   const [world, setWorld] = useState<null | 'discord'>(null);
-  const [sub, setSub] = useState<null | 'roles' | 'effectif' | 'timer'>(null);
-
-  const [timer, setTimer] = useState<{ active: boolean; remainingSec: number } | null>(null);
-  const [timerBusy, setTimerBusy] = useState(false);
+  const [sub, setSub] = useState<null | 'roles' | 'effectif'>(null);
 
   const [autoRoles, setAutoRoles] = useState<AutoRole[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -70,32 +67,6 @@ export default function ServeursSection() {
     await fetch(`/api/serveurs/autoroles?roleId=${roleId}`, { method: 'DELETE' });
     load();
   }
-  const loadTimer = useCallback(async () => {
-    try {
-      const r = await fetch('/api/bytenut');
-      if (r.ok) setTimer(await r.json());
-    } catch {
-      /* ignore */
-    }
-  }, []);
-  useEffect(() => {
-    if (sub !== 'timer') return;
-    loadTimer();
-    const t = setInterval(loadTimer, 1000); // décompte en direct
-    return () => clearInterval(t);
-  }, [sub, loadTimer]);
-
-  async function resetTimer() {
-    if (!confirm('Couper / supprimer le timer Bytenut ?')) return;
-    setTimerBusy(true);
-    try {
-      await fetch('/api/bytenut', { method: 'DELETE' });
-      await loadTimer();
-    } finally {
-      setTimerBusy(false);
-    }
-  }
-
   async function addToEffectif(grade: string) {
     setError('');
     const res = await fetch('/api/staff', {
@@ -154,11 +125,6 @@ export default function ServeursSection() {
             <div className="srv-card-emoji">📋</div>
             <strong>Effectif Discord</strong>
             <span className="site-sub">Ajouter / voir le staff</span>
-          </button>
-          <button className="srv-card" onClick={() => setSub('timer')}>
-            <div className="srv-card-emoji">⏱️</div>
-            <strong>Timer Bot ByteNut</strong>
-            <span className="site-sub">Temps restant + reset</span>
           </button>
         </div>
       </div>
@@ -240,41 +206,6 @@ export default function ServeursSection() {
           })}
         </>
       )}
-
-      {sub === 'timer' && (
-        <>
-          <h2>Timer Bot ByteNut</h2>
-          <p className="site-sub">Temps avant le prochain rappel de renouvellement.</p>
-          <div className="record" style={{ alignItems: 'center', gap: 12 }}>
-            <span className="record-reason" style={{ fontSize: '1.4rem', fontWeight: 700 }}>
-              {timer == null
-                ? '…'
-                : timer.active
-                  ? fmtRemaining(timer.remainingSec)
-                  : 'Aucun timer en cours'}
-            </span>
-            <button
-              className="chip locked"
-              disabled={timerBusy || !timer?.active}
-              onClick={resetTimer}
-            >
-              {timerBusy ? '…' : 'Reset / Supprimer'}
-            </button>
-          </div>
-          <p className="site-sub" style={{ marginTop: 10 }}>
-            Le reset coupe le compte à rebours sur Discord sous ~8 secondes.
-          </p>
-        </>
-      )}
     </div>
   );
-}
-
-/** Formate des secondes en « 1h 50m 03s ». */
-function fmtRemaining(totalSec: number): string {
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  const p = (n: number) => String(n).padStart(2, '0');
-  return h ? `${h}h ${p(m)}m ${p(s)}s` : `${m}m ${p(s)}s`;
 }

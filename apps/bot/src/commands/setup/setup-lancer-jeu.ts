@@ -20,8 +20,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Dépose l'image ici : apps/bot/assets/game-banner.png (elle s'affichera sous l'embed)
 const BANNER_FILE = resolve(__dirname, '../../assets/game-banner.png');
 const BANNER_URL = process.env.GAME_BANNER_URL ?? '';
-// Site du jeu (PAS le panel). Bouton affiché seulement quand ce site existera.
-const GAME_SITE_URL = process.env.GAME_SITE_URL ?? '';
+// Liens de téléchargement du launcher (toujours la DERNIÈRE version publiée). Surchageables par env.
+const REL = 'https://github.com/v9crf8tyfv-coder/EmeriaLauncher/releases/latest/download';
+const LAUNCHER_WIN_URL = process.env.LAUNCHER_WIN_URL ?? `${REL}/EmeriaMC-windows.exe`;
+const LAUNCHER_MAC_URL = process.env.LAUNCHER_MAC_URL ?? `${REL}/EmeriaMC-mac.dmg`;
+const LAUNCHER_LINUX_URL = process.env.LAUNCHER_LINUX_URL ?? `${REL}/EmeriaMC-linux.AppImage`;
 const JOUEUR_EMOJI = '<:Logojoueur:1536109797114515518>';
 
 export const setupLancerJeu: SlashCommand = {
@@ -46,14 +49,11 @@ export const setupLancerJeu: SlashCommand = {
       .setColor(BRAND_COLOR)
       .setDescription(
         '__*🎮 **Jouer au serveur (PC)***__\n' +
-          'La version **Java** est accessible depuis un PC.\n' +
-          'Voici les étapes à suivre pour vous connecter au serveur.\n\n' +
-          `*__${JOUEUR_EMOJI} **Connexion via PC**__*\n` +
-          '1. **Télécharge PolyMC** depuis le site officiel.\n' +
-          '2. En haut à droite, **connecte-toi avec ton compte Microsoft** possédant Minecraft Java.\n' +
-          '3. **Lance l’instance** du serveur.\n' +
-          '4. **Entre l’IP ci-dessous**, puis profite du serveur ! 🎉\n' +
-          '`de2.bytenut.cc:9490`',
+          `${JOUEUR_EMOJI} **Installe le launcher pour jouer, dans ta version.** 👇\n\n` +
+          '⚠️ Sur **Windows**, un avertissement pourra s’afficher à l’installation. ' +
+          '**Ce n’est PAS dangereux, c’est normal.**\n\n' +
+          '🍎 Sur **Mac**, il faudra **autoriser l’ouverture** (clic droit sur l’app → *Ouvrir*). ' +
+          '**Ce n’est PAS dangereux non plus, c’est normal.**',
       );
 
     // Image : fichier local prioritaire, sinon URL, sinon rien
@@ -65,19 +65,23 @@ export const setupLancerJeu: SlashCommand = {
       embed.setImage(BANNER_URL);
     }
 
-    // Bouton SITE : lien si le site du jeu est configuré, sinon bouton « à venir »
-    const siteButton = GAME_SITE_URL
-      ? new ButtonBuilder()
-          .setLabel('SITE')
-          .setEmoji('🌐')
-          .setStyle(ButtonStyle.Link)
-          .setURL(GAME_SITE_URL)
-      : new ButtonBuilder()
-          .setLabel('SITE')
-          .setEmoji('🌐')
-          .setStyle(ButtonStyle.Secondary)
-          .setCustomId('game:site:soon');
-    const components = [new ActionRowBuilder<ButtonBuilder>().addComponents(siteButton)];
+    // 3 boutons de téléchargement du launcher (lien si l'URL existe, sinon « à venir »)
+    const makeBtn = (label: string, emoji: string, url: string, id: string) =>
+      url
+        ? new ButtonBuilder().setLabel(label).setEmoji(emoji).setStyle(ButtonStyle.Link).setURL(url)
+        : new ButtonBuilder()
+            .setLabel(label)
+            .setEmoji(emoji)
+            .setStyle(ButtonStyle.Secondary)
+            .setCustomId(id);
+
+    const components = [
+      new ActionRowBuilder<ButtonBuilder>().addComponents(
+        makeBtn('Launcher Windows', '🪟', LAUNCHER_WIN_URL, 'launcher:soon:win'),
+        makeBtn('Launcher MacBook', '🍎', LAUNCHER_MAC_URL, 'launcher:soon:mac'),
+        makeBtn('Launcher Linux', '🐧', LAUNCHER_LINUX_URL, 'launcher:soon:linux'),
+      ),
+    ];
 
     await (channel as TextChannel).send({ embeds: [embed], files, components });
     await interaction.editReply({

@@ -110,6 +110,13 @@ export const TICKET_CATEGORIES_NORMAL = [
     allowedGrades: [],
     onlyOmnipresent: true, // only responsables
   },
+  {
+    id: 'probleme_launcher',
+    label: 'Problème launcher',
+    description: 'Souci avec le launcher EmeriaMC',
+    emoji: '🖥️',
+    allowedGrades: ['dev', 'admin'], // + omniprésents (fonda, cofonda, resp)
+  },
 ] as const;
 
 export type TicketCategory =
