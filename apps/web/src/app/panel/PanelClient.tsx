@@ -25,6 +25,7 @@ import SiteSection from './SiteSection';
 import StaffSection from './StaffSection';
 import ServeursSection from './ServeursSection';
 import LiensSection from './LiensSection';
+import PlaylistSection from './PlaylistSection';
 import { GradeBadge } from './GradeBadge';
 
 /** Logo du grade (bouclier). Se cache si l'image n'existe pas encore. */
@@ -76,6 +77,7 @@ export default function PanelClient({ account }: Props) {
     sections.push({ id: 'serveurs', label: 'Gestion Serveurs', icon: '🖥️' });
   }
   if (level >= getGrade('responsable').level) {
+    sections.push({ id: 'playerlist', label: 'Playerlist', icon: '📋' });
     sections.push({ id: 'reseaux', label: 'Gestion Réseaux', icon: '', soon: true });
   }
   if (level >= getGrade('admin').level) {
@@ -128,6 +130,8 @@ export default function PanelClient({ account }: Props) {
           <StaffSection myGrade={account.site_grade} />
         ) : current.id === 'serveurs' ? (
           <ServeursSection />
+        ) : current.id === 'playerlist' ? (
+          <PlaylistSection />
         ) : (
           <div className="soon-card">
             <div className="soon-emoji">{current.icon}</div>

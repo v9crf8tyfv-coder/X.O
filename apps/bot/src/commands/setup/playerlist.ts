@@ -36,17 +36,20 @@ export const playerlist: SlashCommand = {
       return;
     }
 
-    // Grades depuis la table staff (pseudo Minecraft -> grades)
-    const staffRows = hasDatabase()
-      ? await db()<{ pseudo: string; grades: string[] }[]>`
-          select pseudo, grades from staff where active = true
-        `
-      : [];
-    const gradeOf = (name: string): string | null => {
-      const row = staffRows.find((s) => s.pseudo?.toLowerCase() === name.toLowerCase());
-      if (!row || !row.grades?.length) return null;
-      return row.grades.reduce((a, b) => (getGrade(b).level > getGrade(a).level ? b : a));
-    };
+    // Grades depuis la table playerlist_entries (esthétique, pseudo -> grade)
+    let entries: { pseudo: string; grade: string }[] = [];
+    if (hasDatabase()) {
+      await db()`
+        create table if not exists playerlist_entries (
+          id serial primary key, pseudo text not null, grade text not null
+        )
+      `;
+      entries = await db()<{ pseudo: string; grade: string }[]>`
+        select pseudo, grade from playerlist_entries
+      `;
+    }
+    const gradeOf = (name: string): string | null =>
+      entries.find((e) => e.pseudo?.toLowerCase() === name.toLowerCase())?.grade ?? null;
 
     // Grade de celui qui lance : les non-fonda ne voient PAS les cofonda/fonda
     const member = interaction.member as GuildMember | null;
