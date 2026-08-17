@@ -14,8 +14,7 @@
     "@xo/shared": "*",
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
-    "minecraft-server-util": "^5.4.4",
-    "mysql2": "^3.23.3"
+    "minecraft-server-util": "^5.4.4"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

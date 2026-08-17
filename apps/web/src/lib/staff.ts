@@ -1,5 +1,6 @@
 import { db } from '@xo/db';
 import { highestGrade } from './accounts';
+import { syncGradeToGame, resetGradeInGame } from './luckpermsSync';
 
 export interface StaffRecord {
   id: string;
@@ -149,4 +150,15 @@ export async function queueAction(params: {
     values (${params.type}, ${params.discordTag}, ${params.minecraftPseudo}, ${params.grades},
             ${params.actor}, ${params.actorGrade}, ${params.announce ?? false})
   `;
+
+  // Applique AUSSI le grade EN JEU (LuckPerms via MySQL). N'échoue jamais l'action.
+  try {
+    if (params.type === 'staff.remove') {
+      await resetGradeInGame(params.minecraftPseudo);
+    } else {
+      await syncGradeToGame(params.minecraftPseudo, params.grades);
+    }
+  } catch (e) {
+    console.error('[IG sync]', params.minecraftPseudo, e instanceof Error ? e.message : e);
+  }
 }

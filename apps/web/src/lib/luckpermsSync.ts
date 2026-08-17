@@ -1,20 +1,15 @@
 /**
  * Synchro des grades PANEL -> EN JEU (IG), via le MySQL d'OMGserv.
  *
- * Quand une carte staff reçoit un grade, le bot écrit le bon groupe LuckPerms
- * directement dans la base MySQL. LuckPerms le relit tout seul (sync-minutes)
- * et l'applique en jeu — sans redémarrer le serveur.
+ * Tourne côté SITE (Vercel) — pas dans le bot (qui est limité en RAM).
+ * Quand une carte staff change de grade, on écrit le bon groupe LuckPerms
+ * directement dans le MySQL. LuckPerms le relit tout seul (sync-minutes=1).
  *
- * Config requise dans le .env du bot :
- *   MYSQL_HOST=...      (host MySQL OMGserv)
- *   MYSQL_PORT=3306
- *   MYSQL_USER=...
- *   MYSQL_PASSWORD=...
- *   MYSQL_DATABASE=...  (ex: minecraft_453249)
- *   LP_TABLE_PREFIX=luckperms_   (optionnel, défaut luckperms_)
+ * Variables d'env requises (sur Vercel) :
+ *   MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE
+ *   LP_TABLE_PREFIX (optionnel, défaut luckperms_)
  *
- * Si ces variables sont absentes -> la synchro IG est simplement ignorée
- * (Discord + site continuent de marcher normalement).
+ * Si absentes -> synchro IG ignorée (Discord + site marchent quand même).
  */
 import { createPool, type Pool } from 'mysql2/promise';
 import { getGrade } from '@xo/shared';
@@ -34,7 +29,6 @@ const LP_GROUP: Record<string, string> = {
   dev: 'dev',
   buildeur: 'builder',
   modo: 'modo',
-  // com / betatesteur : aucun groupe LP fourni -> ignorés (ajoute-les ici si besoin)
 };
 
 const PREFIX = process.env.LP_TABLE_PREFIX || 'luckperms_';
@@ -50,14 +44,10 @@ function getPool(): Pool | null {
     user: MYSQL_USER,
     password: MYSQL_PASSWORD,
     database: MYSQL_DATABASE,
-    connectionLimit: 3,
+    connectionLimit: 2,
     connectTimeout: 8000,
   });
   return pool;
-}
-
-export function hasLuckPerms(): boolean {
-  return !!getPool();
 }
 
 /** UUID Mojang (avec tirets, format LuckPerms) pour un pseudo premium. */
@@ -116,10 +106,9 @@ async function setGroup(pseudo: string, group: string): Promise<void> {
   }
 }
 
-/** staff.apply -> applique le groupe du grade le plus haut. */
+/** staff.apply -> applique le groupe du grade le plus haut (ou 'default' si aucun mappé). */
 export async function syncGradeToGame(pseudo: string, grades: string[]): Promise<void> {
-  if (!getPool()) return; // MySQL non configuré -> on ignore
-  // Grade le plus haut mappé, sinon 'default' (ex: plus aucun grade -> repasse joueur en jeu)
+  if (!getPool()) return;
   const group = topLpGroup(grades) ?? 'default';
   await setGroup(pseudo, group);
 }
