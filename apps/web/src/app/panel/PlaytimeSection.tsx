@@ -18,16 +18,16 @@ interface Data {
   staff: Row[];
 }
 
-const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+const DAY_LABELS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
-/** minutes -> "2h05" / "45m" / "—" */
+/** minutes -> "2h05" / "45min" / "—" */
 function fmt(min: number): string {
   if (!min) return '—';
   const h = Math.floor(min / 60);
   const m = min % 60;
   if (h && m) return `${h}h${String(m).padStart(2, '0')}`;
   if (h) return `${h}h`;
-  return `${m}m`;
+  return `${m}min`;
 }
 
 function shiftWeek(monday: string, deltaWeeks: number): string {
@@ -37,8 +37,9 @@ function shiftWeek(monday: string, deltaWeeks: number): string {
 }
 
 export default function PlaytimeSection() {
-  const [week, setWeek] = useState<string | null>(null); // lundi ISO, null = semaine courante
+  const [week, setWeek] = useState<string | null>(null);
   const [data, setData] = useState<Data | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -57,68 +58,92 @@ export default function PlaytimeSection() {
   }, [load]);
 
   const monday = data?.monday ?? '';
-  const label = monday
-    ? `Semaine du ${new Date(monday + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}`
+  const weekLabel = monday
+    ? `Semaine du ${new Date(monday + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' })}`
     : '…';
+  const nowMonday = () => monday || new Date().toISOString().slice(0, 10);
 
+  const staff = data?.staff ?? [];
+  const current = staff.find((s) => s.id === selected) ?? null;
+
+  // ---------- Vue détail d'un staff ----------
+  if (current) {
+    return (
+      <div className="site-section">
+        <button className="back-btn" onClick={() => setSelected(null)}>
+          ← Retour à la liste
+        </button>
+        <div className="pt-detail-head">
+          <GradeBadge gk={current.grades[0] ?? 'joueur'} />
+          <h2 style={{ margin: 0 }}>{current.pseudo}</h2>
+          <span className="pt-grade">{getGrade(current.grades[0]).label}</span>
+        </div>
+
+        <div className="pt-weeknav">
+          <button className="chip" onClick={() => setWeek(shiftWeek(nowMonday(), -1))}>
+            ← Précédente
+          </button>
+          <span className="pt-weeklabel">{weekLabel}</span>
+          <button className="chip" onClick={() => setWeek(shiftWeek(nowMonday(), 1))}>
+            Suivante →
+          </button>
+        </div>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table className="pt-table pt-detail">
+            <thead>
+              <tr>
+                {(data?.days ?? []).map((d, i) => (
+                  <th key={d}>
+                    {DAY_LABELS[i]}
+                    <div className="pt-date">
+                      {new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {(data?.days ?? []).map((d) => {
+                  const absent = current.absentDays.includes(d);
+                  return (
+                    <td key={d} className={absent ? 'pt-absent' : ''}>
+                      {absent ? 'ABSENT' : fmt(current.perDay[d] ?? 0)}
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="pt-weektotal">
+          Total de la semaine : <strong>{fmt(current.total)}</strong>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- Vue liste des staffs ----------
   return (
     <div className="site-section">
       <h2>Temps de jeu</h2>
-      <p className="site-sub">Temps de jeu réel (en jeu) de chaque staff, par jour.</p>
+      <p className="site-sub">Clique sur un staff pour voir son temps de jeu détaillé (par jour).</p>
       {error && <div className="form-error">{error}</div>}
 
-      <div className="pt-weeknav">
-        <button className="chip" onClick={() => setWeek(shiftWeek(monday || new Date().toISOString().slice(0, 10), -1))}>
-          ← Semaine préc.
-        </button>
-        <span className="pt-weeklabel">{label}</span>
-        <button className="chip" onClick={() => setWeek(shiftWeek(monday || new Date().toISOString().slice(0, 10), 1))}>
-          Semaine suiv. →
-        </button>
-      </div>
-
-      <div style={{ overflowX: 'auto' }}>
-        <table className="pt-table">
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left' }}>Staff</th>
-              {(data?.days ?? []).map((d, i) => (
-                <th key={d}>
-                  {DAY_LABELS[i]}
-                  <div className="pt-date">
-                    {new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
-                  </div>
-                </th>
-              ))}
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.staff ?? []).map((s) => (
-              <tr key={s.id}>
-                <td style={{ textAlign: 'left' }}>
-                  <span className="pt-staff">
-                    <GradeBadge gk={s.grades[0] ?? 'joueur'} /> {s.pseudo}
-                    <span className="pt-grade">{getGrade(s.grades[0]).label}</span>
-                  </span>
-                </td>
-                {(data?.days ?? []).map((d) => (
-                  <td key={d} className={s.absentDays.includes(d) ? 'pt-absent' : ''}>
-                    {s.absentDays.includes(d) ? 'ABSENT' : fmt(s.perDay[d] ?? 0)}
-                  </td>
-                ))}
-                <td className="pt-total">{fmt(s.total)}</td>
-              </tr>
-            ))}
-            {data && data.staff.length === 0 && (
-              <tr>
-                <td colSpan={9} style={{ textAlign: 'center', opacity: 0.6 }}>
-                  Aucun staff visible.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="pt-list">
+        {staff.length === 0 && <p className="site-sub">Aucun staff visible.</p>}
+        {staff.map((s) => (
+          <button key={s.id} className="pt-row" onClick={() => setSelected(s.id)}>
+            <span className="pt-staff">
+              <GradeBadge gk={s.grades[0] ?? 'joueur'} />
+              <strong>{s.pseudo}</strong>
+              <span className="pt-grade">{getGrade(s.grades[0]).label}</span>
+            </span>
+            <span className="pt-rowtotal">{fmt(s.total)} cette semaine ›</span>
+          </button>
+        ))}
       </div>
     </div>
   );
