@@ -333,24 +333,33 @@ export default function StaffSection({ myGrade }: { myGrade: string }) {
       {loading ? (
         <p className="site-sub">Chargement…</p>
       ) : (
-        <div className="staff-grid">
-          {staff.map((s) => (
-            <button className="staff-card" key={s.id} onClick={() => setSelected(s.id)}>
-              <div className="staff-card-name">
-                {s.pseudo}
-                {s.is_absent && <span className="absent-tag">⏰ absent</span>}
-              </div>
-              <div className="site-meta">💬 {s.discord_tag}</div>
-              <div className="staff-card-grades">
-                {s.grades.map((gk) => (
-                  <Bubble key={gk} gk={gk} />
-                ))}
-              </div>
-              {s.records.length > 0 && (
-                <div className="staff-card-badge">{s.records.length} dossier(s)</div>
-              )}
-            </button>
-          ))}
+        <div className="list-rows">
+          {[...staff]
+            .sort(
+              (a, b) =>
+                Math.max(0, ...b.grades.map((g) => getGrade(g).level)) -
+                Math.max(0, ...a.grades.map((g) => getGrade(g).level)),
+            )
+            .map((s) => {
+              const top = s.grades.reduce(
+                (t, g) => (getGrade(g).level > getGrade(t).level ? g : t),
+                s.grades[0] ?? 'joueur',
+              );
+              return (
+                <button className="pt-row" key={s.id} onClick={() => setSelected(s.id)}>
+                  <span className="pt-staff">
+                    <GradeBadge gk={top} />
+                    <strong>{s.pseudo}</strong>
+                    <span className="pt-grade">{getGrade(top).label}</span>
+                    {s.is_absent && <span className="absent-tag">⏰ absent</span>}
+                  </span>
+                  <span className="pt-rowtotal">
+                    💬 {s.discord_tag}
+                    {s.records.length > 0 ? ` · ${s.records.length} dossier(s)` : ''} ›
+                  </span>
+                </button>
+              );
+            })}
           {staff.length === 0 && <p className="site-sub">Aucun staff pour l’instant.</p>}
         </div>
       )}
