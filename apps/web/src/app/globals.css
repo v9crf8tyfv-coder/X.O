@@ -359,3 +359,15 @@ html, body {
     --border: #262a36; --shadow: 0 10px 30px rgba(0,0,0,0.4);
   }
 }
+
+/* ---- Temps de jeu ---- */
+.pt-weeknav { display: flex; align-items: center; gap: 12px; margin: 14px 0; flex-wrap: wrap; }
+.pt-weeklabel { font-weight: 700; }
+.pt-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.92rem; }
+.pt-table th, .pt-table td { padding: 8px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.pt-table thead th { font-weight: 700; opacity: 0.85; }
+.pt-date { font-size: 0.7rem; opacity: 0.5; font-weight: 400; }
+.pt-staff { display: inline-flex; align-items: center; gap: 6px; }
+.pt-grade { font-size: 0.72rem; opacity: 0.55; margin-left: 4px; }
+.pt-total { font-weight: 700; }
+.pt-absent { color: #e67e22; font-weight: 700; font-size: 0.75rem; }

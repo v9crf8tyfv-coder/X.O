@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { GRADES, GRADE_JOUEUR, getGrade } from '@xo/shared';
 import { GradeBadge } from './GradeBadge';
+import PlaylistSection from './PlaylistSection';
 
 interface AutoRole {
   id: string;
@@ -26,7 +27,7 @@ const AUTO_ROLE_CHOICES = [
 
 export default function ServeursSection() {
   const [world, setWorld] = useState<null | 'discord'>(null);
-  const [sub, setSub] = useState<null | 'roles' | 'effectif'>(null);
+  const [sub, setSub] = useState<null | 'roles' | 'effectif' | 'playlist'>(null);
 
   const [autoRoles, setAutoRoles] = useState<AutoRole[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -126,7 +127,24 @@ export default function ServeursSection() {
             <strong>Effectif Discord</strong>
             <span className="site-sub">Ajouter / voir le staff</span>
           </button>
+          <button className="srv-card" onClick={() => setSub('playlist')}>
+            <div className="srv-card-emoji">🎬</div>
+            <strong>Playlist</strong>
+            <span className="site-sub">Grades affichés dans /playerlist</span>
+          </button>
         </div>
+      </div>
+    );
+  }
+
+  // ---------- Playlist (fusionnée ici) ----------
+  if (sub === 'playlist') {
+    return (
+      <div className="site-section">
+        <button className="back-btn" onClick={() => setSub(null)}>
+          ← Retour
+        </button>
+        <PlaylistSection />
       </div>
     );
   }

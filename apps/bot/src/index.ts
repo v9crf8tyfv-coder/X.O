@@ -11,6 +11,7 @@ import { onMessageCreate } from './events/messageCreate.js';
 import { startPendingActionsWorker } from './worker/pendingActions.js';
 import { resumeServerTimer } from './lib/serverTimer.js';
 import { startServerStatusWatcher } from './worker/serverStatusWatcher.js';
+import { startPlaytimeTracker } from './worker/playtimeTracker.js';
 
 const client = new Client({
   intents: [
@@ -37,6 +38,7 @@ client.once('clientReady', () => {
   startPendingActionsWorker(client);
   void resumeServerTimer(client);
   startServerStatusWatcher(client);
+  startPlaytimeTracker();
 });
 client.on('interactionCreate', (i) => handleInteraction(client, i));
 client.on('guildMemberAdd', (m) => onGuildMemberAdd(client, m));
