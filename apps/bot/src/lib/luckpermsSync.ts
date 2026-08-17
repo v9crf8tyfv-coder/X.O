@@ -119,8 +119,8 @@ async function setGroup(pseudo: string, group: string): Promise<void> {
 /** staff.apply -> applique le groupe du grade le plus haut. */
 export async function syncGradeToGame(pseudo: string, grades: string[]): Promise<void> {
   if (!getPool()) return; // MySQL non configuré -> on ignore
-  const group = topLpGroup(grades);
-  if (!group) return; // grade sans groupe LP -> on ne touche pas
+  // Grade le plus haut mappé, sinon 'default' (ex: plus aucun grade -> repasse joueur en jeu)
+  const group = topLpGroup(grades) ?? 'default';
   await setGroup(pseudo, group);
 }
 
