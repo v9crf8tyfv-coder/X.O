@@ -92,16 +92,20 @@ export default function ServeursSection() {
       <div className="site-section">
         <h2>Gestion Serveurs</h2>
         <p className="site-sub">Configure les serveurs liés au panel.</p>
-        <div className="srv-cards">
-          <button className="srv-card" onClick={() => setWorld('discord')}>
-            <div className="srv-card-emoji">💬</div>
-            <strong>Discord</strong>
-            <span className="site-sub">Rôles auto + effectif</span>
+        <div className="list-rows">
+          <button className="pt-row" onClick={() => setWorld('discord')}>
+            <span className="pt-staff">
+              <span className="row-emoji">💬</span> <strong>Discord</strong>
+              <span className="pt-grade">Rôles auto + effectif</span>
+            </span>
+            <span className="pt-rowtotal">›</span>
           </button>
-          <button className="srv-card disabled" disabled>
-            <div className="srv-card-emoji">🎮</div>
-            <strong>IG</strong>
-            <span className="site-sub">À venir (serveur Minecraft)</span>
+          <button className="pt-row is-disabled" disabled>
+            <span className="pt-staff">
+              <span className="row-emoji">🎮</span> <strong>IG</strong>
+              <span className="pt-grade">À venir (serveur Minecraft)</span>
+            </span>
+            <span className="pt-rowtotal">bientôt</span>
           </button>
         </div>
       </div>
@@ -116,21 +120,27 @@ export default function ServeursSection() {
           ← Retour
         </button>
         <h2>Discord</h2>
-        <div className="srv-cards">
-          <button className="srv-card" onClick={() => setSub('roles')}>
-            <div className="srv-card-emoji">🎭</div>
-            <strong>Rôles à l’arrivée</strong>
-            <span className="site-sub">Donnés automatiquement au join</span>
+        <div className="list-rows">
+          <button className="pt-row" onClick={() => setSub('roles')}>
+            <span className="pt-staff">
+              <span className="row-emoji">🎭</span> <strong>Rôles à l’arrivée</strong>
+              <span className="pt-grade">Donnés automatiquement au join</span>
+            </span>
+            <span className="pt-rowtotal">›</span>
           </button>
-          <button className="srv-card" onClick={() => setSub('effectif')}>
-            <div className="srv-card-emoji">📋</div>
-            <strong>Effectif Discord</strong>
-            <span className="site-sub">Ajouter / voir le staff</span>
+          <button className="pt-row" onClick={() => setSub('effectif')}>
+            <span className="pt-staff">
+              <span className="row-emoji">📋</span> <strong>Effectif Discord</strong>
+              <span className="pt-grade">Ajouter / voir le staff</span>
+            </span>
+            <span className="pt-rowtotal">›</span>
           </button>
-          <button className="srv-card" onClick={() => setSub('playlist')}>
-            <div className="srv-card-emoji">🎬</div>
-            <strong>Playlist</strong>
-            <span className="site-sub">Grades affichés dans /playerlist</span>
+          <button className="pt-row" onClick={() => setSub('playlist')}>
+            <span className="pt-staff">
+              <span className="row-emoji">🎬</span> <strong>Playlist</strong>
+              <span className="pt-grade">Grades affichés dans /playerlist</span>
+            </span>
+            <span className="pt-rowtotal">›</span>
           </button>
         </div>
       </div>
