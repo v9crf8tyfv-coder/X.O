@@ -385,3 +385,10 @@ html, body {
 .pt-table.pt-detail td { font-size: 1.05rem; font-weight: 600; }
 .pt-weektotal { margin-top: 16px; font-size: 1rem; }
 .pt-weektotal strong { color: #7c5cff; }
+
+/* ---- Listes rangées (réutilisable partout) ---- */
+.list-rows { display: flex; flex-direction: column; gap: 8px; }
+.list-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 15px; border: 1px solid var(--border); border-radius: 12px;
+  background: var(--card, rgba(255,255,255,0.02)); }
+.list-row .pt-rowtotal { font-size: 0.82rem; opacity: 0.6; }

@@ -207,7 +207,20 @@ export default function ServeursSection() {
                   </button>
                 </div>
                 <div className="eff-members">
-                  {members.length === 0 ? '—' : members.map((m) => m.pseudo).join(', ')}
+                  {members.length === 0 ? (
+                    <span className="site-sub">Aucun membre</span>
+                  ) : (
+                    <div className="list-rows">
+                      {members.map((m) => (
+                        <div className="list-row" key={m.id}>
+                          <span className="pt-staff">
+                            <GradeBadge gk={gk} /> <strong>{m.pseudo}</strong>
+                          </span>
+                          <span className="pt-rowtotal">{m.discord_tag}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {addFor === gk && (
                   <div className="add-grid" style={{ marginTop: 8 }}>
