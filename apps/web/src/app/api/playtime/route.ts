@@ -47,7 +47,26 @@ export async function GET(req: Request) {
     { id: string; pseudo: string; discord_id: string | null; grades: string[] }[]
   >`select id, pseudo, discord_id, grades from staff where active = true`;
 
-  const visible = staff.filter((s) => canSee(g.account.site_grade, s.grades));
+  // Les fondateurs ne sont pas dans "staff" -> on les ajoute depuis "accounts"
+  // (ils ne seront visibles que par les fonda, via canSee).
+  const founders = await db()<{ id: string; pseudo: string; grade: string }[]>`
+    select id::text as id, minecraft_pseudo as pseudo, site_grade as grade
+    from accounts
+    where site_grade in ('fondateur', 'cofondateur') and minecraft_pseudo is not null
+  `;
+  const seen = new Set(staff.map((s) => s.pseudo.toLowerCase()));
+  const foundersAsStaff = founders
+    .filter((f) => !seen.has(f.pseudo.toLowerCase()))
+    .map((f) => ({
+      id: `acc-${f.id}`,
+      pseudo: f.pseudo,
+      discord_id: null as string | null,
+      grades: [f.grade],
+    }));
+
+  const visible = [...staff, ...foundersAsStaff].filter((s) =>
+    canSee(g.account.site_grade, s.grades),
+  );
   const pseudos = visible.map((s) => s.pseudo);
   const discordIds = visible.map((s) => s.discord_id).filter(Boolean) as string[];
 

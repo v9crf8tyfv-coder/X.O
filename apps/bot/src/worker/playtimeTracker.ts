@@ -34,9 +34,16 @@ async function tick(): Promise<void> {
   }
   if (online.length === 0) return;
 
-  // Les staffs actifs (on ne traque que le staff)
+  // Les staffs actifs + les fondateurs (pour qu'ils voient leur propre temps de jeu)
   const staff = await db()<{ pseudo: string }[]>`select pseudo from staff where active = true`;
-  const staffSet = new Set(staff.map((s) => s.pseudo.toLowerCase()));
+  const founders = await db()<{ minecraft_pseudo: string }[]>`
+    select minecraft_pseudo from accounts
+    where site_grade in ('fondateur', 'cofondateur') and minecraft_pseudo is not null
+  `;
+  const staffSet = new Set([
+    ...staff.map((s) => s.pseudo.toLowerCase()),
+    ...founders.map((f) => f.minecraft_pseudo.toLowerCase()),
+  ]);
 
   const day = parisDay();
   for (const name of online) {
