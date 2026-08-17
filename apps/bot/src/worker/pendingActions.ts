@@ -14,6 +14,7 @@ import { publishEffectif } from '../lib/effectifPublish.js';
 import { logSurveillance } from '../lib/surveillance.js';
 import { autoArchiveExpired } from '../lib/absenceArchive.js';
 import { reconcileServerTimer } from '../lib/serverTimer.js';
+import { syncGradeToGame, resetGradeInGame } from '../lib/luckpermsSync.js';
 
 interface PendingAction {
   id: string;
@@ -113,6 +114,10 @@ async function processAction(guild: Guild, a: PendingAction): Promise<void> {
     ].filter((id): id is string => exists(guild, id) && member.roles.cache.has(id));
     if (toRemove.length) await member.roles.remove(toRemove, 'Retrait du staff (site)');
     if (exists(guild, joueur)) await member.roles.add(joueur, 'Retour joueur');
+    // IG : repasse le joueur en 'default' (n'échoue jamais l'action Discord)
+    await resetGradeInGame(a.minecraft_pseudo).catch((e) =>
+      console.error('[IG] reset', a.minecraft_pseudo, e?.message || e),
+    );
     return;
   }
 
@@ -140,6 +145,11 @@ async function processAction(guild: Guild, a: PendingAction): Promise<void> {
   const toRemove = managed.filter((id) => !desired.has(id) && member.roles.cache.has(id));
   if (toAdd.length) await member.roles.add(toAdd, 'Grade staff (site)');
   if (toRemove.length) await member.roles.remove(toRemove, 'MAJ staff (site)');
+
+  // IG : applique le groupe LuckPerms du grade le plus haut (n'échoue jamais l'action Discord)
+  await syncGradeToGame(a.minecraft_pseudo, a.grades).catch((e) =>
+    console.error('[IG] sync', a.minecraft_pseudo, e?.message || e),
+  );
 }
 
 /** Messages automatiques de rank / départ (taverne + général staff) */
