@@ -7,8 +7,7 @@ const PORT = 10006;
 const WELCOME_CHANNEL = '1535347207195328652';
 const LOGO = '<:Logojoueur:1536109797114515518>';
 
-// false = on n'a pas encore "amorcé" (base vide) -> on marque sans souhaiter la bienvenue,
-// pour éviter de spammer tous les joueurs déjà connus au 1er démarrage.
+// Tant que l'amorçage n'est pas fait, on ne poste rien (évite de spammer au démarrage).
 let seeded = false;
 
 async function ensureTable(): Promise<void> {
@@ -30,6 +29,7 @@ async function onlineList(): Promise<string[]> {
 }
 
 async function tick(client: Client): Promise<void> {
+  if (!seeded) return; // amorçage pas encore terminé
   const online = await onlineList();
   if (online.length === 0) return;
 
@@ -38,23 +38,14 @@ async function tick(client: Client): Promise<void> {
   const fresh = online.filter((p) => !knownSet.has(p.toLowerCase()));
   if (fresh.length === 0) return;
 
-  // Marque les nouveaux comme "vus"
+  const ch = await client.channels.fetch(WELCOME_CHANNEL).catch(() => null);
   for (const p of fresh) {
     await db()`insert into seen_players (pseudo) values (${p}) on conflict (pseudo) do nothing`;
-  }
-
-  // Amorçage : au tout 1er passage (base vide), on ne poste rien
-  if (!seeded) {
-    seeded = true;
-    return;
-  }
-
-  const ch = await client.channels.fetch(WELCOME_CHANNEL).catch(() => null);
-  if (!ch || !ch.isTextBased()) return;
-  for (const p of fresh) {
-    await (ch as TextChannel)
-      .send(`${LOGO} Bienvenue à **${p}**, qui vient de se connecter pour la première fois !`)
-      .catch(() => {});
+    if (ch?.isTextBased()) {
+      await (ch as TextChannel)
+        .send(`${LOGO} Bienvenue à **${p}**, qui vient de se connecter pour la première fois !`)
+        .catch(() => {});
+    }
   }
 }
 
@@ -66,9 +57,13 @@ export function startNewPlayerWatcher(client: Client): void {
   }
   (async () => {
     await ensureTable();
-    const c = await db()<{ n: string }[]>`select count(*)::text as n from seen_players`;
-    // Si des joueurs sont déjà connus (redémarrage), on poste directement.
-    seeded = Number(c[0]?.n ?? 0) > 0;
+    // Amorçage : on marque les joueurs déjà en ligne (sans message), puis on accueille les suivants
+    const online = await onlineList();
+    for (const p of online) {
+      await db()`insert into seen_players (pseudo) values (${p}) on conflict (pseudo) do nothing`;
+    }
+    seeded = true;
+    console.log(`[welcome] amorçage OK (${online.length} joueur(s) déjà en ligne)`);
   })().catch((e) => console.error('[welcome] init', e));
 
   console.log('[welcome] surveillance nouveaux joueurs démarrée (1 min)');
