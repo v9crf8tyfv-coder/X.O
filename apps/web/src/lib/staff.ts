@@ -110,6 +110,10 @@ export async function removeStaff(id: string): Promise<Staff | null> {
     update staff set active = false, removed_at = now()
     where id = ${id} returning id, pseudo, discord_tag, site_username, grades, is_absent
   `;
+  // Carte staff retirée -> on efface aussi son temps de jeu (les fonda ne sont pas des cartes staff)
+  if (rows[0]) {
+    await db()`delete from playtime where lower(pseudo) = lower(${rows[0].pseudo})`.catch(() => {});
+  }
   return rows[0] ? { ...rows[0], records: [] } : null;
 }
 

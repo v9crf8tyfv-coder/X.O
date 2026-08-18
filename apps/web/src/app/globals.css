@@ -397,3 +397,6 @@ html, body {
 .row-emoji { font-size: 1.15rem; margin-right: 2px; }
 .pt-row.is-disabled { opacity: 0.5; cursor: default; }
 .pt-row.is-disabled:hover { border-color: var(--border); transform: none; }
+
+/* Absence : temps réellement joué en petit sous ABSENT */
+.pt-absent-play { font-size: 0.65rem; font-weight: 600; color: #c0392b; opacity: 0.85; margin-top: 2px; }

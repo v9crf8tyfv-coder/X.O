@@ -107,9 +107,17 @@ export default function PlaytimeSection() {
               <tr>
                 {(data?.days ?? []).map((d) => {
                   const absent = current.absentDays.includes(d);
+                  const min = current.perDay[d] ?? 0;
                   return (
                     <td key={d} className={absent ? 'pt-absent' : ''}>
-                      {absent ? 'ABSENT' : fmt(current.perDay[d] ?? 0)}
+                      {absent ? (
+                        <>
+                          ABSENT
+                          {min > 0 && <div className="pt-absent-play">joué {fmt(min)}</div>}
+                        </>
+                      ) : (
+                        fmt(min)
+                      )}
                     </td>
                   );
                 })}
