@@ -29,6 +29,8 @@ const LP_GROUP: Record<string, string> = {
   dev: 'dev',
   buildeur: 'builder',
   modo: 'modo',
+  com: 'com/g',
+  betatesteur: 'béta-test',
 };
 
 const PREFIX = process.env.LP_TABLE_PREFIX || 'luckperms_';
