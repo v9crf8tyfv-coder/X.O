@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import type { SlashCommand } from '../../types.js';
 import { OWNER_DISCORD_ID } from '@xo/shared';
 import { db, hasDatabase } from '@xo/db';
@@ -17,7 +17,8 @@ async function setBlocked(value: boolean): Promise<boolean> {
 export const blockfull: SlashCommand = {
   data: new SlashCommandBuilder()
     .setName('blockfull')
-    .setDescription('Verrouiller TOTALEMENT le site (proprio uniquement)'),
+    .setDescription('Verrouiller TOTALEMENT le site (proprio uniquement)')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator), // caché aux admins
   async execute(interaction) {
     if (interaction.user.id !== OWNER_DISCORD_ID) {
       await interaction.reply({
@@ -40,7 +41,8 @@ export const blockfull: SlashCommand = {
 export const unblockfull: SlashCommand = {
   data: new SlashCommandBuilder()
     .setName('unblockfull')
-    .setDescription('Déverrouiller le site (proprio uniquement)'),
+    .setDescription('Déverrouiller le site (proprio uniquement)')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator), // caché aux admins
   async execute(interaction) {
     if (interaction.user.id !== OWNER_DISCORD_ID) {
       await interaction.reply({

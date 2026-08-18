@@ -4,14 +4,16 @@ import {
   MessageFlags,
   type TextChannel,
 } from 'discord.js';
+import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const removeall: SlashCommand = {
+  minLevel: GRADES.responsable.level, // au-dessus d'admin (caché aux admins)
   data: new SlashCommandBuilder()
     .setName('removeall')
     .setDescription('Supprimer TOUS les messages récents (< 14 jours) de ce salon')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });

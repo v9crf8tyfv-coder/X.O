@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import type { SlashCommand } from '../../types.js';
 import { GRADES } from '@xo/shared';
 import { startAnnounce, stopAnnounce } from '../../lib/announceState.js';
@@ -8,7 +8,8 @@ export const annonceStart: SlashCommand = {
   minLevel: GRADES.fondateur.level,
   data: new SlashCommandBuilder()
     .setName('annoncestart')
-    .setDescription('Active le mode annonce : tes messages ici seront postés par le bot'),
+    .setDescription('Active le mode annonce : tes messages ici seront postés par le bot')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator), // caché aux admins
   async execute(interaction) {
     if (!interaction.channelId) {
       await interaction.reply({
@@ -34,7 +35,8 @@ export const annonceStop: SlashCommand = {
   minLevel: GRADES.fondateur.level,
   data: new SlashCommandBuilder()
     .setName('annoncestop')
-    .setDescription('Désactive le mode annonce'),
+    .setDescription('Désactive le mode annonce')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator), // caché aux admins
   async execute(interaction) {
     const was = stopAnnounce(interaction.user.id);
     await interaction.reply({
