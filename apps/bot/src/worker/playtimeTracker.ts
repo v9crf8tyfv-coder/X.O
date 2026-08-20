@@ -3,7 +3,7 @@ import { db, hasDatabase } from '@xo/db';
 
 const HOST = 'emeriamc.mine.gg';
 const PORT = 10006;
-const EVERY_MS = 60_000; // 1 min -> on ajoute 1 min de jeu à chaque staff en ligne
+const EVERY_MS = 60_000; // 1 min -> +1 min de jeu par staff en ligne (précision ~1 min)
 
 /** Date du jour au format YYYY-MM-DD, fuseau Europe/Paris. */
 function parisDay(): string {
@@ -21,10 +21,48 @@ async function ensureTable(): Promise<void> {
   `;
 }
 
+// Cache nom(minuscule) -> UUID Mojang (sans tirets). Évite de spammer l'API Mojang.
+const uuidCache = new Map<string, string>();
+
+async function resolveUuid(name: string): Promise<string | null> {
+  const key = name.toLowerCase();
+  if (uuidCache.has(key)) return uuidCache.get(key)!;
+  try {
+    const r = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`);
+    if (r.ok) {
+      const j = (await r.json()) as { id?: string };
+      if (j.id) {
+        uuidCache.set(key, j.id);
+        return j.id;
+      }
+    }
+  } catch {
+    /* Mojang injoignable -> on renverra null */
+  }
+  return null;
+}
+
+/** Renomme un joueur partout (staff/compte + temps de jeu) suite à un changement de pseudo MC. */
+async function healRename(kind: 'staff' | 'acc', uuid: string, oldPseudo: string, newName: string): Promise<void> {
+  if (kind === 'staff') {
+    await db()`update staff set pseudo = ${newName} where minecraft_uuid = ${uuid}`;
+  } else {
+    await db()`update accounts set minecraft_pseudo = ${newName} where minecraft_uuid = ${uuid}`;
+  }
+  // Fusionne le temps de jeu de l'ancien pseudo dans le nouveau
+  await db()`
+    insert into playtime (pseudo, day, minutes)
+    select ${newName}, day, minutes from playtime where lower(pseudo) = lower(${oldPseudo})
+    on conflict (pseudo, day) do update set minutes = playtime.minutes + excluded.minutes
+  `;
+  await db()`delete from playtime where lower(pseudo) = lower(${oldPseudo}) and lower(pseudo) <> lower(${newName})`;
+  console.log(`[playtime] rename auto-corrigé : ${oldPseudo} -> ${newName} (${uuid})`);
+}
+
 async function tick(): Promise<void> {
   if (!hasDatabase()) return;
 
-  // Qui est en ligne ?
+  // Qui est en ligne ? (liste complète, pas un échantillon)
   let online: string[] = [];
   try {
     const res = await queryFull(HOST, PORT, { timeout: 5000 });
@@ -34,35 +72,65 @@ async function tick(): Promise<void> {
   }
   if (online.length === 0) return;
 
-  // Les staffs actifs + les fondateurs (pour qu'ils voient leur propre temps de jeu)
-  const staff = await db()<{ pseudo: string }[]>`select pseudo from staff where active = true`;
-  const founders = await db()<{ minecraft_pseudo: string }[]>`
-    select minecraft_pseudo from accounts
+  // Staff actif + fondateurs (avec leur UUID quand connu)
+  const staff = await db()<{ pseudo: string; minecraft_uuid: string | null }[]>`
+    select pseudo, minecraft_uuid from staff where active = true
+  `;
+  const founders = await db()<{ minecraft_pseudo: string; minecraft_uuid: string | null }[]>`
+    select minecraft_pseudo, minecraft_uuid from accounts
     where site_grade in ('fondateur', 'cofondateur') and minecraft_pseudo is not null
   `;
-  const staffSet = new Set([
-    ...staff.map((s) => s.pseudo.toLowerCase()),
-    ...founders.map((f) => f.minecraft_pseudo.toLowerCase()),
-  ]);
+
+  // Index par UUID (rename-proof) + secours par nom (si UUID inconnu)
+  const byUuid = new Map<string, { kind: 'staff' | 'acc'; pseudo: string }>();
+  const byName = new Set<string>();
+  for (const s of staff) {
+    if (s.minecraft_uuid) byUuid.set(s.minecraft_uuid, { kind: 'staff', pseudo: s.pseudo });
+    else byName.add(s.pseudo.toLowerCase());
+  }
+  for (const f of founders) {
+    if (f.minecraft_uuid) byUuid.set(f.minecraft_uuid, { kind: 'acc', pseudo: f.minecraft_pseudo });
+    else byName.add(f.minecraft_pseudo.toLowerCase());
+  }
 
   const day = parisDay();
   for (const name of online) {
-    if (!staffSet.has(name.toLowerCase())) continue;
+    const lower = name.toLowerCase();
+    const uuid = await resolveUuid(name);
+
+    let tracked = false;
+    let storedPseudo = name;
+
+    if (uuid && byUuid.has(uuid)) {
+      tracked = true;
+      const e = byUuid.get(uuid)!;
+      storedPseudo = e.pseudo;
+      // Le joueur s'est renommé ? -> on met à jour son pseudo partout (aucune maj manuelle)
+      if (e.pseudo.toLowerCase() !== lower) {
+        await healRename(e.kind, uuid, e.pseudo, name);
+        storedPseudo = name;
+      }
+    } else if (byName.has(lower)) {
+      tracked = true;
+      storedPseudo = name;
+    }
+
+    if (!tracked) continue;
     await db()`
-      insert into playtime (pseudo, day, minutes) values (${name}, ${day}, 1)
+      insert into playtime (pseudo, day, minutes) values (${storedPseudo}, ${day}, 1)
       on conflict (pseudo, day) do update set minutes = playtime.minutes + 1
     `;
   }
 }
 
-/** Cumule le temps de jeu (minutes/jour) de chaque staff en ligne. */
+/** Cumule le temps de jeu (minutes/jour) de chaque staff en ligne. Suivi par UUID (rename-proof). */
 export function startPlaytimeTracker(): void {
   if (!hasDatabase()) {
     console.log('[playtime] pas de base → désactivé');
     return;
   }
   ensureTable().catch((e) => console.error('[playtime] table', e));
-  console.log('[playtime] traqueur démarré (1 min)');
+  console.log('[playtime] traqueur démarré (1 min, suivi par UUID)');
   setInterval(() => {
     tick().catch((e) => console.error('[playtime]', e));
   }, EVERY_MS);
