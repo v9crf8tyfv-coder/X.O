@@ -3,6 +3,7 @@ import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { recordSanction } from '../../lib/sanctions.js';
+import { surveilCommand } from '../../lib/surveillance.js';
 
 export const ban: SlashCommand = {
   minLevel: GRADES.admin.level, // ban = admin et au-dessus
@@ -37,6 +38,7 @@ export const ban: SlashCommand = {
       reason: raison,
       issuedBy: interaction.user.tag,
     });
+    await surveilCommand(interaction, 'Ban', user.tag, [{ name: 'Raison', value: raison }]);
 
     await interaction.editReply({
       embeds: [

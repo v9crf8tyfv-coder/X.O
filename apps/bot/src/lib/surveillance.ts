@@ -1,6 +1,33 @@
-import { EmbedBuilder, type Client, type TextChannel } from 'discord.js';
+import { EmbedBuilder, type ChatInputCommandInteraction, type Client, type TextChannel } from 'discord.js';
 import { CHANNELS, type SurveillanceCategory } from '@xo/shared';
 import { db, hasDatabase } from '@xo/db';
+import { memberSurveillanceCategory } from './surveillanceCategory.js';
+
+/**
+ * Journalise une action faite via une commande du BOT (ex: /ban, /mute) avec le VRAI auteur
+ * (l'audit log Discord montrerait le bot). Rien n'est logué pour les fonda/non-staff.
+ */
+export async function surveilCommand(
+  interaction: ChatInputCommandInteraction,
+  action: string,
+  target?: string | null,
+  fields?: { name: string; value: string }[],
+): Promise<void> {
+  const guild = interaction.guild;
+  if (!guild) return;
+  const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+  if (!member) return;
+  const category = memberSurveillanceCategory(member);
+  if (category === 'none') return;
+  await logSurveillance(interaction.client, {
+    category,
+    action,
+    actor: interaction.user.tag,
+    target: target ?? null,
+    source: 'discord',
+    fields,
+  });
+}
 
 /** Salon de surveillance selon la catégorie */
 const CATEGORY_CHANNEL: Record<Exclude<SurveillanceCategory, 'none'>, string> = {

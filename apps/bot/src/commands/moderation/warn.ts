@@ -3,6 +3,7 @@ import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed } from '../../lib/embeds.js';
 import { recordSanction } from '../../lib/sanctions.js';
+import { surveilCommand } from '../../lib/surveillance.js';
 
 export const warn: SlashCommand = {
   minLevel: GRADES.modo.level, // sanctions = modo et au-dessus
@@ -28,6 +29,7 @@ export const warn: SlashCommand = {
       reason: raison,
       issuedBy: interaction.user.tag,
     });
+    await surveilCommand(interaction, 'Avertissement', user.tag, [{ name: 'Raison', value: raison }]);
 
     // Tentative de DM au membre
     await user

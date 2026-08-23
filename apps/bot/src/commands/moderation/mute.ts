@@ -3,6 +3,7 @@ import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { recordSanction } from '../../lib/sanctions.js';
+import { surveilCommand } from '../../lib/surveillance.js';
 import { parseDuration } from '../../lib/duration.js';
 
 const MAX_TIMEOUT = 28 * 86_400_000; // 28 jours (limite Discord)
@@ -50,6 +51,7 @@ export const mute: SlashCommand = {
     }
 
     await member.timeout(ms, raison);
+    await surveilCommand(interaction, 'Mute (timeout)', user.tag, [{ name: 'Raison', value: raison }]);
     await recordSanction({
       targetPseudo: user.tag,
       type: 'tempmute',

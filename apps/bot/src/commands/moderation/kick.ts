@@ -3,6 +3,7 @@ import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { recordSanction } from '../../lib/sanctions.js';
+import { surveilCommand } from '../../lib/surveillance.js';
 
 export const kick: SlashCommand = {
   minLevel: GRADES.modo.level, // modo et au-dessus
@@ -37,6 +38,7 @@ export const kick: SlashCommand = {
     }
 
     await member.kick(raison);
+    await surveilCommand(interaction, 'Kick', user.tag, [{ name: 'Raison', value: raison }]);
     await recordSanction({
       targetPseudo: user.tag,
       type: 'kick',

@@ -9,6 +9,7 @@ import { onGuildMemberAdd } from './events/guildMemberAdd.js';
 import { onGuildMemberUpdate } from './events/guildMemberUpdate.js';
 import { onMessageCreate } from './events/messageCreate.js';
 import { onVoiceStateUpdate } from './events/voiceStateUpdate.js';
+import { onAuditLog } from './events/auditLog.js';
 import { startPendingActionsWorker } from './worker/pendingActions.js';
 import { resumeServerTimer } from './lib/serverTimer.js';
 import { startServerStatusWatcher } from './worker/serverStatusWatcher.js';
@@ -49,6 +50,7 @@ client.on('guildMemberAdd', (m) => onGuildMemberAdd(client, m));
 client.on('guildMemberUpdate', (oldM, newM) => onGuildMemberUpdate(client, oldM, newM));
 client.on('messageCreate', (m) => onMessageCreate(client, m));
 client.on('voiceStateUpdate', (o, n) => onVoiceStateUpdate(client, o, n));
+client.on('guildAuditLogEntryCreate', (entry, guild) => onAuditLog(client, entry, guild));
 
 // Arrêt propre
 process.on('SIGINT', () => client.destroy().then(() => process.exit(0)));
