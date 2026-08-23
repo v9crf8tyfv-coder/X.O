@@ -36,7 +36,7 @@ export async function publishEffectif(client: Client): Promise<void> {
   for (const sec of EFFECTIF_SECTIONS) {
     const members = rows.filter((r) => sectionForGrades(r.grades) === sec.key);
     const lines = members.map((m) => {
-      const dc = m.discord_id ? ` — <@${m.discord_id}> — \`${m.discord_id}\`` : '';
+      const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
       return `${m.is_absent ? '⏰ ' : ''}**${m.pseudo}**${dc}`;
     });
     embeds.push(
