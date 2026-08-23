@@ -1,60 +1,53 @@
-import { GRADES } from '@xo/shared';
+import { getGrade } from '@xo/shared';
 
-/** Seuls ces grades apparaissent dans l'effectif (du plus haut au plus bas) */
-const ORDER = ['responsable', 'admin', 'dev', 'modo', 'buildeur', 'com'] as const;
+export interface EffectifRow {
+  pseudo: string;
+  grades: string[];
+  discord_id: string | null;
+  is_absent: boolean;
+}
 
-/** Noms affichés dans l'effectif */
-const LABEL: Record<string, string> = {
-  responsable: 'Responsables',
-  admin: 'Administrateur',
-  dev: 'Développeur',
-  buildeur: 'Buildeur',
-  modo: 'Modérateur',
-  com: 'Communication / Graphiste',
-};
+export interface EffectifSection {
+  key: string;
+  label: string;
+  emoji: string; // nom de l'emoji Discord (résolu au runtime via le serveur)
+  color: number;
+}
 
-/** Emojis custom (logos Discord). Buildeur : logo à venir. */
-const EMOJI: Record<string, string> = {
-  responsable: '<:LogoResp:1535977247880646656>',
-  admin: '<:LogoAdmin:1535740524240175114>',
-  dev: '<:LogoDev:1535740345684598835>',
-  modo: '<:LogoModo:1536109940098470010>',
-};
+/**
+ * Sections de l'effectif (du plus haut au plus bas).
+ * Exclut fondateur, co-fondateur, dev, com (et joueur).
+ */
+export const EFFECTIF_SECTIONS: EffectifSection[] = [
+  { key: 'responsable', label: 'Responsable', emoji: 'LogoResp', color: 0x8b1a1a },
+  { key: 'admin', label: 'Administrateur', emoji: 'LogoAdmin', color: 0xdc2626 },
+  { key: 'buildeur', label: 'Buildeur', emoji: 'LogoBuildeur', color: 0x65a30d },
+  { key: 'modo', label: 'Modérateur', emoji: 'LogoModo', color: 0x9333ea },
+  { key: 'betatesteur', label: 'Bêta-testeur', emoji: 'LogoBetaTest', color: 0x9ca3af },
+];
 
-/** Le grade "effectif" d'un staff = le plus haut parmi ORDER, ou null */
-function effectifGrade(grades: string[]): string | null {
+/** Clé du grade le plus haut (par niveau) d'un membre. */
+function highestGradeKey(grades: string[]): string | null {
   let best: string | null = null;
   let lvl = -1;
   for (const gk of grades) {
-    if ((ORDER as readonly string[]).includes(gk)) {
-      const l = GRADES[gk as keyof typeof GRADES]?.level ?? -1;
-      if (l > lvl) {
-        lvl = l;
-        best = gk;
-      }
+    const g = getGrade(gk);
+    if (g.level > lvl) {
+      lvl = g.level;
+      best = gk;
     }
   }
   return best;
 }
 
-export interface EffectifRow {
-  pseudo: string;
-  grades: string[];
-  is_absent: boolean;
-}
-
-/** Construit le texte de l'effectif (pseudos Minecraft, groupés par grade) */
-export function buildEffectif(rows: EffectifRow[]): string {
-  const lines: string[] = [];
-  for (const key of ORDER) {
-    const members = rows.filter((r) => effectifGrade(r.grades) === key);
-    const actifs = members.filter((m) => !m.is_absent).map((m) => m.pseudo);
-    const absents = members.filter((m) => m.is_absent).map((m) => m.pseudo);
-    const emoji = EMOJI[key] ? `${EMOJI[key]} ` : '';
-    lines.push(`${emoji}**${LABEL[key]} (${members.length}) :**`);
-    lines.push(actifs.length ? actifs.join(', ') : '---');
-    if (absents.length) lines.push(`⏰ **Absent :** ${absents.join(', ')}`);
-    lines.push('');
-  }
-  return lines.join('\n').trim() || '*Aucun staff.*';
+/**
+ * Section d'effectif d'un staff, ou null s'il n'apparaît pas.
+ * (fonda/co-fonda/dev/com/joueur = pas affichés)
+ */
+export function sectionForGrades(grades: string[]): string | null {
+  const top = highestGradeKey(grades);
+  if (!top) return null;
+  if (top === 'responsable' || top.startsWith('resp_')) return 'responsable';
+  if (top === 'admin' || top === 'buildeur' || top === 'modo' || top === 'betatesteur') return top;
+  return null;
 }
