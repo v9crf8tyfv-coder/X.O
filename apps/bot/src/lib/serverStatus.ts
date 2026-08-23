@@ -6,8 +6,8 @@ import { db, hasDatabase } from '@xo/db';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const STATUS_CHANNEL_ID = '1535349226626613268';
-// Le message de statut ping UNIQUEMENT ce rôle (plus le rôle joueur).
-const PING_ROLES = ['1540339218759426149'];
+// Le message de statut ping UNIQUEMENT le rôle "statut" (plus joueur/membre/staff).
+const PING_ROLES = ['1540339127784968293'];
 const MSG_KEY = 'status_message';
 // Images à déposer : apps/bot/assets/status-open.png (vert) et status-close.png (rouge)
 
