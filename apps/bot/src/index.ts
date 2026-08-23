@@ -8,6 +8,7 @@ import { onReady } from './events/ready.js';
 import { onGuildMemberAdd } from './events/guildMemberAdd.js';
 import { onGuildMemberUpdate } from './events/guildMemberUpdate.js';
 import { onMessageCreate } from './events/messageCreate.js';
+import { onVoiceStateUpdate } from './events/voiceStateUpdate.js';
 import { startPendingActionsWorker } from './worker/pendingActions.js';
 import { resumeServerTimer } from './lib/serverTimer.js';
 import { startServerStatusWatcher } from './worker/serverStatusWatcher.js';
@@ -21,6 +22,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildModeration, // bans
     GatewayIntentBits.MessageContent, // requis : mode annonce (lire les messages)
+    GatewayIntentBits.GuildVoiceStates, // requis : salon vocal "Créer son Salon"
   ],
   partials: [Partials.GuildMember],
 }) as XOClient;
@@ -46,6 +48,7 @@ client.on('interactionCreate', (i) => handleInteraction(client, i));
 client.on('guildMemberAdd', (m) => onGuildMemberAdd(client, m));
 client.on('guildMemberUpdate', (oldM, newM) => onGuildMemberUpdate(client, oldM, newM));
 client.on('messageCreate', (m) => onMessageCreate(client, m));
+client.on('voiceStateUpdate', (o, n) => onVoiceStateUpdate(client, o, n));
 
 // Arrêt propre
 process.on('SIGINT', () => client.destroy().then(() => process.exit(0)));

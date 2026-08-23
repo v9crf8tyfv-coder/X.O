@@ -17,6 +17,7 @@ import {
 import { ticketOpen, ticketClose } from './ticket.js';
 import { launcherSoon } from './game.js';
 import { bytenutRenew } from './bytenut.js';
+import { roleButton } from './roleButton.js';
 
 export const buttons: ComponentHandler<ButtonInteraction>[] = [
   absenceNew,
@@ -26,6 +27,7 @@ export const buttons: ComponentHandler<ButtonInteraction>[] = [
   ticketClose,
   launcherSoon,
   bytenutRenew,
+  roleButton,
 ];
 
 export const selectMenus: ComponentHandler<StringSelectMenuInteraction>[] = [ticketOpen];

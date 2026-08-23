@@ -16,6 +16,8 @@ import { blockfull, unblockfull } from './setup/blockfull.js';
 import { annonceStart, annonceStop } from './setup/annonce.js';
 import { statut } from './setup/statut.js';
 import { playerlist } from './setup/playerlist.js';
+import { setupVoice } from './setup/setup-voice.js';
+import { setupRoles } from './setup/setup-roles.js';
 
 export const commands: SlashCommand[] = [
   ban,
@@ -37,4 +39,6 @@ export const commands: SlashCommand[] = [
   annonceStop,
   statut,
   playerlist,
+  setupVoice,
+  setupRoles,
 ];
