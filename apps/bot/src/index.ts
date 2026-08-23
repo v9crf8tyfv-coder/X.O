@@ -16,6 +16,7 @@ import { startServerStatusWatcher } from './worker/serverStatusWatcher.js';
 import { startPlaytimeTracker } from './worker/playtimeTracker.js';
 import { startNewPlayerWatcher } from './worker/newPlayerWatcher.js';
 import { startIgActionsWatcher } from './worker/igActionsWatcher.js';
+import { startAutoRestart } from './worker/autoRestart.js';
 
 const client = new Client({
   intents: [
@@ -46,6 +47,7 @@ client.once('clientReady', () => {
   startPlaytimeTracker();
   startNewPlayerWatcher(client);
   startIgActionsWatcher(client);
+  startAutoRestart();
 });
 client.on('interactionCreate', (i) => handleInteraction(client, i));
 client.on('guildMemberAdd', (m) => onGuildMemberAdd(client, m));
