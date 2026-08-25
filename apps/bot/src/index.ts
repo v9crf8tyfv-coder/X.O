@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Collection, Partials } from 'discord.js';
+import { Client, GatewayIntentBits, Collection, Partials, Options } from 'discord.js';
 import { ENV } from './env.js';
 import type { XOClient } from './types.js';
 import { commands } from './commands/index.js';
@@ -28,6 +28,20 @@ const client = new Client({
     GatewayIntentBits.GuildVoiceStates, // requis : salon vocal "Créer son Salon"
   ],
   partials: [Partials.GuildMember],
+  // Allège la mémoire : on ne garde quasi rien en cache (évite la saturation).
+  makeCache: Options.cacheWithLimits({
+    ...Options.DefaultMakeCacheSettings,
+    MessageManager: 10, // très peu de messages en cache
+    PresenceManager: 0,
+    ReactionManager: 0,
+    ReactionUserManager: 0,
+    GuildBanManager: 0,
+    ThreadManager: 0,
+  }),
+  sweepers: {
+    ...Options.DefaultSweeperSettings,
+    messages: { interval: 300, lifetime: 300 }, // vire les messages en cache > 5 min
+  },
 }) as XOClient;
 
 // Collections
@@ -55,6 +69,10 @@ client.on('guildMemberUpdate', (oldM, newM) => onGuildMemberUpdate(client, oldM,
 client.on('messageCreate', (m) => onMessageCreate(client, m));
 client.on('voiceStateUpdate', (o, n) => onVoiceStateUpdate(client, o, n));
 client.on('guildAuditLogEntryCreate', (entry, guild) => onAuditLog(client, entry, guild));
+
+// Anti-crash : une erreur non gérée est loguée mais NE tue PAS le bot.
+process.on('unhandledRejection', (err) => console.error('[unhandledRejection]', err));
+process.on('uncaughtException', (err) => console.error('[uncaughtException]', err));
 
 // Arrêt propre
 process.on('SIGINT', () => client.destroy().then(() => process.exit(0)));
