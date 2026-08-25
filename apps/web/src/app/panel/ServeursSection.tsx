@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { GRADES, GRADE_JOUEUR, getGrade } from '@xo/shared';
+import { getGrade } from '@xo/shared';
 import { GradeBadge } from './GradeBadge';
 import PlaylistSection from './PlaylistSection';
 
@@ -9,6 +9,12 @@ interface AutoRole {
   id: string;
   role_id: string;
   label: string | null;
+}
+interface DiscordRole {
+  id: string;
+  name: string;
+  color: number;
+  position: number;
 }
 interface Staff {
   id: string;
@@ -19,17 +25,13 @@ interface Staff {
 }
 
 const EFFECTIF_GRADES = ['responsable', 'admin', 'dev', 'modo', 'buildeur', 'com'];
-// Rôles proposables en auto (grades avec ID Discord + Joueur)
-const AUTO_ROLE_CHOICES = [
-  ...Object.values(GRADES).filter((g) => g.roleId),
-  { key: 'joueur', label: 'Joueur', roleId: GRADE_JOUEUR.roleId },
-];
 
 export default function ServeursSection() {
   const [world, setWorld] = useState<null | 'discord'>(null);
   const [sub, setSub] = useState<null | 'roles' | 'effectif' | 'playlist'>(null);
 
   const [autoRoles, setAutoRoles] = useState<AutoRole[]>([]);
+  const [discordRoles, setDiscordRoles] = useState<DiscordRole[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [error, setError] = useState('');
   const [pickGrade, setPickGrade] = useState('');
@@ -40,9 +42,14 @@ export default function ServeursSection() {
 
   const load = useCallback(async () => {
     try {
-      const [ar, st] = await Promise.all([fetch('/api/serveurs/autoroles'), fetch('/api/staff')]);
+      const [ar, st, dr] = await Promise.all([
+        fetch('/api/serveurs/autoroles'),
+        fetch('/api/staff'),
+        fetch('/api/serveurs/discord-roles'),
+      ]);
       if (ar.ok) setAutoRoles(await ar.json());
       if (st.ok) setStaff(await st.json());
+      if (dr.ok) setDiscordRoles(await dr.json());
     } catch {
       setError('Impossible de contacter le serveur.');
     }
@@ -54,12 +61,12 @@ export default function ServeursSection() {
   }, [load]);
 
   async function addAutoRole() {
-    const c = AUTO_ROLE_CHOICES.find((x) => x.key === pickGrade);
-    if (!c?.roleId) return;
+    const role = discordRoles.find((r) => r.id === pickGrade);
+    if (!role) return;
     await fetch('/api/serveurs/autoroles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roleId: c.roleId, label: c.label }),
+      body: JSON.stringify({ roleId: role.id, label: role.name }),
     });
     setPickGrade('');
     load();
@@ -169,15 +176,25 @@ export default function ServeursSection() {
       {sub === 'roles' && (
         <>
           <h2>Rôles à l’arrivée</h2>
-          <p className="site-sub">Ces rôles sont donnés à chaque membre qui rejoint le serveur.</p>
+          <p className="site-sub">
+            Ces rôles sont donnés à chaque membre qui rejoint le serveur. La liste se met à jour
+            automatiquement avec les rôles créés/supprimés sur Discord.
+          </p>
           <div className="record-add">
             <select value={pickGrade} onChange={(e) => setPickGrade(e.target.value)}>
               <option value="">— Choisir un rôle —</option>
-              {AUTO_ROLE_CHOICES.map((g) => (
-                <option key={g.key} value={g.key}>
-                  {g.label}
+              {discordRoles.filter((r) => !autoRoles.some((a) => a.role_id === r.id)).length === 0 && (
+                <option value="" disabled>
+                  {discordRoles.length === 0 ? '(rôles Discord indisponibles)' : '(tous déjà ajoutés)'}
                 </option>
-              ))}
+              )}
+              {discordRoles
+                .filter((r) => !autoRoles.some((a) => a.role_id === r.id))
+                .map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
             </select>
             <button className="btn-submit" disabled={!pickGrade} onClick={addAutoRole}>
               Ajouter
@@ -185,14 +202,21 @@ export default function ServeursSection() {
           </div>
           <div className="record-list">
             {autoRoles.length === 0 && <p className="site-sub">Aucun rôle auto.</p>}
-            {autoRoles.map((r) => (
-              <div className="record" key={r.id}>
-                <span className="record-reason">{r.label || r.role_id}</span>
-                <button className="chip locked" onClick={() => removeAutoRole(r.role_id)}>
-                  Retirer
-                </button>
-              </div>
-            ))}
+            {autoRoles.map((r) => {
+              const live = discordRoles.find((d) => d.id === r.role_id);
+              const deleted = discordRoles.length > 0 && !live;
+              return (
+                <div className="record" key={r.id}>
+                  <span className="record-reason">
+                    {live?.name || r.label || r.role_id}
+                    {deleted && ' — ⚠️ supprimé du Discord'}
+                  </span>
+                  <button className="chip locked" onClick={() => removeAutoRole(r.role_id)}>
+                    Retirer
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </>
       )}
