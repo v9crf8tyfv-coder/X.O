@@ -13,6 +13,7 @@
  */
 import { createPool, type Pool } from 'mysql2/promise';
 import { getGrade } from '@xo/shared';
+import { db, hasDatabase } from '@xo/db';
 
 /** Grade du panel -> nom du groupe LuckPerms en jeu (d'après `lp listgroups`). */
 const LP_GROUP: Record<string, string> = {
@@ -52,6 +53,30 @@ function getPool(): Pool | null {
   return pool;
 }
 
+/** Formate un UUID (avec ou sans tirets) au format LuckPerms (avec tirets). */
+function dashed(id: string): string | null {
+  const raw = id.replace(/-/g, '');
+  if (raw.length !== 32) return null;
+  return `${raw.slice(0, 8)}-${raw.slice(8, 12)}-${raw.slice(12, 16)}-${raw.slice(16, 20)}-${raw.slice(20)}`;
+}
+
+/** UUID depuis la base (fiable, backfillé) : staff/accounts. null si absent. */
+async function uuidFromDb(pseudo: string): Promise<string | null> {
+  if (!hasDatabase()) return null;
+  try {
+    const rows = await db()<{ u: string | null }[]>`
+      select coalesce(
+        (select minecraft_uuid from staff where lower(pseudo)=lower(${pseudo}) and minecraft_uuid is not null limit 1),
+        (select minecraft_uuid from accounts where lower(minecraft_pseudo)=lower(${pseudo}) and minecraft_uuid is not null limit 1)
+      ) as u
+    `;
+    const id = rows[0]?.u;
+    return id ? dashed(id) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** UUID Mojang (avec tirets, format LuckPerms) pour un pseudo premium. */
 async function fetchUuid(pseudo: string): Promise<string | null> {
   try {
@@ -86,7 +111,8 @@ function topLpGroup(grades: string[]): string | null {
 async function setGroup(pseudo: string, group: string): Promise<void> {
   const p = getPool();
   if (!p) return;
-  const uuid = await fetchUuid(pseudo);
+  // UUID depuis la base d'abord (fiable), Mojang en secours (évite le rate-limit).
+  const uuid = (await uuidFromDb(pseudo)) ?? (await fetchUuid(pseudo));
   if (!uuid) throw new Error(`UUID introuvable pour "${pseudo}" (compte premium ?)`);
   const players = `${PREFIX}players`;
   const perms = `${PREFIX}user_permissions`;
