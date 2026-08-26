@@ -21,7 +21,7 @@ import { GRADES, BRAND_COLOR } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../lib/embeds.js';
 
 const BOUTIQUE_CHANNEL = '1538507381825077299';
-const LOGS_CHANNEL = '1542266023590502582';
+const LOGS_CHANNEL = '1542303169093042176';
 const FONDATEUR = GRADES.fondateur.roleId;
 const COFONDATEUR = GRADES.cofondateur.roleId;
 
