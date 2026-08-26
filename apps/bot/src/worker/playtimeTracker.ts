@@ -98,24 +98,20 @@ async function tick(): Promise<void> {
     const lower = name.toLowerCase();
     const uuid = await resolveUuid(name);
 
-    let tracked = false;
     let storedPseudo = name;
 
+    // Staff/founder : suivi par UUID (rename-proof, met à jour le pseudo partout)
     if (uuid && byUuid.has(uuid)) {
-      tracked = true;
       const e = byUuid.get(uuid)!;
       storedPseudo = e.pseudo;
-      // Le joueur s'est renommé ? -> on met à jour son pseudo partout (aucune maj manuelle)
       if (e.pseudo.toLowerCase() !== lower) {
         await healRename(e.kind, uuid, e.pseudo, name);
         storedPseudo = name;
       }
-    } else if (byName.has(lower)) {
-      tracked = true;
-      storedPseudo = name;
     }
 
-    if (!tracked) continue;
+    // Suivi de TOUS les joueurs (par pseudo) — nécessaire pour la boutique (temps de jeu total).
+    // Écritures en base uniquement -> impact RAM négligeable.
     await db()`
       insert into playtime (pseudo, day, minutes) values (${storedPseudo}, ${day}, 1)
       on conflict (pseudo, day) do update set minutes = playtime.minutes + 1
