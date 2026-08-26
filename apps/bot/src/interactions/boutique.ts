@@ -117,8 +117,12 @@ export const shopCodeModal: ComponentHandler<ModalSubmitInteraction> = {
     });
 
     // Récap de la commande
-    const items = Array.isArray(order.items) ? (order.items as { name: string; qty: number }[]) : [];
-    const recap = items.length ? items.map((it) => `• ${it.name} × ${it.qty}`).join('\n') : '—';
+    let rawItems: unknown = order.items;
+    if (typeof rawItems === 'string') {
+      try { rawItems = JSON.parse(rawItems); } catch { rawItems = []; }
+    }
+    const items = Array.isArray(rawItems) ? (rawItems as { name: string; qty: number }[]) : [];
+    const recap = items.length ? items.map((it) => `• **${it.name}** × ${it.qty}`).join('\n') : '—';
 
     // colonne ajoutée à la volée si absente (la table est créée par le site)
     await db()`alter table shop_orders add column if not exists ticket_channel text`.catch(() => {});
