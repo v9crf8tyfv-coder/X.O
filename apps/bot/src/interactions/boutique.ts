@@ -29,9 +29,9 @@ const CONDITIONS =
   "***Conditions d'achat !***\n" +
   '**`Une fois accepté, vous vous engagez à respecter ces règles.`**\n\n' +
   '**1. __*Une fois que vous procédez au paiement, voici des explications / règles importantes à suivre.*__**\n' +
-  "1.1 :__ Le grade sera rajouté une fois l'argent reçu par nous, nous vous conseillons donc un virement instantané__.\n\n" +
-  '1.2 :__Dans la communication de votre virement, rien ne doit y être marqué, ou Don pour Emeria, si ce point n\'est pas respecté,__\n' +
-  '       __un remboursement sera effectué ainsi qu\'un retrait du grade.__';
+  "1.1 : Le grade sera rajouté une fois l'argent reçu par nous, nous vous conseillons donc un virement instantané.\n\n" +
+  "1.2 : Dans la communication de votre virement, rien ne doit y être marqué, ou Don pour Emeria, si ce point n'est pas respecté,\n" +
+  '       un remboursement sera effectué ainsi qu\'un retrait du grade.';
 
 function isFounder(member: GuildMember | null): boolean {
   if (!member) return false;
@@ -156,7 +156,13 @@ export const shopAccept: ComponentHandler<ButtonInteraction> = {
     // Débloque l'écriture pour l'acheteur
     await channel.permissionOverwrites.edit(buyerId, { SendMessages: true }).catch(() => {});
     if (hasDatabase()) {
-      await db()`update shop_orders set status = 'accepted' where ticket_channel = ${channel.id}`.catch(() => {});
+      // Preuve d'acceptation : qui + quand (pour les logs et en cas de litige)
+      await db()`alter table shop_orders add column if not exists accepted_at timestamptz`.catch(() => {});
+      await db()`alter table shop_orders add column if not exists buyer_tag text`.catch(() => {});
+      await db()`
+        update shop_orders set status = 'accepted', accepted_at = now(), buyer_tag = ${interaction.user.tag}
+        where ticket_channel = ${channel.id}
+      `.catch(() => {});
     }
 
     // Retire le bouton accepter (édite le message)
@@ -184,11 +190,12 @@ export const shopClose: ComponentHandler<ButtonInteraction> = {
     if (!channel) return;
     await interaction.reply({ embeds: [successEmbed('Fermeture…', 'Le ticket sera supprimé dans quelques secondes.')] });
 
-    let order: { code: string; pseudo: string; status: string } | null = null;
+    type Ord = { code: string; pseudo: string; status: string; buyer_tag: string | null; accepted_at: Date | null };
+    let order: Ord | null = null;
     if (hasDatabase()) {
-      const rows = await db()<{ code: string; pseudo: string; status: string }[]>`
-        select code, pseudo, status from shop_orders where ticket_channel = ${channel.id}
-      `.catch(() => [] as { code: string; pseudo: string; status: string }[]);
+      const rows = await db()<Ord[]>`
+        select code, pseudo, status, buyer_tag, accepted_at from shop_orders where ticket_channel = ${channel.id}
+      `.catch(() => [] as Ord[]);
       order = rows[0] ?? null;
       await db()`update shop_orders set status = 'closed' where ticket_channel = ${channel.id}`.catch(() => {});
     }
@@ -196,13 +203,20 @@ export const shopClose: ComponentHandler<ButtonInteraction> = {
     try {
       const logs = await interaction.client.channels.fetch(LOGS_CHANNEL);
       if (logs?.isTextBased()) {
+        const accepted = order && order.accepted_at;
+        const acceptLine = accepted
+          ? `✅ **Acceptées** par ${order!.buyer_tag ?? order!.pseudo} <t:${Math.floor(new Date(order!.accepted_at!).getTime() / 1000)}:F>`
+          : '❌ **Non acceptées**';
         const embed = new EmbedBuilder()
           .setColor(BRAND_COLOR)
           .setTitle('🧾 Commande boutique — ticket fermé')
           .setDescription(
-            (order
-              ? `**Compte MC :** ${order.pseudo}\n**Code :** \`${order.code}\`\n**Conditions :** acceptées ✅\n`
-              : '') + `**Fermé par :** ${interaction.user.tag}`,
+            (order ? `**Compte MC :** ${order.pseudo}\n**Code :** \`${order.code}\`\n` : '') +
+              `**Fermé par :** ${interaction.user.tag}`,
+          )
+          .addFields(
+            { name: 'Conditions', value: acceptLine },
+            { name: 'Texte des conditions acceptées', value: CONDITIONS.slice(0, 1024) },
           )
           .setTimestamp();
         await (logs as TextChannel).send({ embeds: [embed] });

@@ -30,7 +30,9 @@ export async function publishEffectif(client: Client): Promise<void> {
   // En-tête avec le logo Emeria
   const header = new EmbedBuilder()
     .setColor(0x8b5cf6)
-    .setAuthor({ name: 'Effectif du Staff — EmeriaMC', iconURL: emojiUrl(guild, EMERIA_EMOJI) });
+    .setAuthor({ name: 'Effectif du Staff — EmeriaMC', iconURL: emojiUrl(guild, EMERIA_EMOJI) })
+    .setTitle('🌐 Site officiel — emeria-site.vercel.app')
+    .setURL('https://emeria-site.vercel.app');
 
   const embeds: EmbedBuilder[] = [header];
   for (const sec of EFFECTIF_SECTIONS) {
