@@ -31,8 +31,8 @@ export async function publishEffectif(client: Client): Promise<void> {
   const header = new EmbedBuilder()
     .setColor(0x8b5cf6)
     .setAuthor({ name: 'Effectif du Staff — EmeriaMC', iconURL: emojiUrl(guild, EMERIA_EMOJI) })
-    .setTitle('🌐 Site officiel — emeria-site.vercel.app')
-    .setURL('https://emeria-site.vercel.app');
+    .setTitle('🌐 Site officiel — emeria-site.com')
+    .setURL('https://emeria-site.com');
 
   const embeds: EmbedBuilder[] = [header];
   for (const sec of EFFECTIF_SECTIONS) {
