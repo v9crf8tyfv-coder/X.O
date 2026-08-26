@@ -18,6 +18,7 @@ import { ticketOpen, ticketClose } from './ticket.js';
 import { launcherSoon } from './game.js';
 import { bytenutRenew } from './bytenut.js';
 import { roleButton } from './roleButton.js';
+import { shopEnterCode, shopAccept, shopClose, shopCodeModal } from './boutique.js';
 
 export const buttons: ComponentHandler<ButtonInteraction>[] = [
   absenceNew,
@@ -28,6 +29,9 @@ export const buttons: ComponentHandler<ButtonInteraction>[] = [
   launcherSoon,
   bytenutRenew,
   roleButton,
+  shopEnterCode,
+  shopAccept,
+  shopClose,
 ];
 
 export const selectMenus: ComponentHandler<StringSelectMenuInteraction>[] = [ticketOpen];
@@ -37,4 +41,5 @@ export const roleSelects: ComponentHandler<RoleSelectMenuInteraction>[] = [panel
 export const modals: ComponentHandler<ModalSubmitInteraction>[] = [
   absenceCreate,
   absenceEditSubmit,
+  shopCodeModal,
 ];

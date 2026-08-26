@@ -18,6 +18,7 @@ import { statut } from './setup/statut.js';
 import { playerlist } from './setup/playerlist.js';
 import { setupVoice } from './setup/setup-voice.js';
 import { setupRoles } from './setup/setup-roles.js';
+import { setupBoutique } from './setup/setup-boutique.js';
 
 export const commands: SlashCommand[] = [
   ban,
@@ -41,4 +42,5 @@ export const commands: SlashCommand[] = [
   playerlist,
   setupVoice,
   setupRoles,
+  setupBoutique,
 ];
