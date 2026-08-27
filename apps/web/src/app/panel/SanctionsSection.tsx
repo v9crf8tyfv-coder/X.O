@@ -30,12 +30,16 @@ function fmtDate(iso: string): string {
   });
 }
 
+// Ordre d'affichage des filtres
+const FILTER_ORDER = ['Mute', 'Tempban', 'Jail', 'Freeze', 'Unmute', 'Unjail'];
+
 export default function SanctionsSection() {
   const [pseudo, setPseudo] = useState('');
   const [results, setResults] = useState<Sanction[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState('');
+  const [filter, setFilter] = useState<string | null>(null); // null = tous
 
   async function search() {
     const q = pseudo.trim();
@@ -45,6 +49,7 @@ export default function SanctionsSection() {
     }
     setLoading(true);
     setError('');
+    setFilter(null); // on repart sur "Tous" à chaque recherche
     try {
       const r = await fetch(`/api/sanctions?pseudo=${encodeURIComponent(q)}`);
       if (!r.ok) {
@@ -62,6 +67,12 @@ export default function SanctionsSection() {
       setLoading(false);
     }
   }
+
+  // Types présents dans les résultats (pour n'afficher que les filtres utiles)
+  const presentTypes = results
+    ? FILTER_ORDER.filter((t) => results.some((s) => s.action === t))
+    : [];
+  const shown = results && filter ? results.filter((s) => s.action === filter) : results;
 
   return (
     <div className="sanctions-section">
@@ -97,8 +108,34 @@ export default function SanctionsSection() {
               <p className="sanctions-count">
                 {results.length} sanction(s) pour <strong>{results[0]!.target}</strong>
               </p>
+
+              {presentTypes.length > 1 && (
+                <div className="sanctions-filters">
+                  <button
+                    className={`filter-chip ${filter === null ? 'active' : ''}`}
+                    onClick={() => setFilter(null)}
+                  >
+                    Tous ({results.length})
+                  </button>
+                  {presentTypes.map((t) => {
+                    const st = ACTION_STYLE[t] ?? { label: t, color: '#888' };
+                    const n = results.filter((s) => s.action === t).length;
+                    return (
+                      <button
+                        key={t}
+                        className={`filter-chip ${filter === t ? 'active' : ''}`}
+                        onClick={() => setFilter(t)}
+                        style={filter === t ? { background: st.color, borderColor: st.color, color: '#fff' } : { borderColor: st.color, color: st.color }}
+                      >
+                        {st.label} ({n})
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               <ul className="sanctions-list">
-                {results.map((s) => {
+                {shown!.map((s) => {
                   const st = ACTION_STYLE[s.action] ?? { label: s.action, color: '#888' };
                   return (
                     <li key={s.id} className="sanction-row">

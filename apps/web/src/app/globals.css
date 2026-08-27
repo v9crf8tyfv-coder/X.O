@@ -433,3 +433,12 @@ html, body {
 .sanction-actor { font-weight: 700; font-size: 0.9rem; }
 .sanction-date { color: var(--muted); font-size: 0.82rem; }
 .sanction-details { color: var(--text); font-size: 0.88rem; margin-top: 4px; opacity: 0.85; word-break: break-word; }
+
+/* Filtres de la Gestion Sanction */
+.sanctions-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.filter-chip {
+  padding: 5px 12px; border-radius: 999px; cursor: pointer; font-size: 0.8rem; font-weight: 700;
+  background: var(--card); border: 1px solid var(--border); color: var(--text); transition: all 0.12s;
+}
+.filter-chip:hover { filter: brightness(1.05); }
+.filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
