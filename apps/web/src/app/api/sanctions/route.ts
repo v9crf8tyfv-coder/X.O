@@ -26,8 +26,7 @@ export async function GET(req: Request) {
   const rows = await db()<
     { id: string; actor: string; action: string; target: string; details: string | null; created_at: string }[]
   >`
-    select id::text as id, actor, action, target, details,
-           to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SSOF') as created_at
+    select id::text as id, actor, action, target, details, created_at
     from ig_actions
     where target ilike ${pseudo}
       and action = any(${SANCTION_ACTIONS})
