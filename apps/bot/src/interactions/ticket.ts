@@ -16,8 +16,10 @@ import {
   buildTicketOverwrites,
   buildTicketHeaderEmbed,
   buildCloseButton,
+  buildCategorySelect,
   type TicketSpace,
 } from '../lib/tickets.js';
+import { logToDiscord, fmtError } from '../lib/logWebhook.js';
 
 /** Menu de catégorie -> crée le salon de ticket */
 export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
@@ -37,53 +39,77 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    // Un seul ticket ouvert par personne et par espace
-    if (hasDatabase()) {
-      const existing = await db()<{ channel_id: string }[]>`
-        select channel_id from tickets
-        where opener_id = ${interaction.user.id} and space = ${space} and status = 'open'
-      `;
-      if (existing.length > 0) {
-        await interaction.editReply({
-          embeds: [
-            errorEmbed('Ticket déjà ouvert', `Tu as déjà un ticket : <#${existing[0]!.channel_id}>`),
-          ],
-        });
-        return;
+    // IMPORTANT : on réinitialise le menu du panneau tout de suite, pour qu'on
+    // puisse RE-sélectionner la même catégorie ensuite. Sinon Discord garde
+    // l'option cochée et un nouveau clic sur la même option n'envoie rien
+    // (= "je ne pouvais plus recliquer sur candidature COM").
+    interaction.message?.edit({ components: [buildCategorySelect(space)] }).catch(() => {});
+
+    try {
+      // Un seul ticket ouvert par personne et par espace
+      if (hasDatabase()) {
+        const existing = await db()<{ channel_id: string }[]>`
+          select channel_id from tickets
+          where opener_id = ${interaction.user.id} and space = ${space} and status = 'open'
+        `;
+        if (existing.length > 0) {
+          const chanId = existing[0]!.channel_id;
+          // Le salon existe-t-il encore ? Sinon on nettoie et on autorise à rouvrir
+          // (évite de rester bloqué si un ancien ticket a été supprimé à la main).
+          const still = await guild.channels.fetch(chanId).catch(() => null);
+          if (still) {
+            await interaction.editReply({
+              embeds: [errorEmbed('Ticket déjà ouvert', `Tu as déjà un ticket : <#${chanId}>`)],
+            });
+            return;
+          }
+          await db()`update tickets set status = 'closed' where channel_id = ${chanId}`.catch(() => {});
+        }
       }
+
+      // Salon rangé sous la même catégorie que le panneau
+      const panelChannel = interaction.channel as TextChannel | null;
+      const parentId = panelChannel?.parentId ?? undefined;
+
+      const safeName = interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+      const ticketChannel = await guild.channels.create({
+        name: `ticket-${safeName || interaction.user.id.slice(-4)}`,
+        type: ChannelType.GuildText,
+        parent: parentId,
+        permissionOverwrites: buildTicketOverwrites(guild, interaction.user.id, category),
+      });
+
+      // Embed persistant (épinglé) : pseudo + type + bouton fermer
+      const header = await ticketChannel.send({
+        content: `<@${interaction.user.id}>`,
+        embeds: [buildTicketHeaderEmbed(interaction.user.tag, category)],
+        components: [buildCloseButton()],
+      });
+      await header.pin().catch(() => {});
+
+      if (hasDatabase()) {
+        await db()`
+          insert into tickets (channel_id, category_id, space, opener_id, opener_tag, status)
+          values (${ticketChannel.id}, ${category.id}, ${space}, ${interaction.user.id},
+                  ${interaction.user.tag}, 'open')
+        `.catch((e) => console.error('[ticket] insert échoué:', e));
+      }
+
+      await interaction.editReply({
+        embeds: [successEmbed('Ticket créé', `Ton ticket : <#${ticketChannel.id}>`)],
+      });
+    } catch (err) {
+      // Plus de "bug silencieux" : message clair + log Discord pour diagnostiquer.
+      console.error('[ticket] création échouée:', err);
+      void logToDiscord(fmtError(`Création ticket "${category.id}" échouée`, err));
+      await interaction.editReply({
+        embeds: [errorEmbed(
+          'Impossible de créer le ticket',
+          "Une erreur est survenue (droits du bot ou catégorie pleine — max 50 salons). " +
+          "Réessaie ; si ça persiste, préviens un admin.",
+        )],
+      }).catch(() => {});
     }
-
-    // Salon rangé sous la même catégorie que le panneau
-    const panelChannel = interaction.channel as TextChannel | null;
-    const parentId = panelChannel?.parentId ?? undefined;
-
-    const safeName = interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
-    const ticketChannel = await guild.channels.create({
-      name: `ticket-${safeName || interaction.user.id.slice(-4)}`,
-      type: ChannelType.GuildText,
-      parent: parentId,
-      permissionOverwrites: buildTicketOverwrites(guild, interaction.user.id, category),
-    });
-
-    // Embed persistant (épinglé) : pseudo + type + bouton fermer
-    const header = await ticketChannel.send({
-      content: `<@${interaction.user.id}>`,
-      embeds: [buildTicketHeaderEmbed(interaction.user.tag, category)],
-      components: [buildCloseButton()],
-    });
-    await header.pin().catch(() => {});
-
-    if (hasDatabase()) {
-      await db()`
-        insert into tickets (channel_id, category_id, space, opener_id, opener_tag, status)
-        values (${ticketChannel.id}, ${category.id}, ${space}, ${interaction.user.id},
-                ${interaction.user.tag}, 'open')
-      `;
-    }
-
-    await interaction.editReply({
-      embeds: [successEmbed('Ticket créé', `Ton ticket : <#${ticketChannel.id}>`)],
-    });
   },
 };
 
