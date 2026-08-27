@@ -43,7 +43,13 @@ export const ticketRemove: SlashCommand = {
       return;
     }
     const user = interaction.options.getUser('membre', true);
-    await ch.permissionOverwrites.delete(user.id).catch(() => {});
-    await interaction.reply({ embeds: [successEmbed('Membre retiré', `<@${user.id}> a été retiré du ticket.`)] });
+    // Interdiction EXPLICITE : écrase l'accès donné par un rôle (grade/com).
+    // Un simple delete() ne retirerait que l'invitation perso, pas l'accès via rôle.
+    await ch.permissionOverwrites.edit(user.id, {
+      ViewChannel: false,
+      SendMessages: false,
+      ReadMessageHistory: false,
+    }).catch(() => {});
+    await interaction.reply({ embeds: [successEmbed('Membre retiré', `<@${user.id}> a été retiré du ticket (il ne peut plus le voir).`)] });
   },
 };
