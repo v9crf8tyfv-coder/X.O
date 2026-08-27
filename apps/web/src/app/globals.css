@@ -400,3 +400,36 @@ html, body {
 
 /* Absence : temps réellement joué en petit sous ABSENT */
 .pt-absent-play { font-size: 0.65rem; font-weight: 600; color: #c0392b; opacity: 0.85; margin-top: 2px; }
+
+/* ===== Gestion Sanction(s) ===== */
+.sanctions-section { max-width: 760px; }
+.section-title { font-size: 1.4rem; font-weight: 800; margin: 0 0 4px; }
+.section-sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 18px; }
+.sanctions-search { display: flex; gap: 10px; margin-bottom: 16px; }
+.sanctions-search input {
+  flex: 1; padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--card); color: var(--text); font-size: 0.95rem;
+}
+.sanctions-search input:focus { outline: none; border-color: var(--accent); }
+.sanctions-search button {
+  padding: 11px 20px; border: none; border-radius: 10px; cursor: pointer;
+  background: var(--accent); color: #fff; font-weight: 700; font-size: 0.9rem;
+}
+.sanctions-search button:disabled { opacity: 0.6; cursor: default; }
+.sanctions-error { color: #c0392b; font-size: 0.9rem; margin: 4px 0; }
+.sanctions-empty { color: var(--muted); }
+.sanctions-count { font-size: 0.9rem; color: var(--muted); margin: 0 0 12px; }
+.sanctions-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.sanction-row {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+}
+.sanction-badge {
+  color: #fff; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.3px;
+  padding: 4px 10px; border-radius: 999px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0;
+}
+.sanction-body { flex: 1; min-width: 0; }
+.sanction-meta { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.sanction-actor { font-weight: 700; font-size: 0.9rem; }
+.sanction-date { color: var(--muted); font-size: 0.82rem; }
+.sanction-details { color: var(--text); font-size: 0.88rem; margin-top: 4px; opacity: 0.85; word-break: break-word; }
