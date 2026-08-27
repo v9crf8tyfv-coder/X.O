@@ -86,7 +86,7 @@ export const TICKET_CATEGORIES_NORMAL = [
     label: 'Recrutement COM',
     description: 'Candidature communication',
     emoji: '📢',
-    allowedGrades: ['com', 'admin'],
+    allowedGrades: ['admin'], // com retiré : seuls admin + omniprésents (resp/cofonda/fonda) voient les recrutements
   },
   {
     id: 'recrutement_staff',
