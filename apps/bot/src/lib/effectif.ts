@@ -23,6 +23,7 @@ export const EFFECTIF_SECTIONS: EffectifSection[] = [
   { key: 'admin', label: 'Administrateur', emoji: 'LogoAdmin', color: 0xdc2626 },
   { key: 'buildeur', label: 'Buildeur', emoji: 'LogoBuildeur', color: 0x65a30d },
   { key: 'modo', label: 'Modérateur', emoji: 'LogoModo', color: 0x9333ea },
+  { key: 'com', label: 'Communication', emoji: 'LogoCom', color: 0xb14fd6 },
   { key: 'betatesteur', label: 'Bêta-testeur', emoji: 'LogoBetaTest', color: 0x9ca3af },
 ];
 
@@ -48,6 +49,6 @@ export function sectionForGrades(grades: string[]): string | null {
   const top = highestGradeKey(grades);
   if (!top) return null;
   if (top === 'responsable' || top.startsWith('resp_')) return 'responsable';
-  if (top === 'admin' || top === 'buildeur' || top === 'modo' || top === 'betatesteur') return top;
+  if (top === 'admin' || top === 'buildeur' || top === 'modo' || top === 'com' || top === 'betatesteur') return top;
   return null;
 }
