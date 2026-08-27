@@ -8,6 +8,7 @@ import { GRADES } from '@xo/shared';
 import type { XOClient } from '../types.js';
 import { highestGrade } from '../lib/permissions.js';
 import { errorEmbed } from '../lib/embeds.js';
+import { logToDiscord, fmtError } from '../lib/logWebhook.js';
 
 export async function handleInteraction(
   client: XOClient,
@@ -72,6 +73,10 @@ export async function handleInteraction(
     }
   } catch (err) {
     console.error('[interaction] erreur:', err);
+    const label = interaction.isChatInputCommand()
+      ? `/${interaction.commandName}`
+      : ('customId' in interaction ? String((interaction as { customId?: string }).customId) : 'interaction');
+    void logToDiscord(fmtError(`Erreur sur ${label}`, err));
     if (interaction.isRepliable()) {
       const payload: InteractionReplyOptions = {
         embeds: [errorEmbed('Erreur', 'Une erreur est survenue.')],

@@ -20,4 +20,6 @@ export const ENV = {
   DISCORD_TOKEN: required('DISCORD_TOKEN'),
   DISCORD_CLIENT_ID: required('DISCORD_CLIENT_ID'),
   DISCORD_GUILD_ID: required('DISCORD_GUILD_ID'),
+  // Optionnel : webhook Discord où le bot poste son démarrage + ses erreurs (pour voir les logs).
+  LOG_WEBHOOK_URL: process.env.LOG_WEBHOOK_URL ?? '',
 };

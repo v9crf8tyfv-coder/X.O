@@ -17,6 +17,10 @@ import { startPlaytimeTracker } from './worker/playtimeTracker.js';
 import { startNewPlayerWatcher } from './worker/newPlayerWatcher.js';
 import { startIgActionsWatcher } from './worker/igActionsWatcher.js';
 import { startAutoRestart } from './worker/autoRestart.js';
+import { logToDiscord, fmtError } from './lib/logWebhook.js';
+
+// Log tout de suite : on saura que le process a bien démarré (avant login).
+void logToDiscord(`🟡 Démarrage du bot… (${new Date().toISOString()})`);
 
 const client = new Client({
   intents: [
@@ -54,6 +58,7 @@ client.modals = modals;
 
 // Événements
 client.once('clientReady', () => {
+  void logToDiscord(`🟢 Bot **connecté** et prêt : ${client.user?.tag ?? '?'} (${new Date().toISOString()})`);
   onReady(client);
   startPendingActionsWorker(client);
   void resumeServerTimer(client);
@@ -63,6 +68,11 @@ client.once('clientReady', () => {
   startIgActionsWatcher(client);
   startAutoRestart();
 });
+
+// Le bot s'est déconnecté du gateway (coupure réseau / kill hébergeur)
+client.on('shardDisconnect', (event) =>
+  void logToDiscord(`🟠 Déconnexion du gateway (code ${event.code}) — ${new Date().toISOString()}`));
+client.on('error', (err) => void logToDiscord(fmtError('client.error', err)));
 client.on('interactionCreate', (i) => handleInteraction(client, i));
 client.on('guildMemberAdd', (m) => onGuildMemberAdd(client, m));
 client.on('guildMemberUpdate', (oldM, newM) => onGuildMemberUpdate(client, oldM, newM));
@@ -70,12 +80,22 @@ client.on('messageCreate', (m) => onMessageCreate(client, m));
 client.on('voiceStateUpdate', (o, n) => onVoiceStateUpdate(client, o, n));
 client.on('guildAuditLogEntryCreate', (entry, guild) => onAuditLog(client, entry, guild));
 
-// Anti-crash : une erreur non gérée est loguée mais NE tue PAS le bot.
-process.on('unhandledRejection', (err) => console.error('[unhandledRejection]', err));
-process.on('uncaughtException', (err) => console.error('[uncaughtException]', err));
+// Anti-crash : une erreur non gérée est loguée (console + Discord) mais NE tue PAS le bot.
+process.on('unhandledRejection', (err) => {
+  console.error('[unhandledRejection]', err);
+  void logToDiscord(fmtError('unhandledRejection', err));
+});
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err);
+  void logToDiscord(fmtError('uncaughtException', err));
+});
 
 // Arrêt propre
 process.on('SIGINT', () => client.destroy().then(() => process.exit(0)));
 process.on('SIGTERM', () => client.destroy().then(() => process.exit(0)));
 
-client.login(ENV.DISCORD_TOKEN);
+// Échec de connexion (mauvais token, coupure au login…) → visible dans le salon logs
+client.login(ENV.DISCORD_TOKEN).catch((err) => {
+  console.error('[login] échec de connexion:', err);
+  void logToDiscord(fmtError('Échec de connexion (login)', err));
+});
