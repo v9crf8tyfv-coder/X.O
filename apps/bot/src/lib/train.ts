@@ -184,9 +184,10 @@ export function controlPanel(running: boolean): {
     .setTitle('🎓 Entraînement Modération')
     .setDescription(
       "X.O va poster de **faux messages** de joueurs qui enfreignent le règlement.\n" +
-        'À toi de réagir vite avec une sanction, par exemple :\n\n' +
-        '```mute pseudo temps raison```\n' +
-        '`mute Zephyx_ 10m insulte` — mais aussi `warn`, `kick`, `ban`…\n\n' +
+        'À toi de réagir vite avec une sanction :\n\n' +
+        '```sanction pseudo temps raison```\n' +
+        'Exemple : `mute Zephyx_ 10m insulte` — sanctions dispo : `mute`, `warn`, `kick`, `ban`…\n' +
+        'Si le message est **correct**, réponds simplement `rien` (aucune sanction).\n\n' +
         'Dès que tu réponds, le message disparaît et un nouveau cas arrive.\n' +
         'Début, fin et réponses sont enregistrés dans le salon résultat.',
     )
@@ -199,6 +200,6 @@ export function controlPanel(running: boolean): {
 /** Le bouton On/Off, dont l'apparence dépend de l'état courant */
 export function toggleButton(running: boolean): ButtonBuilder {
   return running
-    ? new ButtonBuilder().setCustomId('train:toggle').setLabel('ON — Arrêter').setStyle(ButtonStyle.Danger).setEmoji('🟢')
-    : new ButtonBuilder().setCustomId('train:toggle').setLabel('OFF — Lancer').setStyle(ButtonStyle.Success).setEmoji('⚫');
+    ? new ButtonBuilder().setCustomId('train:toggle').setLabel('Entraînement : ON').setStyle(ButtonStyle.Success).setEmoji('🟢')
+    : new ButtonBuilder().setCustomId('train:toggle').setLabel('Entraînement : OFF').setStyle(ButtonStyle.Danger).setEmoji('🔴');
 }

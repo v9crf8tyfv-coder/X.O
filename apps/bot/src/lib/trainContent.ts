@@ -18,7 +18,8 @@ export type TrainCategory =
   | 'pub'
   | 'discrimination'
   | 'provocation'
-  | 'spam';
+  | 'spam'
+  | 'ok';
 
 export interface TrainLine {
   category: TrainCategory;
@@ -77,6 +78,13 @@ export const TRAIN_LINES: TrainLine[] = [
   { category: 'discrimination', message: 'retourne d’où tu viens on veut pas de toi ici' },
   { category: 'discrimination', message: 'les filles savent pas jouer, casse toi du serveur' },
   { category: 'discrimination', message: 'on se moque de ta religion, va prier ailleurs' },
+
+  // --- messages CORRECTS : la bonne réponse est « rien » (aucune sanction) ---
+  { category: 'ok', message: 'gg les gars belle partie, à demain !' },
+  { category: 'ok', message: 'quelqu’un peut m’aider à construire ma base svp ?' },
+  { category: 'ok', message: 'trop stylé ton build, bravo' },
+  { category: 'ok', message: 'je vais manger je reviens dans 20 min' },
+  { category: 'ok', message: 'wp l’équipe on a gagné le fight' },
 ];
 
 /** Libellé lisible d'une catégorie (pour le log résultat) */
@@ -87,6 +95,7 @@ export const CATEGORY_LABEL: Record<TrainCategory, string> = {
   discrimination: 'Discrimination',
   provocation: 'Provocation / toxicité',
   spam: 'Spam',
+  ok: 'Message correct (aucune sanction)',
 };
 
 /** Tire une ligne + un pseudo au hasard */

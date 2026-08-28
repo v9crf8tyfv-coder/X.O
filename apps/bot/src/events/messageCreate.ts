@@ -10,7 +10,7 @@ import { highestGrade } from '../lib/permissions.js';
  * Retourne true si le message a été « consommé » par l'entraînement.
  */
 /** Verbes de sanction reconnus comme une réponse d'entraînement */
-const SANCTION_RE = /^(mute|tempmute|warn|kick|ban|tempban|unmute|unban|sanction)\b/i;
+const SANCTION_RE = /^(mute|tempmute|warn|kick|ban|tempban|unmute|unban|sanction|rien|ras|ok)\b/i;
 
 async function handleTrainMessage(client: Client, message: Message): Promise<boolean> {
   if (!isRunning(message.channelId)) return false;
