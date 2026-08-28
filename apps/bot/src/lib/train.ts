@@ -36,7 +36,8 @@ interface Session {
 
 /** Mélange (Fisher-Yates) les indices de toutes les lignes disponibles */
 function shuffledDeck(): number[] {
-  const d = TRAIN_LINES.map((_, i) => i);
+  // On ignore les lignes vides (placeholders non remplis)
+  const d = TRAIN_LINES.map((l, i) => (l.message.trim() ? i : -1)).filter((i) => i >= 0);
   for (let i = d.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [d[i], d[j]] = [d[j]!, d[i]!];
@@ -240,6 +241,6 @@ export function controlPanel(running: boolean): {
 /** Le bouton On/Off, dont l'apparence dépend de l'état courant */
 export function toggleButton(running: boolean): ButtonBuilder {
   return running
-    ? new ButtonBuilder().setCustomId('train:toggle').setLabel('Entraînement : ON').setStyle(ButtonStyle.Success).setEmoji('🟢')
-    : new ButtonBuilder().setCustomId('train:toggle').setLabel('Entraînement : OFF').setStyle(ButtonStyle.Danger).setEmoji('🔴');
+    ? new ButtonBuilder().setCustomId('train:toggle').setLabel('Entraînement : ON').setStyle(ButtonStyle.Danger).setEmoji('⏹️')
+    : new ButtonBuilder().setCustomId('train:toggle').setLabel('Entraînement : OFF').setStyle(ButtonStyle.Success).setEmoji('▶️');
 }

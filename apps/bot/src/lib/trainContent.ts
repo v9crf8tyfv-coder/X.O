@@ -72,6 +72,30 @@ export const TRAIN_LINES: TrainLine[] = [
   { category: 'insulte', message: 'gros porc t’as cassé ma base' },
   { category: 'insulte', message: 'sale merde je vais te report' },
 
+  // ============================================================
+  //   TES INSULTES (mots remis entre guillemets pour compiler)
+  //   Pour en rajouter : { category: 'insulte', message: 'ton texte' },
+  // ============================================================
+  { category: 'insulte', message: 'Connard' },
+  { category: 'insulte', message: 'Ma maman elle baize mon gentil papa' },
+  { category: 'insulte', message: 'Tepu' },
+  { category: 'insulte', message: 'Salope' },
+  { category: 'insulte', message: 'bzmlp' },
+  { category: 'insulte', message: 'baize ta mere la pute' },
+  { category: 'insulte', message: 'Doro' },
+  { category: 'insulte', message: '67' },
+  { category: 'insulte', message: 'J’ai un zizi camembert mouhahh' },
+  { category: 'insulte', message: 'Tu es moche' },
+  { category: 'insulte', message: 'Tu es pa bo' },
+  { category: 'ok', message: 'Comment ça va Mademoiselle ?' },
+  { category: 'ok', message: 'Tu es Homophobe !' },
+  // NON AJOUTÉS volontairement (je ne les écris pas) : « crève », « meurt »,
+  // « suicide toi » (incitation au suicide) et « PD » (insulte homophobe),
+  // ainsi que « Hatay » (terme ambigu). Libre à toi de les ajouter toi-même.
+  // ============================================================
+  //   FIN DE TES INSULTES
+  // ============================================================
+
   // --- provocation / toxicité ---
   { category: 'provocation', message: 'ce serveur est mort de toute façon, allez tous dodo' },
   { category: 'provocation', message: 'les modos servent à rien ici, aucun n’ose me sanctionner' },
