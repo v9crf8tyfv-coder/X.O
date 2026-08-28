@@ -244,7 +244,7 @@ export function controlPanel(running: boolean): {
       "X.O va poster de **faux messages** de joueurs qui enfreignent le règlement.\n" +
         'À toi de réagir vite avec une sanction :\n\n' +
         '```sanction pseudo temps raison```\n' +
-        'Exemple : `mute Zephyx_ 10m insulte` — sanctions dispo : `mute`, `warn`, `kick`, `ban`…\n' +
+        'Exemple : `mute Zephyx_ 10m insulte` — sanctions dispo : `mute`, `warn`, `kick`, `ban`, `prévention`…\n' +
         'Si le message est **correct**, réponds simplement `rien` (aucune sanction).\n\n' +
         'Dès que tu réponds, le message disparaît et un nouveau cas arrive.\n' +
         'Début, fin et réponses sont enregistrés dans le salon résultat.',
