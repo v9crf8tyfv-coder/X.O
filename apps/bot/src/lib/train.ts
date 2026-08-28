@@ -19,8 +19,22 @@ interface Challenge {
   pseudo: string;
   message: string;
   category: TrainCategory;
+  offense: number; // récidive : 1 = 1ère fois, 2, 3, 4 = 4ème et +
   messageId: string | null; // id du message posté (pour le supprimer ensuite)
   postedAt: number;
+}
+
+/** Tire un niveau de récidive aléatoire (pondéré vers les premières fois) */
+function randomOffense(): number {
+  const r = Math.random();
+  return r < 0.45 ? 1 : r < 0.72 ? 2 : r < 0.9 ? 3 : 4;
+}
+
+/** Libellé de récidive affiché */
+function offenseLabel(n: number): string {
+  if (n <= 1) return '1ère fois';
+  if (n >= 4) return '4ème fois et +';
+  return `${n}ème fois`;
 }
 
 interface Session {
@@ -89,6 +103,7 @@ function challengeEmbed(c: Challenge): EmbedBuilder {
     .setColor(0x2b2d31)
     .setAuthor({ name: `${c.pseudo}  ›  #general` })
     .setDescription(`> ${c.message}`)
+    .addFields({ name: 'Récidive', value: `⚠️ **${offenseLabel(c.offense)}**`, inline: true })
     .setFooter({ text: HINT });
 }
 
@@ -100,6 +115,7 @@ async function postChallenge(channel: TextChannel, session: Session): Promise<vo
     pseudo,
     message: line.message,
     category: line.category,
+    offense: randomOffense(),
     messageId: null,
     postedAt: Date.now(),
   };
@@ -206,6 +222,7 @@ async function logResult(
     .addFields(
       { name: 'Message fictif', value: `**${c.pseudo}** : ${c.message}` },
       { name: 'Type', value: CATEGORY_LABEL[c.category], inline: true },
+      { name: 'Récidive', value: offenseLabel(c.offense), inline: true },
       { name: 'Réponse du staff', value: `\`${response}\`` },
       { name: 'Par', value: staffTag, inline: true },
     )
