@@ -13,7 +13,7 @@ import {
   type Client,
 } from 'discord.js';
 import { CHANNELS, BRAND_COLOR } from '@xo/shared';
-import { pickChallenge, CATEGORY_LABEL, type TrainCategory } from './trainContent.js';
+import { TRAIN_LINES, FAKE_PSEUDOS, CATEGORY_LABEL, type TrainCategory } from './trainContent.js';
 
 interface Challenge {
   pseudo: string;
@@ -29,6 +29,42 @@ interface Session {
   current: Challenge | null;
   handled: number; // nombre de cas résolus correctement
   startedAt: number;
+  deck: number[]; // ordre mélangé des lignes (indices dans TRAIN_LINES)
+  deckPos: number; // prochaine ligne à tirer
+  lastPseudo: string | null;
+}
+
+/** Mélange (Fisher-Yates) les indices de toutes les lignes disponibles */
+function shuffledDeck(): number[] {
+  const d = TRAIN_LINES.map((_, i) => i);
+  for (let i = d.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [d[i], d[j]] = [d[j]!, d[i]!];
+  }
+  return d;
+}
+
+/** Prochaine ligne SANS répétition : on vide le deck avant de re-mélanger,
+ *  et on évite d'enchaîner deux fois la même juste après un re-mélange. */
+function nextLine(session: Session) {
+  if (session.deckPos >= session.deck.length) {
+    const last = session.deck[session.deck.length - 1];
+    const d = shuffledDeck();
+    if (d.length > 1 && d[0] === last) [d[0], d[1]] = [d[1]!, d[0]!];
+    session.deck = d;
+    session.deckPos = 0;
+  }
+  return TRAIN_LINES[session.deck[session.deckPos++]!]!;
+}
+
+/** Pseudo au hasard, différent du précédent si possible */
+function nextPseudo(session: Session): string {
+  let p = FAKE_PSEUDOS[Math.floor(Math.random() * FAKE_PSEUDOS.length)]!;
+  if (FAKE_PSEUDOS.length > 1 && p === session.lastPseudo) {
+    p = FAKE_PSEUDOS[(FAKE_PSEUDOS.indexOf(p) + 1) % FAKE_PSEUDOS.length]!;
+  }
+  session.lastPseudo = p;
+  return p;
 }
 
 /** channelId -> session active */
@@ -57,7 +93,8 @@ function challengeEmbed(c: Challenge): EmbedBuilder {
 
 /** Poste un nouveau défi dans le salon et le mémorise */
 async function postChallenge(channel: TextChannel, session: Session): Promise<void> {
-  const { pseudo, line } = pickChallenge();
+  const line = nextLine(session);
+  const pseudo = nextPseudo(session);
   const c: Challenge = {
     pseudo,
     message: line.message,
@@ -84,6 +121,9 @@ export async function startSession(
     current: null,
     handled: 0,
     startedAt: Date.now(),
+    deck: shuffledDeck(),
+    deckPos: 0,
+    lastPseudo: null,
   };
   sessions.set(channel.id, session);
   await logSession(channel.client, 'start', { by: startedByTag });
