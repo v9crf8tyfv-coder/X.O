@@ -1,5 +1,34 @@
-import { EmbedBuilder, type Client, type Message, type TextChannel } from 'discord.js';
+import { EmbedBuilder, type Client, type Message, type TextChannel, type GuildMember } from 'discord.js';
+import { GRADES } from '@xo/shared';
 import { getAnnounceChannel } from '../lib/announceState.js';
+import { isRunning, handleAnswer } from '../lib/train.js';
+import { highestGrade } from '../lib/permissions.js';
+
+/**
+ * Entraînement modération : dans le salon en session, un staff répond
+ * `mute pseudo temps raison`. On valide et on enchaîne le cas suivant.
+ * Retourne true si le message a été « consommé » par l'entraînement.
+ */
+/** Verbes de sanction reconnus comme une réponse d'entraînement */
+const SANCTION_RE = /^(mute|tempmute|warn|kick|ban|tempban|unmute|unban|sanction)\b/i;
+
+async function handleTrainMessage(client: Client, message: Message): Promise<boolean> {
+  if (!isRunning(message.channelId)) return false;
+  const content = message.content.trim();
+  if (!SANCTION_RE.test(content)) return false;
+
+  // Réservé aux modos et au-dessus
+  const member = message.member as GuildMember | null;
+  if (!member || (highestGrade(member)?.level ?? 0) < GRADES.modo.level) return false;
+
+  const channel = message.channel as TextChannel;
+  const consumed = await handleAnswer(client, channel, message.author.tag, content);
+  if (!consumed) return false;
+
+  // On nettoie la réponse du staff : le nouveau cas est déjà affiché, tout est loggué.
+  await message.delete().catch(() => {});
+  return true;
+}
 
 /**
  * Mode annonce : si l'auteur est en mode annonce dans CE salon, on supprime son
@@ -8,6 +37,10 @@ import { getAnnounceChannel } from '../lib/announceState.js';
  */
 export async function onMessageCreate(_client: Client, message: Message): Promise<void> {
   if (message.author.bot || !message.inGuild()) return;
+
+  // Entraînement modération (salon en session) — prioritaire
+  if (await handleTrainMessage(_client, message)) return;
+
   const target = getAnnounceChannel(message.author.id);
   if (!target || target !== message.channelId) return;
 

@@ -17,6 +17,8 @@ export const CHANNELS = {
   taverne: '1535347207195328652', // annonces de rank (public)
   generalStaff: '1535333104733003896', // annonces de rank (staff)
   lancerJeu: '1535350366382719037', // embed "lancer le jeu"
+  trainModo: '1542969179399913603', // salon "train modo" : panneau + faux messages à modérer
+  trainResultat: '1542970098904727742', // salon "résultats" : log des sanctions d'entraînement
 } as const;
 
 /**

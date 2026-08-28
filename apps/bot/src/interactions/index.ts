@@ -19,6 +19,7 @@ import { launcherSoon } from './game.js';
 import { bytenutRenew } from './bytenut.js';
 import { roleButton } from './roleButton.js';
 import { shopEnterCode, shopAccept, shopClose, shopCodeModal } from './boutique.js';
+import { trainToggle } from './train.js';
 
 export const buttons: ComponentHandler<ButtonInteraction>[] = [
   absenceNew,
@@ -32,6 +33,7 @@ export const buttons: ComponentHandler<ButtonInteraction>[] = [
   shopEnterCode,
   shopAccept,
   shopClose,
+  trainToggle,
 ];
 
 export const selectMenus: ComponentHandler<StringSelectMenuInteraction>[] = [ticketOpen];
