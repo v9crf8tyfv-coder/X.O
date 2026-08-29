@@ -17,6 +17,11 @@ function emojiTag(guild: Guild | null, name: string): string {
   return e ? e.toString() : '';
 }
 
+/** Neutralise le markdown dans un pseudo (ex "_Roi_tortue_" ne devient pas italique). */
+function escMd(s: string): string {
+  return s.replace(/([\\_*~`|])/g, '\\$1');
+}
+
 /**
  * Publie l'effectif dans le salon accueil : un embed d'en-tête (logo Emeria) +
  * un embed par grade (logo + "Pseudo — @mention — ID"). Édite le message existant.
@@ -33,25 +38,32 @@ export async function publishEffectif(client: Client): Promise<void> {
   const text = channel as TextChannel;
   const guild = text.guild;
 
-  // Un seul embed : liens utiles en haut, puis la hiérarchie en liste (un champ par grade).
+  // Un seul embed, propre et aéré : liens utiles en haut, puis la hiérarchie en liste.
+  const sections = EFFECTIF_SECTIONS.map((sec) => {
+    const members = rows.filter((r) => sectionForGrades(r.grades) === sec.key);
+    const tag = emojiTag(guild, sec.emoji);
+    const head = `${tag ? tag + ' ' : ''}**${sec.label}** — ${members.length}`;
+    const body = members.length
+      ? members
+          .map((m) => {
+            const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
+            return `> ${m.is_absent ? '⏰ ' : ''}**${escMd(m.pseudo)}**${dc}`;
+          })
+          .join('\n')
+      : '> *—*';
+    return `${head}\n${body}`;
+  });
+
+  const description =
+    '**Liens utiles**\n' +
+    '> [Site officiel](https://emeria-site.com)\n\n' +
+    '**Hiérarchie du staff**\n\n' +
+    sections.join('\n\n');
+
   const embed = new EmbedBuilder()
     .setColor(0x8b5cf6)
     .setAuthor({ name: 'Effectif du Staff — EmeriaMC', iconURL: emojiUrl(guild, EMERIA_EMOJI) })
-    .setDescription('**Liens utiles**\n[Site officiel](https://emeria-site.com)');
-
-  for (const sec of EFFECTIF_SECTIONS) {
-    const members = rows.filter((r) => sectionForGrades(r.grades) === sec.key);
-    const lines = members.map((m) => {
-      const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
-      return `${m.is_absent ? '⏰ ' : ''}**${m.pseudo}**${dc}`;
-    });
-    const tag = emojiTag(guild, sec.emoji);
-    embed.addFields({
-      name: `${tag ? tag + ' ' : ''}${sec.label} (${members.length})`,
-      value: lines.length ? lines.join('\n') : '—',
-      inline: false,
-    });
-  }
+    .setDescription(description);
 
   const embeds: EmbedBuilder[] = [embed];
 
