@@ -5,7 +5,7 @@ import { getGrade } from '@xo/shared';
 
 /**
  * Affiche le LOGO du grade (fichier /logos/<grade>.png) s'il existe,
- * sinon replie sur un point de couleur. Remplace les "bulles".
+ * sinon replie sur un point de couleur.
  */
 export function GradeBadge({ gk }: { gk: string }) {
   const [ok, setOk] = useState(true);

@@ -181,7 +181,11 @@ export default function StaffSection({ myGrade }: { myGrade: string }) {
           </div>
           <div className="staff-grades">
             {s.grades.map((gk) => (
-              <span className="grade-tag" key={gk}>
+              <span
+                className="grade-tag"
+                key={gk}
+                style={{ color: `#${getGrade(gk).color}` }}
+              >
                 <Bubble gk={gk} />
                 {getGrade(gk).label}
               </span>

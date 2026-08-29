@@ -70,7 +70,7 @@ export const GRADES = {
   dev: {
     key: 'dev',
     label: 'Dev',
-    color: 'a84300',
+    color: 'e0a82b',
     roleId: '1535321787783446628',
     level: 40,
     surveillance: 'staff', // surveillés par les admin
@@ -86,7 +86,7 @@ export const GRADES = {
   com: {
     key: 'com',
     label: 'Communication / Graphiste',
-    color: 'b14fd6', // TODO: couleur exacte du rôle Discord à confirmer
+    color: 'd98e2b', // TODO: couleur exacte du rôle Discord à confirmer
     roleId: '1535322033771118623',
     level: 40,
     surveillance: 'staff',
@@ -105,7 +105,7 @@ export const GRADES = {
   betatesteur: {
     key: 'betatesteur',
     label: 'Bêta-testeur',
-    color: '1abc9c',
+    color: '7e8c9c',
     roleId: '1535332321635344494',
     level: 10,
     surveillance: 'staff',

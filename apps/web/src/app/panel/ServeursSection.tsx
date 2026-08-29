@@ -234,7 +234,7 @@ export default function ServeursSection() {
               <div className="eff-grade" key={gk}>
                 <div className="eff-grade-head">
                   <GradeBadge gk={gk} />
-                  <strong>{getGrade(gk).label}</strong>
+                  <strong style={{ color: `#${getGrade(gk).color}` }}>{getGrade(gk).label}</strong>
                   <span className="site-sub">({members.length})</span>
                   <button className="chip" onClick={() => setAddFor(addFor === gk ? null : gk)}>
                     + ajouter
