@@ -25,7 +25,6 @@ const REL = 'https://github.com/v9crf8tyfv-coder/EmeriaLauncher/releases/latest/
 const LAUNCHER_WIN_URL = process.env.LAUNCHER_WIN_URL ?? `${REL}/EmeriaMC-windows.exe`;
 const LAUNCHER_MAC_URL = process.env.LAUNCHER_MAC_URL ?? `${REL}/EmeriaMC-mac.dmg`;
 const LAUNCHER_LINUX_URL = process.env.LAUNCHER_LINUX_URL ?? `${REL}/EmeriaMC-linux.AppImage`;
-const JOUEUR_EMOJI = '<:Logojoueur:1536109797114515518>';
 
 export const setupLancerJeu: SlashCommand = {
   minLevel: GRADES.fondateur.level,
@@ -47,14 +46,7 @@ export const setupLancerJeu: SlashCommand = {
 
     const embed = new EmbedBuilder()
       .setColor(BRAND_COLOR)
-      .setDescription(
-        '__*🎮 **Jouer au serveur (PC)***__\n' +
-          `${JOUEUR_EMOJI} **Installe le launcher pour jouer, dans ta version.** 👇\n\n` +
-          '⚠️ Sur **Windows**, un avertissement pourra s’afficher à l’installation. ' +
-          '**Ce n’est PAS dangereux, c’est normal.**\n\n' +
-          '🍎 Sur **Mac**, il faudra **autoriser l’ouverture** (clic droit sur l’app → *Ouvrir*). ' +
-          '**Ce n’est PAS dangereux non plus, c’est normal.**',
-      );
+      .setDescription('**Installe le launcher pour jouer, choisis ta version ci-dessous.**');
 
     // Image : fichier local prioritaire, sinon URL, sinon rien
     const files: AttachmentBuilder[] = [];

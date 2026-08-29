@@ -28,14 +28,14 @@ export const setupRoles: SlashCommand = {
       .setColor(0x8b5cf6)
       .setDescription(
         'Clique sur un bouton pour **prendre** ou **retirer** un rôle.\n\n' +
-          '🤍 **Statut** — être notifié quand le serveur ouvre/ferme',
+          '🛠️ **Statut** — être notifié quand le serveur ouvre/ferme',
       );
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId(`rolebtn:${STATUT_ROLE}`)
         .setLabel('Statut')
-        .setEmoji('🤍')
+        .setEmoji('🛠️')
         .setStyle(ButtonStyle.Secondary),
     );
 

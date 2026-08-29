@@ -11,6 +11,12 @@ function emojiUrl(guild: Guild | null, name: string): string | undefined {
   return e ? e.imageURL({ size: 128 }) : undefined;
 }
 
+/** Markup d'un emoji du serveur (ex "<:LogoResp:123>"), utilisable dans un texte. */
+function emojiTag(guild: Guild | null, name: string): string {
+  const e = guild?.emojis.cache.find((em) => em.name === name);
+  return e ? e.toString() : '';
+}
+
 /**
  * Publie l'effectif dans le salon accueil : un embed d'en-tête (logo Emeria) +
  * un embed par grade (logo + "Pseudo — @mention — ID"). Édite le message existant.
@@ -27,27 +33,27 @@ export async function publishEffectif(client: Client): Promise<void> {
   const text = channel as TextChannel;
   const guild = text.guild;
 
-  // En-tête avec le logo Emeria
-  const header = new EmbedBuilder()
+  // Un seul embed : liens utiles en haut, puis la hiérarchie en liste (un champ par grade).
+  const embed = new EmbedBuilder()
     .setColor(0x8b5cf6)
     .setAuthor({ name: 'Effectif du Staff — EmeriaMC', iconURL: emojiUrl(guild, EMERIA_EMOJI) })
-    .setTitle('🌐 Site officiel — emeria-site.com')
-    .setURL('https://emeria-site.com');
+    .setDescription('**Liens utiles**\n[Site officiel](https://emeria-site.com)');
 
-  const embeds: EmbedBuilder[] = [header];
   for (const sec of EFFECTIF_SECTIONS) {
     const members = rows.filter((r) => sectionForGrades(r.grades) === sec.key);
     const lines = members.map((m) => {
       const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
       return `${m.is_absent ? '⏰ ' : ''}**${m.pseudo}**${dc}`;
     });
-    embeds.push(
-      new EmbedBuilder()
-        .setColor(sec.color)
-        .setAuthor({ name: `${sec.label} (${members.length})`, iconURL: emojiUrl(guild, sec.emoji) })
-        .setDescription(lines.length ? lines.join('\n') : '—'),
-    );
+    const tag = emojiTag(guild, sec.emoji);
+    embed.addFields({
+      name: `${tag ? tag + ' ' : ''}${sec.label} (${members.length})`,
+      value: lines.length ? lines.join('\n') : '—',
+      inline: false,
+    });
   }
+
+  const embeds: EmbedBuilder[] = [embed];
 
   const stored = await db()<{ value: string }[]>`
     select value from bot_state where key = 'effectif_message_id'
