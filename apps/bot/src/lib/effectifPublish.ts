@@ -55,7 +55,7 @@ export async function publishEffectif(client: Client): Promise<void> {
   });
 
   // Fondateurs (pas des cartes staff en base) — affichés en tête de la hiérarchie.
-  const fondaTag = emojiTag(guild, 'LogoFonda');
+  const fondaTag = emojiTag(guild, 'LogoFondateur');
   const fondateurBlock =
     `${fondaTag ? fondaTag + ' ' : ''}**Fondateur** — 2\n` +
     '> **Xtazzking** — ilian0800\n' +
