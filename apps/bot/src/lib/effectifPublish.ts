@@ -54,6 +54,13 @@ export async function publishEffectif(client: Client): Promise<void> {
     return `${head}\n${body}`;
   });
 
+  // Fondateurs (pas des cartes staff en base) — affichés en tête de la hiérarchie.
+  const fondaTag = emojiTag(guild, 'LogoFonda');
+  const fondateurBlock =
+    `${fondaTag ? fondaTag + ' ' : ''}**Fondateur** — 2\n` +
+    '> **Orionyx84**\n' +
+    '> **Xtazzking**';
+
   const description =
     '__**Liens utiles**__\n' +
     '> [Site officiel](https://emeria-site.com)\n' +
@@ -67,6 +74,7 @@ export async function publishEffectif(client: Client): Promise<void> {
     '> [Serveur Privé](https://serveur-prive.net/minecraft/emeriamc/vote)\n' +
     '> [Top Serveurs](https://top-serveurs.net/minecraft/vote/emeriamc/success)\n\n' +
     '__**Hiérarchie du staff**__\n\n' +
+    fondateurBlock + '\n\n' +
     sections.join('\n\n');
 
   const embed = new EmbedBuilder()
