@@ -62,10 +62,10 @@ export async function publishEffectif(client: Client): Promise<void> {
     '> [YouTube](https://youtube.com/@emeriamc)\n' +
     '> [Instagram](https://www.instagram.com/emeriamc)\n\n' +
     '__**Vote**__\n' +
-    '> [serveur-minecraft-vote.fr](https://serveur-minecraft-vote.fr/serveur/2803/voter)\n' +
-    '> [liste-serveurs-minecraft.org](https://www.liste-serveurs-minecraft.org/serveur-minecraft/emeriamc/)\n' +
-    '> [serveur-prive.net](https://serveur-prive.net/minecraft/emeriamc/vote)\n' +
-    '> [top-serveurs.net](https://top-serveurs.net/minecraft/vote/emeriamc/success)\n\n' +
+    '> [Serveur Minecraft Vote](https://serveur-minecraft-vote.fr/serveur/2803/voter)\n' +
+    '> [Liste Serveurs Minecraft](https://www.liste-serveurs-minecraft.org/serveur-minecraft/emeriamc/)\n' +
+    '> [Serveur Privé](https://serveur-prive.net/minecraft/emeriamc/vote)\n' +
+    '> [Top Serveurs](https://top-serveurs.net/minecraft/vote/emeriamc/success)\n\n' +
     '__**Hiérarchie du staff**__\n\n' +
     sections.join('\n\n');
 
