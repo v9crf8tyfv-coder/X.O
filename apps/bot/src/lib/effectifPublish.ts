@@ -58,8 +58,8 @@ export async function publishEffectif(client: Client): Promise<void> {
   const fondaTag = emojiTag(guild, 'LogoFonda');
   const fondateurBlock =
     `${fondaTag ? fondaTag + ' ' : ''}**Fondateur** — 2\n` +
-    '> **Orionyx84**\n' +
-    '> **Xtazzking**';
+    '> **Xtazzking** — ilian0800\n' +
+    '> **Orionyx84** — orionyx84';
 
   const description =
     '__**Liens utiles**__\n' +
