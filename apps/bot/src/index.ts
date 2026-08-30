@@ -16,7 +16,10 @@ import { startServerStatusWatcher } from './worker/serverStatusWatcher.js';
 import { startPlaytimeTracker } from './worker/playtimeTracker.js';
 import { startNewPlayerWatcher } from './worker/newPlayerWatcher.js';
 import { startIgActionsWatcher } from './worker/igActionsWatcher.js';
-import { startAutoRestart } from './worker/autoRestart.js';
+// Redémarrage auto désactivé : il faisait process.exit(0) à 00h/12h et l'hébergeur
+// ne relançait pas toujours le process → bot mort. Un bot discord.js n'a pas besoin
+// de restart quotidien. (Fichier worker/autoRestart.ts conservé mais plus appelé.)
+// import { startAutoRestart } from './worker/autoRestart.js';
 import { logToDiscord, fmtError } from './lib/logWebhook.js';
 
 // Log tout de suite : on saura que le process a bien démarré (avant login).
@@ -66,7 +69,7 @@ client.once('clientReady', () => {
   startPlaytimeTracker();
   startNewPlayerWatcher(client);
   startIgActionsWatcher(client);
-  startAutoRestart();
+  // startAutoRestart(); // désactivé : provoquait la mort du bot à 00h/12h (voir import ci-dessus)
 });
 
 // Le bot s'est déconnecté du gateway (coupure réseau / kill hébergeur)
