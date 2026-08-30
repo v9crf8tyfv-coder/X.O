@@ -55,9 +55,13 @@ export async function publishEffectif(client: Client): Promise<void> {
   });
 
   const description =
-    '**Liens utiles**\n' +
-    '> [Site officiel](https://emeria-site.com)\n\n' +
-    '**Hiérarchie du staff**\n\n' +
+    '__**Liens utiles**__\n' +
+    '> [Site officiel](https://emeria-site.com)\n' +
+    '> [TikTok](https://www.tiktok.com/@emeriamc)\n' +
+    '> [Twitch](https://www.twitch.tv/emeriamc)\n' +
+    '> [YouTube](https://youtube.com/@emeriamc)\n' +
+    '> [Instagram](https://www.instagram.com/emeriamc)\n\n' +
+    '__**Hiérarchie du staff**__\n\n' +
     sections.join('\n\n');
 
   const embed = new EmbedBuilder()
