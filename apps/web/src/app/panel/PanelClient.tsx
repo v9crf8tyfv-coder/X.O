@@ -22,6 +22,7 @@ async function resizeImage(file: File, size: number): Promise<string> {
   return canvas.toDataURL('image/jpeg', 0.82);
 }
 import SiteSection from './SiteSection';
+import LauncherSection from './LauncherSection';
 import StaffSection from './StaffSection';
 import ServeursSection from './ServeursSection';
 import LiensSection from './LiensSection';
@@ -87,6 +88,7 @@ export default function PanelClient({ account }: Props) {
     sections.push({ id: 'sanctions', label: 'Gestion Sanction(s)', icon: '' });
   }
   if (founder) {
+    sections.push({ id: 'launcher', label: 'Launcher', icon: '🚀' });
     sections.push({ id: 'site', label: 'Gestion Site', icon: '🔐' });
   }
 
@@ -129,6 +131,8 @@ export default function PanelClient({ account }: Props) {
           <LiensSection myGrade={account.site_grade} />
         ) : current.id === 'site' ? (
           <SiteSection myGrade={account.site_grade} isChief={account.is_founder_chief} />
+        ) : current.id === 'launcher' ? (
+          <LauncherSection />
         ) : current.id === 'staff' ? (
           <StaffSection myGrade={account.site_grade} />
         ) : current.id === 'serveurs' ? (
