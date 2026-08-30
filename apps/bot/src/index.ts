@@ -45,6 +45,11 @@ const client = new Client({
     ReactionUserManager: 0,
     GuildBanManager: 0,
     ThreadManager: 0,
+    // Caches jamais utilisés par le bot → 0 (gain de RAM, aucun impact fonctionnel)
+    GuildStickerManager: 0,
+    GuildScheduledEventManager: 0,
+    StageInstanceManager: 0,
+    AutoModerationRuleManager: 0,
   }),
   sweepers: {
     ...Options.DefaultSweeperSettings,
