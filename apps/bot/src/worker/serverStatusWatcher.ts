@@ -7,6 +7,11 @@ const HOST = 'emeriamc.mine.gg';
 const PORT = 10006;
 const STATE_KEY = 'server_online';
 
+// Anti-spam : le serveur peut rater un ping ponctuellement (lag, pré-génération Chunky…).
+// On n'annonce CLOSE qu'après FAIL_THRESHOLD pings ratés d'affilée. OPEN reste immédiat.
+const FAIL_THRESHOLD = 3;
+let consecutiveFails = 0;
+
 async function ping(): Promise<boolean> {
   try {
     await status(HOST, PORT, { timeout: 5000 });
@@ -17,7 +22,15 @@ async function ping(): Promise<boolean> {
 }
 
 async function check(client: Client): Promise<void> {
-  const online = await ping();
+  const up = await ping();
+  if (up) {
+    consecutiveFails = 0;
+  } else {
+    consecutiveFails++;
+    // Pas encore sûr que le serveur soit vraiment down → on attend, sans rien poster.
+    if (consecutiveFails < FAIL_THRESHOLD) return;
+  }
+  const online = up;
   const cur = online ? '1' : '0';
 
   let prev: string | null = null;
