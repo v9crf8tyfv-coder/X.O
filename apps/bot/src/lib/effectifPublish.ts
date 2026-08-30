@@ -22,9 +22,23 @@ function escMd(s: string): string {
   return s.replace(/([\\_*~`|])/g, '\\$1');
 }
 
+/** Durée écoulée depuis une date, en format court FR (à l'instant / X min / X h / X j). */
+function ago(since: Date | null): string {
+  if (!since) return '';
+  const ms = Date.now() - since.getTime();
+  const min = Math.floor(ms / 60_000);
+  if (min < 1) return "à l'instant";
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} h`;
+  const j = Math.floor(h / 24);
+  return `${j} j`;
+}
+
 /**
- * Publie l'effectif dans le salon accueil : un embed d'en-tête (logo Emeria) +
- * un embed par grade (logo + "Pseudo — @mention — ID"). Édite le message existant.
+ * Publie l'effectif dans le salon accueil : UN seul embed (liens utiles + hiérarchie),
+ * chaque staff affiché avec son statut temps réel (En ligne / Hors ligne depuis…).
+ * Édite le message existant.
  */
 export async function publishEffectif(client: Client): Promise<void> {
   if (!hasDatabase()) return;
@@ -32,6 +46,12 @@ export async function publishEffectif(client: Client): Promise<void> {
   const rows = await db()<EffectifRow[]>`
     select pseudo, grades, discord_id, is_absent from staff where active = true
   `;
+
+  // Présence temps réel (maj par worker/staffPresence) : en ligne/hors ligne + depuis quand.
+  const presRows = await db()<{ pseudo: string; online: boolean; since: Date }[]>`
+    select pseudo, online, since from staff_presence
+  `.catch(() => [] as { pseudo: string; online: boolean; since: Date }[]);
+  const presence = new Map(presRows.map((p) => [p.pseudo.toLowerCase(), p]));
 
   const channel = await client.channels.fetch(CHANNELS.accueil).catch(() => null);
   if (!channel?.isTextBased()) return;
@@ -46,8 +66,13 @@ export async function publishEffectif(client: Client): Promise<void> {
     const body = members.length
       ? members
           .map((m) => {
-            const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
-            return `> ${m.is_absent ? '⏰ ' : ''}**${escMd(m.pseudo)}**${dc}`;
+            const pr = presence.get(m.pseudo.toLowerCase());
+            const stat = pr
+              ? pr.online
+                ? `En ligne depuis ${ago(pr.since)}`
+                : `Hors ligne depuis ${ago(pr.since)}`
+              : 'Hors ligne';
+            return `> ${m.is_absent ? '⏰ ' : ''}**${escMd(m.pseudo)}** — ${stat}`;
           })
           .join('\n')
       : '> *—*';

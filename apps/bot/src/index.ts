@@ -21,6 +21,7 @@ import { startIgActionsWatcher } from './worker/igActionsWatcher.js';
 // de restart quotidien. (Fichier worker/autoRestart.ts conservé mais plus appelé.)
 // import { startAutoRestart } from './worker/autoRestart.js';
 import { startWatchdog } from './worker/watchdog.js';
+import { startStaffPresence } from './worker/staffPresence.js';
 import { logToDiscord, fmtError } from './lib/logWebhook.js';
 
 // Log tout de suite : on saura que le process a bien démarré (avant login).
@@ -72,6 +73,7 @@ client.once('clientReady', () => {
   startIgActionsWatcher(client);
   // startAutoRestart(); // désactivé : provoquait la mort du bot à 00h/12h (voir import ci-dessus)
   startWatchdog(client); // détecte une gateway zombie (bot en ligne mais muet) → relance
+  startStaffPresence(client); // suivi temps réel en ligne/hors ligne du staff (effectif)
 });
 
 // Le bot s'est déconnecté du gateway (coupure réseau / kill hébergeur)
