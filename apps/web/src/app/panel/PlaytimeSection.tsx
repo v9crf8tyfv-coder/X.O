@@ -4,6 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { getGrade } from '@xo/shared';
 import { GradeBadge } from './GradeBadge';
 
+/** Grade le plus élevé (par niveau) d'un staff — pour l'affichage. */
+function topGradeKey(grades: string[]): string {
+  if (!grades || grades.length === 0) return 'joueur';
+  return grades.reduce((best, g) => (getGrade(g).level > getGrade(best).level ? g : best), grades[0]!);
+}
+
 interface Row {
   id: string;
   pseudo: string;
@@ -74,9 +80,9 @@ export default function PlaytimeSection() {
           ← Retour à la liste
         </button>
         <div className="pt-detail-head">
-          <GradeBadge gk={current.grades[0] ?? 'joueur'} />
+          <GradeBadge gk={topGradeKey(current.grades)} />
           <h2 style={{ margin: 0 }}>{current.pseudo}</h2>
-          <span className="pt-grade">{getGrade(current.grades[0]).label}</span>
+          <span className="pt-grade">{getGrade(topGradeKey(current.grades)).label}</span>
         </div>
 
         <div className="pt-weeknav">
@@ -145,9 +151,9 @@ export default function PlaytimeSection() {
         {staff.map((s) => (
           <button key={s.id} className="pt-row" onClick={() => setSelected(s.id)}>
             <span className="pt-staff">
-              <GradeBadge gk={s.grades[0] ?? 'joueur'} />
+              <GradeBadge gk={topGradeKey(s.grades)} />
               <strong>{s.pseudo}</strong>
-              <span className="pt-grade">{getGrade(s.grades[0]).label}</span>
+              <span className="pt-grade">{getGrade(topGradeKey(s.grades)).label}</span>
             </span>
             <span className="pt-rowtotal">{fmt(s.total)} cette semaine ›</span>
           </button>
