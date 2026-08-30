@@ -22,6 +22,21 @@ function escMd(s: string): string {
   return s.replace(/([\\_*~`|])/g, '\\$1');
 }
 
+/** Retrouve l'ID Discord d'un membre par son nom d'utilisateur (pour les mentions fondateur). */
+async function memberIdByUsername(guild: Guild | null, username: string): Promise<string | null> {
+  if (!guild) return null;
+  const uname = username.toLowerCase();
+  const cached = guild.members.cache.find((m) => m.user.username.toLowerCase() === uname);
+  if (cached) return cached.id;
+  try {
+    const found = await guild.members.fetch({ query: username, limit: 5 });
+    const m = found.find((x) => x.user.username.toLowerCase() === uname);
+    return m ? m.id : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Publie l'effectif dans le salon accueil : UN seul embed (liens utiles + hiérarchie).
  * Édite le message existant.
@@ -56,10 +71,14 @@ export async function publishEffectif(client: Client): Promise<void> {
 
   // Fondateurs (pas des cartes staff en base) — affichés en tête de la hiérarchie.
   const fondaTag = emojiTag(guild, 'LogoFondateur');
+  const xtazzId = await memberIdByUsername(guild, 'ilian0800');
+  const orionId = await memberIdByUsername(guild, 'orionyx84');
+  const xtazzMention = xtazzId ? `<@${xtazzId}>` : 'ilian0800';
+  const orionMention = orionId ? `<@${orionId}>` : 'orionyx84';
   const fondateurBlock =
     `${fondaTag ? fondaTag + ' ' : ''}**Fondateur** — 2\n` +
-    '> **Xtazzking** — ilian0800\n' +
-    '> **Orionyx84** — orionyx84';
+    `> **Xtazzking** — ${xtazzMention}\n` +
+    `> **Orionyx84** — ${orionMention}`;
 
   const description =
     '__**Liens utiles**__\n' +
