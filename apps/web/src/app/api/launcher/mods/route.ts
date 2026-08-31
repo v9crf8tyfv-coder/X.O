@@ -19,7 +19,7 @@ export async function GET() {
   }
 }
 
-const MAX_URL = 150 * 1024 * 1024; // ~150 Mo pour l'ajout par lien (le serveur télécharge)
+const MAX_URL = 180 * 1024 * 1024; // ~180 Mo pour l'ajout par lien (le serveur télécharge)
 
 /** Ajoute un mod ou resourcepack (upload de fichier, OU par lien via JSON). */
 export async function POST(req: Request) {

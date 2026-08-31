@@ -210,7 +210,7 @@ export default function LauncherSection() {
           <input ref={modRef} type="file" accept=".jar" multiple hidden onChange={(e) => stage('mods', e.target.files)} />
           <input ref={rpRef} type="file" accept=".zip" multiple hidden onChange={(e) => stage('resourcepacks', e.target.files)} />
         </div>
-        <p className="lchr-hint">Fichier direct : ~4 Mo max (limite Vercel). Pour les gros mods, utilise « par lien » ci-dessous (jusqu'à 150 Mo).</p>
+        <p className="lchr-hint">Fichier direct : ~4 Mo max (limite Vercel). Pour les gros mods, utilise « par lien » ci-dessous (jusqu'à 180 Mo).</p>
         <div className="lchr-add" style={{ marginTop: 8 }}>
           <button className="btn-sec" onClick={() => addByLink('mods')}>+ Mod par lien</button>
           <button className="btn-sec" onClick={() => addByLink('resourcepacks')}>+ Resourcepack par lien</button>
