@@ -1,10 +1,13 @@
-/** Parse une date "JJ/MM/AAAA" -> Date (UTC minuit). null si invalide. */
+/** Parse une date "JJ/MM/AAAA" -> Date (UTC minuit). null si invalide.
+ *  Tolérant : séparateurs / . - , espaces éventuels, et année à 2 ou 4 chiffres. */
 export function parseFrDate(input: string): Date | null {
-  const m = input.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const cleaned = String(input).trim().replace(/\s+/g, '');
+  const m = cleaned.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/);
   if (!m) return null;
   const day = parseInt(m[1]!, 10);
   const month = parseInt(m[2]!, 10);
-  const year = parseInt(m[3]!, 10);
+  let year = parseInt(m[3]!, 10);
+  if (m[3]!.length === 2) year += 2000; // "26" -> 2026
   const d = new Date(Date.UTC(year, month - 1, day));
   if (
     d.getUTCDate() !== day ||
