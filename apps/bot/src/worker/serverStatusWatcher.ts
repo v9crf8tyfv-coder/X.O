@@ -9,7 +9,7 @@ const STATE_KEY = 'server_online';
 
 // Anti-spam : le serveur peut rater un ping ponctuellement (lag, pré-génération Chunky…).
 // On n'annonce CLOSE qu'après FAIL_THRESHOLD pings ratés d'affilée. OPEN reste immédiat.
-const FAIL_THRESHOLD = 3;
+const FAIL_THRESHOLD = 2;
 let consecutiveFails = 0;
 
 async function ping(): Promise<boolean> {
