@@ -242,7 +242,7 @@ export default function LauncherSection() {
       {(implemented || build.on || build.done) && (
         <div className="lchr-card">
           <h3>Mettre à jour les 3 launchers</h3>
-          <p className="lchr-hint">Reconstruit et publie les launchers Windows / Mac / Linux. Les joueurs reçoivent la maj automatiquement.</p>
+          <p className="lchr-hint">⚠️ PAS nécessaire pour les mods/resourcepacks — les joueurs les reçoivent au prochain lancement du jeu, tout seuls. Ce bouton sert UNIQUEMENT à reconstruire l'appli launcher elle-même (rare). Reconstruit et publie Windows / Mac / Linux.</p>
           {(build.on || build.done) && <Bar pct={build.pct} label={build.label} ok={build.done && build.ok} fail={build.done && !build.ok} />}
           {!build.on && !build.done && (
             <button className="btn-accent" onClick={update3} style={{ marginTop: 12 }}>Lancer la mise à jour</button>
