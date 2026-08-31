@@ -23,6 +23,7 @@ async function resizeImage(file: File, size: number): Promise<string> {
 }
 import SiteSection from './SiteSection';
 import LauncherSection from './LauncherSection';
+import SupportStaffSection from './SupportStaffSection';
 import StaffSection from './StaffSection';
 import ServeursSection from './ServeursSection';
 import LiensSection from './LiensSection';
@@ -89,6 +90,7 @@ export default function PanelClient({ account }: Props) {
   }
   if (founder) {
     sections.push({ id: 'launcher', label: 'Launcher', icon: '🚀' });
+    sections.push({ id: 'support', label: 'Support', icon: '🎫' });
     sections.push({ id: 'site', label: 'Gestion Site', icon: '🔐' });
   }
 

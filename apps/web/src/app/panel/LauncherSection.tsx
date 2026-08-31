@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 interface Entry { name: string; url: string; sha256: string }
-interface Manifest { mods: Entry[]; resourcepacks: Entry[]; optional: (Entry & { id: string })[] }
+interface Manifest { mods: Entry[]; resourcepacks: Entry[]; optional: (Entry & { id: string })[]; axiomAllowed: string[] }
 type Kind = 'mods' | 'resourcepacks';
 
 export default function LauncherSection() {
@@ -80,6 +80,24 @@ export default function LauncherSection() {
     else setError((await r.json().catch(() => ({}))).error || 'Échec de la suppression.');
   }
 
+  const [axiomInput, setAxiomInput] = useState('');
+  async function addAxiom() {
+    const pseudo = axiomInput.trim();
+    if (!pseudo) return;
+    setError('');
+    const r = await fetch('/api/launcher/axiom', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pseudo }),
+    });
+    if (r.ok) { setManifest((await r.json()).manifest); setAxiomInput(''); }
+    else setError((await r.json().catch(() => ({}))).error || 'Échec de l’ajout.');
+  }
+  async function delAxiom(pseudo: string) {
+    if (!confirm(`Retirer ${pseudo} du staff build (Axiom) ?`)) return;
+    const r = await fetch(`/api/launcher/axiom?pseudo=${encodeURIComponent(pseudo)}`, { method: 'DELETE' });
+    if (r.ok) setManifest((await r.json()).manifest);
+    else setError((await r.json().catch(() => ({}))).error || 'Échec de la suppression.');
+  }
+
   /** Lance la mise à jour des 3 launchers (build 3 OS) + suit la progression. */
   async function update3() {
     setError('');
@@ -144,6 +162,32 @@ export default function LauncherSection() {
       {!!manifest?.optional?.length && (
         <PublishedList title="Optionnels (Axiom — staff build)" items={manifest.optional} readOnly />
       )}
+
+      {/* Staff build : liste des pseudos autorisés à Axiom */}
+      <div className="lchr-card">
+        <h3>Staff build — Axiom <span className="lchr-count">{manifest?.axiomAllowed?.length ?? 0}</span></h3>
+        <p className="lchr-hint">Ces pseudos Minecraft peuvent activer Axiom dans le launcher (build staff).</p>
+        {manifest?.axiomAllowed?.length ? (
+          <ul className="lchr-list">
+            {manifest.axiomAllowed.map((p) => (
+              <li key={p}><span>{p}</span><button className="lchr-x" onClick={() => delAxiom(p)}>Retirer</button></li>
+            ))}
+          </ul>
+        ) : (
+          <p className="lchr-hint">Aucun pour l’instant.</p>
+        )}
+        <div className="lchr-add" style={{ marginTop: 12 }}>
+          <input
+            className="btn-sec"
+            style={{ flex: 1, minWidth: 160 }}
+            placeholder="Pseudo Minecraft"
+            value={axiomInput}
+            onChange={(e) => setAxiomInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') addAxiom(); }}
+          />
+          <button className="btn-accent" onClick={addAxiom}>Ajouter</button>
+        </div>
+      </div>
 
       {/* Ajout */}
       <div className="lchr-card">

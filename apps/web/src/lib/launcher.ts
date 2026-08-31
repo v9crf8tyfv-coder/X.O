@@ -21,6 +21,7 @@ export interface Manifest {
   mods: ManifestEntry[];
   resourcepacks: ManifestEntry[];
   optional: OptionalEntry[];
+  axiomAllowed: string[]; // pseudos autorisés à voir/activer Axiom (staff build)
 }
 
 export function hasToken(): boolean {
@@ -71,7 +72,7 @@ export async function getModsRelease(): Promise<Release> {
   return (await r.json()) as Release;
 }
 
-const EMPTY: Manifest = { mods: [], resourcepacks: [], optional: [] };
+const EMPTY: Manifest = { mods: [], resourcepacks: [], optional: [], axiomAllowed: [] };
 
 /** Lit manifest.json depuis la release (ou un manifeste vide s'il n'existe pas). */
 export async function getManifest(rel?: Release): Promise<Manifest> {
@@ -86,6 +87,7 @@ export async function getManifest(rel?: Release): Promise<Manifest> {
       mods: Array.isArray(j.mods) ? j.mods : [],
       resourcepacks: Array.isArray(j.resourcepacks) ? j.resourcepacks : [],
       optional: Array.isArray(j.optional) ? j.optional : [],
+      axiomAllowed: Array.isArray(j.axiomAllowed) ? j.axiomAllowed : [],
     };
   } catch {
     return { ...EMPTY };
@@ -150,6 +152,27 @@ export async function addFile(
 }
 
 /** Retire un fichier du manifeste (et supprime l'asset). */
+/** Ajoute un pseudo à la liste Axiom (staff build). Insensible à la casse, sans doublon. */
+export async function addAxiom(pseudo: string): Promise<Manifest> {
+  const release = await getModsRelease();
+  const manifest = await getManifest(release);
+  const p = pseudo.trim();
+  if (p && !manifest.axiomAllowed.some((x) => x.toLowerCase() === p.toLowerCase())) {
+    manifest.axiomAllowed.push(p);
+    await putManifest(release, manifest);
+  }
+  return manifest;
+}
+
+/** Retire un pseudo de la liste Axiom. */
+export async function removeAxiom(pseudo: string): Promise<Manifest> {
+  const release = await getModsRelease();
+  const manifest = await getManifest(release);
+  manifest.axiomAllowed = manifest.axiomAllowed.filter((x) => x.toLowerCase() !== pseudo.toLowerCase());
+  await putManifest(release, manifest);
+  return manifest;
+}
+
 export async function removeFile(kind: 'mods' | 'resourcepacks', filename: string): Promise<Manifest> {
   const release = await getModsRelease();
   const manifest = await getManifest(release);
