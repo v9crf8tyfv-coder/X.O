@@ -23,13 +23,15 @@ export async function postStatus(client: Client, isOpen: boolean): Promise<void>
   }
 
   const pings = PING_ROLES.map((r) => `<@&${r}>`).join(' ');
-  const content = `# Serveur ${isOpen ? 'OPEN' : 'CLOSE'}\n-# ${pings}`;
+  const content = isOpen
+    ? `# *__✅ Serveur OPEN__*\n-# ${pings}`
+    : `# *__🆑  Serveur Close__*\n-# ${pings} ✂️`;
   const img = resolve(__dirname, `../../assets/status-${isOpen ? 'open' : 'close'}.png`);
   const files = existsSync(img) ? [new AttachmentBuilder(img, { name: 'statut.png' })] : [];
 
   const msg = await ch.send({ content, files, allowedMentions: { roles: PING_ROLES } });
   await msg.react('💜').catch(() => {});
-  await msg.react('✅').catch(() => {});
+  await msg.react(isOpen ? '✅' : '🆑').catch(() => {});
 
   if (hasDatabase()) {
     await db()`
