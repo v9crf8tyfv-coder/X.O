@@ -24,8 +24,8 @@ export async function postStatus(client: Client, isOpen: boolean): Promise<void>
 
   const pings = PING_ROLES.map((r) => `<@&${r}>`).join(' ');
   const content = isOpen
-    ? `# *__✅ Serveur OPEN__*\n-# ${pings}`
-    : `# *__🆑  Serveur Close__*\n-# ${pings} ✂️`;
+    ? `# ✅  *__Serveur OPEN__*\n-# ➡️ *${pings}*`
+    : `# 🆑  *__Serveur Close__*\n-# ➡️ *${pings} ✂️*`;
   const img = resolve(__dirname, `../../assets/status-${isOpen ? 'open' : 'close'}.png`);
   const files = existsSync(img) ? [new AttachmentBuilder(img, { name: 'statut.png' })] : [];
 
