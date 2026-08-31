@@ -11,10 +11,10 @@ const cache = new Map<string, string>(); // nom d'émoji -> id
 let loaded = false;
 let loading: Promise<void> | null = null;
 
-/** Nom d'émoji valide (Tete_<pseudo>) : 2–32 caractères, [A-Za-z0-9_]. */
+/** Nom d'émoji valide (Tr_<pseudo>) : 2–32 caractères, [A-Za-z0-9_]. (Tr = tête ronde) */
 function emojiName(pseudo: string): string {
   const clean = pseudo.replace(/[^A-Za-z0-9_]/g, '');
-  return ('Tete_' + clean).slice(0, 32) || 'Tete_x';
+  return ('Tr_' + clean).slice(0, 32) || 'Tr_x';
 }
 
 async function ensureLoaded(client: Client): Promise<void> {
@@ -46,7 +46,9 @@ export async function headEmoji(client: Client, pseudo: string): Promise<string>
   const cached = cache.get(name);
   if (cached) return `<:${name}:${cached}>`;
   try {
-    const res = await fetch(`https://mc-heads.net/avatar/${encodeURIComponent(pseudo)}/64`);
+    // wsrv.nl arrondit l'image côté serveur (mask=circle) → aucun traitement sur le bot.
+    const src = `mc-heads.net/avatar/${encodeURIComponent(pseudo)}/64`;
+    const res = await fetch(`https://wsrv.nl/?url=${encodeURIComponent(src)}&mask=circle&output=png`);
     if (!res.ok) return '';
     const buf = Buffer.from(await res.arrayBuffer());
     const emoji = await client.application.emojis.create({ attachment: buf, name });
