@@ -52,6 +52,6 @@ async function check(client: Client): Promise<void> {
 /** Surveille automatiquement l'état du serveur MC et poste OPEN/CLOSE au changement. */
 export function startServerStatusWatcher(client: Client): void {
   const run = () => check(client).catch((e) => console.error('[status]', e));
-  setTimeout(run, 10_000); // premier check au démarrage
-  setInterval(run, 60_000); // puis toutes les 60s
+  setTimeout(run, 8_000); // premier check au démarrage
+  setInterval(run, 20_000); // puis toutes les 20s (CLOSE confirmé en ~40s, OPEN instantané)
 }
