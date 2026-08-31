@@ -105,7 +105,7 @@ export async function publishEffectif(client: Client): Promise<void> {
     sections.join('\n\n');
 
   const embed = new EmbedBuilder()
-    .setColor(0x8b5cf6)
+    .setColor(0x4c1d95) // violet foncé
     .setAuthor({ name: 'Effectif du Staff — EmeriaMC', iconURL: emojiUrl(guild, EMERIA_EMOJI) })
     .setDescription(description);
 
