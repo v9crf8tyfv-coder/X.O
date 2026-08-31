@@ -135,6 +135,8 @@ export default function PanelClient({ account }: Props) {
           <SiteSection myGrade={account.site_grade} isChief={account.is_founder_chief} />
         ) : current.id === 'launcher' ? (
           <LauncherSection />
+        ) : current.id === 'support' ? (
+          <SupportStaffSection />
         ) : current.id === 'staff' ? (
           <StaffSection myGrade={account.site_grade} />
         ) : current.id === 'serveurs' ? (
