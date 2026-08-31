@@ -21,8 +21,8 @@ export interface EffectifSection {
 export const EFFECTIF_SECTIONS: EffectifSection[] = [
   { key: 'responsable', label: 'Responsable', emoji: 'LogoResp', color: 0x8b1a1a },
   { key: 'admin', label: 'Administrateur', emoji: 'LogoAdmin', color: 0xdc2626 },
-  { key: 'buildeur', label: 'Buildeur', emoji: 'LogoBuildeur', color: 0x65a30d },
   { key: 'modo', label: 'Modérateur', emoji: 'LogoModo', color: 0x9333ea },
+  { key: 'buildeur', label: 'Buildeur', emoji: 'LogoBuildeur', color: 0x65a30d },
   { key: 'com', label: 'Communication', emoji: 'LogoCom', color: 0xb14fd6 },
   { key: 'betatesteur', label: 'Bêta-testeur', emoji: 'LogoBetaTest', color: 0x9ca3af },
 ];

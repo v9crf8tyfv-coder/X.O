@@ -2,6 +2,7 @@ import { EmbedBuilder, type Client, type Guild, type TextChannel } from 'discord
 import { CHANNELS } from '@xo/shared';
 import { db, hasDatabase } from '@xo/db';
 import { EFFECTIF_SECTIONS, sectionForGrades, type EffectifRow } from './effectif.js';
+import { headEmoji } from './headEmojis.js';
 
 const EMERIA_EMOJI = 'EmeriaMC';
 
@@ -54,20 +55,25 @@ export async function publishEffectif(client: Client): Promise<void> {
   const guild = text.guild;
 
   // Un seul embed, propre et aéré : liens utiles en haut, puis la hiérarchie en liste.
-  const sections = EFFECTIF_SECTIONS.map((sec) => {
-    const members = rows.filter((r) => sectionForGrades(r.grades) === sec.key);
-    const tag = emojiTag(guild, sec.emoji);
-    const head = `${tag ? tag + ' ' : ''}**${sec.label}** — ${members.length}`;
-    const body = members.length
-      ? members
-          .map((m) => {
-            const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
-            return `> ${m.is_absent ? '⏰ ' : ''}**${escMd(m.pseudo)}**${dc}`;
-          })
-          .join('\n')
-      : '> *—*';
-    return `${head}\n${body}`;
-  });
+  const sections = await Promise.all(
+    EFFECTIF_SECTIONS.map(async (sec) => {
+      const members = rows.filter((r) => sectionForGrades(r.grades) === sec.key);
+      const tag = emojiTag(guild, sec.emoji);
+      const header = `${tag ? tag + ' ' : ''}**${sec.label}** — ${members.length}`;
+      const body = members.length
+        ? (
+            await Promise.all(
+              members.map(async (m) => {
+                const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
+                const th = await headEmoji(client, m.pseudo);
+                return `> ${th ? th + ' ' : ''}${m.is_absent ? '⏰ ' : ''}**${escMd(m.pseudo)}**${dc}`;
+              }),
+            )
+          ).join('\n')
+        : '> *—*';
+      return `${header}\n${body}`;
+    }),
+  );
 
   // Fondateurs (pas des cartes staff en base) — affichés en tête de la hiérarchie.
   const fondaTag = emojiTag(guild, 'LogoFondateur');
@@ -75,10 +81,12 @@ export async function publishEffectif(client: Client): Promise<void> {
   const orionId = await memberIdByUsername(guild, 'orionyx84');
   const xtazzMention = xtazzId ? `<@${xtazzId}>` : 'ilian0800';
   const orionMention = orionId ? `<@${orionId}>` : 'orionyx84';
+  const xtazzHead = await headEmoji(client, 'Xtazzking');
+  const orionHead = await headEmoji(client, 'Orionyx84');
   const fondateurBlock =
     `${fondaTag ? fondaTag + ' ' : ''}**Fondateur** — 2\n` +
-    `> **Xtazzking** — ${xtazzMention}\n` +
-    `> **Orionyx84** — ${orionMention}`;
+    `> ${xtazzHead ? xtazzHead + ' ' : ''}**Xtazzking** — ${xtazzMention}\n` +
+    `> ${orionHead ? orionHead + ' ' : ''}**Orionyx84** — ${orionMention}`;
 
   const description =
     '__**Liens utiles**__\n' +
