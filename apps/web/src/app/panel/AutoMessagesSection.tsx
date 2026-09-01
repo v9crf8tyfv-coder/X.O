@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 interface Msg {
   id: number;
@@ -10,8 +10,11 @@ interface Msg {
   mode: string;
   every_hours: number | null;
   at_hhmm: string | null;
+  days: string | null;
   enabled: boolean;
 }
+
+const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']; // index 0 = jour 1 (Lundi)
 
 export default function AutoMessagesSection() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -26,8 +29,10 @@ export default function AutoMessagesSection() {
   const [mode, setMode] = useState<'interval' | 'daily'>('interval');
   const [everyHours, setEveryHours] = useState('2');
   const [atHHMM, setAtHHMM] = useState('19:00');
+  const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5, 6, 7]); // tous par défaut
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState<number | null>(null);
+  const toggleDay = (d: number) => setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()));
 
   async function load() {
     setLoading(true);
@@ -50,7 +55,7 @@ export default function AutoMessagesSection() {
     const r = await fetch('/api/auto-messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target, channelId, content, imageUrl, mode, everyHours: Number(everyHours), atHHMM }),
+      body: JSON.stringify({ target, channelId, content, imageUrl, mode, everyHours: Number(everyHours), atHHMM, days }),
     });
     setSaving(false);
     if (r.ok) { setContent(''); setImageUrl(''); await load(); }
@@ -70,8 +75,13 @@ export default function AutoMessagesSection() {
   }
 
   const muted = 'var(--muted, #8a8a94)';
-  const timing = (m: Msg) =>
-    m.mode === 'daily' ? `chaque jour à ${m.at_hhmm}` : `toutes les ${m.every_hours ?? 2} h`;
+  const timing = (m: Msg) => {
+    if (m.mode !== 'daily') return `toutes les ${m.every_hours ?? 2} h`;
+    const jours = m.days
+      ? ' (' + m.days.split(',').map((d) => DAY_LABELS[Number(d) - 1]).join(' ') + ')'
+      : '';
+    return `chaque jour à ${m.at_hhmm}${jours}`;
+  };
 
   return (
     <div className="launcher-sec">
@@ -98,12 +108,10 @@ export default function AutoMessagesSection() {
             <input className="btn-sec" placeholder="ID du salon Discord (clic droit sur le salon → Copier l'identifiant)"
               value={channelId} onChange={(e) => setChannelId(e.target.value)} style={{ padding: '10px 12px' }} />
           )}
-          <textarea className="btn-sec" placeholder="Message (ex. N'oubliez pas de voter : /vote)" rows={3}
+          <textarea className="btn-sec" placeholder="Message — Discord : **gras** __souligné__ · En jeu : &a couleur &l gras (voir aperçu)" rows={3}
             value={content} onChange={(e) => setContent(e.target.value)} style={{ padding: '10px 12px', resize: 'vertical' }} />
-          {target === 'discord' && (
-            <input className="btn-sec" placeholder="Lien image (optionnel, https://…)"
-              value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} style={{ padding: '10px 12px' }} />
-          )}
+          <input className="btn-sec" placeholder="Lien image (optionnel, https://… — s'affiche sur Discord)"
+            value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} style={{ padding: '10px 12px' }} />
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <select className="btn-sec" value={mode} onChange={(e) => setMode(e.target.value as 'interval' | 'daily')} style={{ padding: '10px 12px' }}>
               <option value="interval">Toutes les X heures</option>
@@ -120,6 +128,25 @@ export default function AutoMessagesSection() {
             )}
             <button className="btn-accent" onClick={add} disabled={saving}>{saving ? '…' : 'Ajouter'}</button>
           </div>
+          {mode === 'daily' && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ color: muted, fontSize: 13 }}>Jours :</span>
+              {DAY_LABELS.map((lbl, i) => {
+                const d = i + 1;
+                const on = days.includes(d);
+                return (
+                  <button key={d} type="button" onClick={() => toggleDay(d)} className="btn-sec"
+                    style={{ padding: '6px 10px', opacity: on ? 1 : 0.4, borderColor: on ? 'var(--accent, #7c5cff)' : undefined }}>
+                    {lbl}
+                  </button>
+                );
+              })}
+              <span style={{ color: muted, fontSize: 12 }}>
+                ({days.length === 7 ? 'tous les jours' : days.length === 0 ? 'aucun jour !' : days.length + ' jours'})
+              </span>
+            </div>
+          )}
+          <ChatPreview text={content} inGame={target === 'game'} />
         </div>
       </div>
 
@@ -161,6 +188,58 @@ export default function AutoMessagesSection() {
   );
 }
 
+const MC_COLORS: Record<string, string> = {
+  '0': '#000000', '1': '#0000AA', '2': '#00AA00', '3': '#00AAAA', '4': '#AA0000', '5': '#AA00AA',
+  '6': '#FFAA00', '7': '#AAAAAA', '8': '#555555', '9': '#5555FF', a: '#55FF55', b: '#55FFFF',
+  c: '#FF5555', d: '#FF55FF', e: '#FFFF55', f: '#FFFFFF',
+};
+
+/** Rend les codes Minecraft &a &l &n … en <span> stylés. */
+function renderMc(text: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  let color = '#FFFFFF', bold = false, italic = false, underline = false, strike = false, buf = '', k = 0;
+  const flush = () => {
+    if (!buf) return;
+    const deco = `${underline ? 'underline' : ''} ${strike ? 'line-through' : ''}`.trim();
+    out.push(<span key={k++} style={{ color, fontWeight: bold ? 700 : 400, fontStyle: italic ? 'italic' : 'normal', textDecoration: deco || 'none' }}>{buf}</span>);
+    buf = '';
+  };
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if ((ch === '&' || ch === '§') && i + 1 < text.length) {
+      const c = text[i + 1].toLowerCase();
+      if (MC_COLORS[c]) { flush(); color = MC_COLORS[c]; bold = italic = underline = strike = false; i++; continue; }
+      if (c === 'l') { flush(); bold = true; i++; continue; }
+      if (c === 'o') { flush(); italic = true; i++; continue; }
+      if (c === 'n') { flush(); underline = true; i++; continue; }
+      if (c === 'm') { flush(); strike = true; i++; continue; }
+      if (c === 'r') { flush(); color = '#FFFFFF'; bold = italic = underline = strike = false; i++; continue; }
+      if (c === 'k') { i++; continue; }
+    }
+    buf += ch;
+  }
+  flush();
+  return out;
+}
+
+/** Rend le markdown Discord (**gras** __souligné__ *italique* ~~barré~~) — simple, non imbriqué. */
+function renderDiscord(text: string): ReactNode[] {
+  const re = /(\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|\*[^*]+\*)/g;
+  const out: ReactNode[] = [];
+  let last = 0, m: RegExpExecArray | null, k = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) out.push(<span key={k++}>{text.slice(last, m.index)}</span>);
+    const t = m[0];
+    if (t.startsWith('**')) out.push(<b key={k++}>{t.slice(2, -2)}</b>);
+    else if (t.startsWith('__')) out.push(<u key={k++}>{t.slice(2, -2)}</u>);
+    else if (t.startsWith('~~')) out.push(<s key={k++}>{t.slice(2, -2)}</s>);
+    else out.push(<i key={k++}>{t.slice(1, -1)}</i>);
+    last = m.index + t.length;
+  }
+  if (last < text.length) out.push(<span key={k++}>{text.slice(last)}</span>);
+  return out;
+}
+
 function ChatPreview({ text, inGame }: { text: string; inGame: boolean }) {
   return (
     <div style={{
@@ -174,10 +253,10 @@ function ChatPreview({ text, inGame }: { text: string; inGame: boolean }) {
       {inGame ? (
         <div>
           <span style={{ color: '#FFAA00', fontWeight: 700 }}>[EmeriaMC] </span>
-          <span style={{ color: '#FFFF55' }}>{text || '(vide)'}</span>
+          {text ? renderMc(text) : <span style={{ color: '#888' }}>(vide)</span>}
         </div>
       ) : (
-        <div style={{ color: '#dcddde' }}>{text || '(vide)'}</div>
+        <div style={{ color: '#dcddde' }}>{text ? renderDiscord(text) : <span style={{ color: '#888' }}>(vide)</span>}</div>
       )}
     </div>
   );

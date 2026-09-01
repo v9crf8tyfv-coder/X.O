@@ -10,7 +10,15 @@ interface AutoMsg {
   mode: string;
   every_hours: number | null;
   at_hhmm: string | null;
+  days: string | null;
   last_sent_at: Date | null;
+}
+
+/** Jour de la semaine à Paris : 1=Lundi … 7=Dimanche. */
+function nowDay(): number {
+  const d = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short' }).format(new Date());
+  const map: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
+  return map[d] ?? 1;
 }
 
 const TZ = 'Europe/Paris';
@@ -30,6 +38,7 @@ function isDue(m: AutoMsg): boolean {
   const now = new Date();
   if (m.mode === 'daily') {
     if (!m.at_hhmm) return false;
+    if (m.days && !m.days.split(',').includes(String(nowDay()))) return false; // jours restreints
     if (nowHHMM() !== m.at_hhmm) return false;
     // Une seule fois par jour.
     return !m.last_sent_at || dayKey(m.last_sent_at) !== dayKey(now);
@@ -44,7 +53,7 @@ async function tick(client: Client): Promise<void> {
   if (!hasDatabase()) return;
   const sql = db();
   const rows = await sql<AutoMsg[]>`
-    select id, channel_id, content, image_url, mode, every_hours, at_hhmm, last_sent_at
+    select id, channel_id, content, image_url, mode, every_hours, at_hhmm, days, last_sent_at
     from auto_messages where enabled = true and channel_id is not null and channel_id <> ''`;
 
   for (const m of rows) {
