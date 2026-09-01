@@ -45,7 +45,7 @@ async function tick(client: Client): Promise<void> {
   const sql = db();
   const rows = await sql<AutoMsg[]>`
     select id, channel_id, content, image_url, mode, every_hours, at_hhmm, last_sent_at
-    from auto_messages where enabled = true`;
+    from auto_messages where enabled = true and channel_id is not null and channel_id <> ''`;
 
   for (const m of rows) {
     if (!isDue(m)) continue;

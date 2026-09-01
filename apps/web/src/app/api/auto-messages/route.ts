@@ -16,7 +16,21 @@ interface Row {
   last_sent_at: string | null;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  // Lecture PUBLIQUE pour le mod du serveur : messages "en jeu" (sans salon Discord).
+  // Pas de données sensibles (ces messages sont diffusés à tous en jeu de toute façon).
+  const url = new URL(req.url);
+  if (url.searchParams.get('for') === 'game') {
+    const rows = await db()<Row[]>`
+      select id, content, mode, every_hours, at_hhmm
+      from auto_messages
+      where enabled = true and (channel_id is null or channel_id = '')
+      order by id`;
+    const res = NextResponse.json({ messages: rows });
+    res.headers.set('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
+    return res;
+  }
+
   const g = await requireLevel(FOUNDER_LEVEL);
   if (g instanceof NextResponse) return g;
   const rows = await db()<Row[]>`
@@ -30,18 +44,19 @@ export async function POST(req: Request) {
   if (g instanceof NextResponse) return g;
 
   const b = await req.json().catch(() => ({}));
-  const channelId = String(b.channelId || '').trim();
+  const target = b.target === 'discord' ? 'discord' : 'game'; // défaut : en jeu
+  const channelId = target === 'discord' ? String(b.channelId || '').trim() : '';
   const content = String(b.content || '').trim();
-  const imageUrl = String(b.imageUrl || '').trim() || null;
+  const imageUrl = target === 'discord' ? (String(b.imageUrl || '').trim() || null) : null;
   const mode = b.mode === 'daily' ? 'daily' : 'interval';
   const everyHours = mode === 'interval' ? Math.max(1, Math.min(168, Number(b.everyHours) || 2)) : null;
   const atHHMM = mode === 'daily' ? String(b.atHHMM || '').trim() : null;
 
-  if (!/^\d{5,25}$/.test(channelId)) {
+  if (target === 'discord' && !/^\d{5,25}$/.test(channelId)) {
     return NextResponse.json({ error: 'ID de salon invalide (copie l’identifiant du salon Discord).' }, { status: 400 });
   }
   if (!content && !imageUrl) {
-    return NextResponse.json({ error: 'Mets au moins un texte ou une image.' }, { status: 400 });
+    return NextResponse.json({ error: 'Mets au moins un texte (ou une image pour Discord).' }, { status: 400 });
   }
   if (mode === 'daily' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(atHHMM || '')) {
     return NextResponse.json({ error: 'Heure invalide (format HH:MM, ex. 19:00).' }, { status: 400 });
