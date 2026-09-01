@@ -3,6 +3,7 @@ import { GRADES } from '@xo/shared';
 import { getAnnounceChannel } from '../lib/announceState.js';
 import { isRunning, handleAnswer } from '../lib/train.js';
 import { highestGrade } from '../lib/permissions.js';
+import { handleVoteLogMessage } from '../lib/voteLog.js';
 
 /**
  * Entraînement modération : dans le salon en session, un staff répond
@@ -36,6 +37,9 @@ async function handleTrainMessage(client: Client, message: Message): Promise<boo
  * (embed), pas en fichier joint.
  */
 export async function onMessageCreate(_client: Client, message: Message): Promise<void> {
+  // Salon de votes : on lit les messages des webhooks (donc AVANT le filtre "bot").
+  if (await handleVoteLogMessage(message)) return;
+
   if (message.author.bot || !message.inGuild()) return;
 
   // Entraînement modération (salon en session) — prioritaire

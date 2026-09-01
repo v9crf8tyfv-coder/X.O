@@ -1,6 +1,7 @@
 import { ActivityType, REST, Routes, type Client } from 'discord.js';
 import { ENV } from '../env.js';
 import { commands } from '../commands/index.js';
+import { refreshVoteChannel } from '../lib/voteLog.js';
 
 /** Enregistre les slash commands sur la guilde (instantané) à chaque démarrage. */
 async function registerCommands(): Promise<void> {
@@ -30,6 +31,11 @@ function uptime(since: number): string {
 
 export function onReady(client: Client): void {
   console.log(`✅ X.O connecté en tant que ${client.user?.tag}`);
+
+  // Salon de votes (pont de votes vers le classement du site) : chargé au démarrage
+  // puis rafraîchi toutes les 5 min (négligeable, aucun impact sur l'abonnement).
+  void refreshVoteChannel();
+  setInterval(() => void refreshVoteChannel(), 300_000);
 
   // Statut personnalisé "En ligne depuis …", rafraîchi toutes les 60s.
   // Une MAJ de présence toutes les 60s est négligeable (aucun impact sur l'abonnement).
