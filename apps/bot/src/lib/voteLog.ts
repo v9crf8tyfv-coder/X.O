@@ -41,13 +41,23 @@ const PATTERNS: RegExp[] = [
   new RegExp('vote\\s+de\\s+' + P, 'i'), // Vote de X
 ];
 
+// Pseudos bidon des messages de test (à ne jamais enregistrer).
+const FAKE = new Set([
+  'joueur', 'player', 'un', 'une', 'le', 'la', 'les', 'serveur', 'server',
+  'test', 'pseudo', 'username', 'exemple', 'example', 'someone', 'quelqu',
+]);
+
 /** Extrait le pseudo d'un message de vote (enlève le markdown Discord). */
 export function parseVotePseudo(text: string): string | null {
   // On enlève le markdown Discord (gras/italique/…) SANS toucher aux "_" des pseudos.
   const t = (text || '').replace(/\*\*|\*|`|~~|~|\|\|/g, ' ');
+
+  // Message de test explicite → on ignore.
+  if (/\[\s*test\s*\]/i.test(t)) return null;
+
   for (const re of PATTERNS) {
     const m = t.match(re);
-    if (m && m[1]) return m[1];
+    if (m && m[1] && !FAKE.has(m[1].toLowerCase())) return m[1];
   }
   return null;
 }
