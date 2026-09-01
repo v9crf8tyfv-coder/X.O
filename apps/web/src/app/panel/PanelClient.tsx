@@ -24,6 +24,7 @@ async function resizeImage(file: File, size: number): Promise<string> {
 import SiteSection from './SiteSection';
 import LauncherSection from './LauncherSection';
 import SupportStaffSection from './SupportStaffSection';
+import VisitsSection from './VisitsSection';
 import StaffSection from './StaffSection';
 import ServeursSection from './ServeursSection';
 import LiensSection from './LiensSection';
@@ -91,6 +92,7 @@ export default function PanelClient({ account }: Props) {
   if (founder) {
     sections.push({ id: 'launcher', label: 'Launcher', icon: '🚀' });
     sections.push({ id: 'support', label: 'Support', icon: '🎫' });
+    sections.push({ id: 'trafic', label: 'Trafic du site', icon: '📈' });
     sections.push({ id: 'site', label: 'Gestion Site', icon: '🔐' });
   }
 
@@ -137,6 +139,8 @@ export default function PanelClient({ account }: Props) {
           <LauncherSection />
         ) : current.id === 'support' ? (
           <SupportStaffSection />
+        ) : current.id === 'trafic' ? (
+          <VisitsSection />
         ) : current.id === 'staff' ? (
           <StaffSection myGrade={account.site_grade} />
         ) : current.id === 'serveurs' ? (
