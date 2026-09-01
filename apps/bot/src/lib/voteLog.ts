@@ -1,4 +1,4 @@
-import type { Message } from 'discord.js';
+import type { Client, Message, TextChannel } from 'discord.js';
 import { db, hasDatabase } from '@xo/db';
 
 /**
@@ -116,4 +116,22 @@ export async function handleVoteLogMessage(message: Message): Promise<boolean> {
     }
   }
   return true; // message du salon de votes : consommé dans tous les cas
+}
+
+/**
+ * Rattrapage : au démarrage du bot, relit les derniers messages du salon de votes
+ * et enregistre ceux ratés pendant une coupure. L'anti-doublon (1/site/heure) évite
+ * de recompter ce qui l'a déjà été. On ne traite que les messages de la dernière heure.
+ */
+export async function catchUpMissedVotes(client: Client): Promise<void> {
+  if (!channelId) return;
+  const ch = await client.channels.fetch(channelId).catch(() => null);
+  if (!ch || !ch.isTextBased()) return;
+  const msgs = await (ch as TextChannel).messages.fetch({ limit: 50 }).catch(() => null);
+  if (!msgs) return;
+  const cutoff = Date.now() - 60 * 60 * 1000;
+  const recent = [...msgs.values()].filter((m) => m.createdTimestamp >= cutoff).reverse(); // + ancien d'abord
+  for (const m of recent) {
+    try { await handleVoteLogMessage(m); } catch { /* ignore */ }
+  }
 }
