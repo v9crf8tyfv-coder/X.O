@@ -77,6 +77,22 @@ export function buildCloseButton(): ActionRowBuilder<ButtonBuilder> {
   );
 }
 
+/** Boutons de traitement d'un recrutement (admins/fonda uniquement). */
+export function buildRecruitButtons(): ActionRowBuilder<ButtonBuilder> {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId('ticket:recruit:accept')
+      .setLabel('Recrutement Accepter')
+      .setEmoji('✅')
+      .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId('ticket:recruit:refuse')
+      .setLabel('Recrutement Refuser')
+      .setEmoji('⛔')
+      .setStyle(ButtonStyle.Danger),
+  );
+}
+
 /**
  * Calcule les permissions du salon de ticket :
  * - @everyone : pas d'accès

@@ -14,7 +14,7 @@ import {
   absenceEdit,
   absenceEditSubmit,
 } from './absence.js';
-import { ticketOpen, ticketClose } from './ticket.js';
+import { ticketOpen, ticketClose, ticketRecruit } from './ticket.js';
 import { launcherSoon } from './game.js';
 import { bytenutRenew } from './bytenut.js';
 import { roleButton } from './roleButton.js';
@@ -27,6 +27,7 @@ export const buttons: ComponentHandler<ButtonInteraction>[] = [
   absenceDelete,
   absenceEdit,
   ticketClose,
+  ticketRecruit,
   launcherSoon,
   bytenutRenew,
   roleButton,

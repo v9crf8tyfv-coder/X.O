@@ -6,16 +6,20 @@ import {
   type StringSelectMenuInteraction,
   type ButtonInteraction,
   type TextChannel,
+  type GuildMember,
+  type Client,
 } from 'discord.js';
 import type { ComponentHandler } from '../types.js';
 import { db, hasDatabase } from '@xo/db';
-import { CHANNELS, BRAND_COLOR } from '@xo/shared';
+import { CHANNELS, BRAND_COLOR, GRADES } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../lib/embeds.js';
+import { highestGrade } from '../lib/permissions.js';
 import {
   findCategory,
   buildTicketOverwrites,
   buildTicketHeaderEmbed,
   buildCloseButton,
+  buildRecruitButtons,
   buildCategorySelect,
   type TicketSpace,
 } from '../lib/tickets.js';
@@ -79,11 +83,13 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
         permissionOverwrites: buildTicketOverwrites(guild, interaction.user.id, category),
       });
 
-      // Embed persistant (épinglé) : pseudo + type + bouton fermer
+      // Embed persistant (épinglé) : pseudo + type + bouton fermer.
+      // Sur un ticket de recrutement, on ajoute les boutons Accepter / Refuser (admins+).
+      const isRecruit = category.id.startsWith('recrutement');
       const header = await ticketChannel.send({
         content: `<@${interaction.user.id}>`,
         embeds: [buildTicketHeaderEmbed(interaction.user.tag, category)],
-        components: [buildCloseButton()],
+        components: isRecruit ? [buildRecruitButtons(), buildCloseButton()] : [buildCloseButton()],
       });
       await header.pin().catch(() => {});
 
@@ -113,6 +119,51 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
   },
 };
 
+/** Archive (récap + transcription) puis supprime le salon. Partagé par Fermer et Refuser. */
+async function finalizeClose(client: Client, channel: TextChannel, closedByTag: string): Promise<void> {
+  let info: { category_id: string; space: string; opener_tag: string } | null = null;
+  if (hasDatabase()) {
+    const rows = await db()<{ category_id: string; space: string; opener_tag: string }[]>`
+      select category_id, space, opener_tag from tickets where channel_id = ${channel.id}
+    `.catch(() => [] as { category_id: string; space: string; opener_tag: string }[]);
+    info = rows[0] ?? null;
+    await db()`
+      update tickets set status = 'closed', closed_by = ${closedByTag}, closed_at = now()
+      where channel_id = ${channel.id}
+    `.catch(() => {});
+  }
+
+  try {
+    const transcript = await buildTranscript(channel);
+    const archive = await client.channels.fetch(CHANNELS.archivesTicket);
+    if (archive?.isTextBased()) {
+      const embed = new EmbedBuilder()
+        .setColor(BRAND_COLOR)
+        .setTitle('📦 Ticket archivé')
+        .setDescription(
+          `**Salon :** #${channel.name}\n` +
+            (info
+              ? `**Ouvert par :** ${info.opener_tag}\n` +
+                `**Catégorie :** ${info.category_id}\n` +
+                `**Espace :** ${info.space}\n`
+              : '') +
+            `**Fermé par :** ${closedByTag}`,
+        )
+        .setTimestamp();
+      const file = new AttachmentBuilder(Buffer.from(transcript, 'utf8'), {
+        name: `transcript-${channel.name}.txt`,
+      });
+      await (archive as TextChannel).send({ embeds: [embed], files: [file] });
+    }
+  } catch (err) {
+    console.error('[ticket] archivage échoué:', err);
+  }
+
+  setTimeout(() => {
+    channel.delete('Ticket fermé').catch(() => {});
+  }, 5000);
+}
+
 /** Bouton Fermer -> archive (récap + transcription) puis supprime le salon */
 export const ticketClose: ComponentHandler<ButtonInteraction> = {
   prefix: 'ticket:close',
@@ -129,55 +180,50 @@ export const ticketClose: ComponentHandler<ButtonInteraction> = {
       ],
     });
 
-    // Infos du ticket (si base configurée)
-    let info: {
-      category_id: string;
-      space: string;
-      opener_tag: string;
-    } | null = null;
-    if (hasDatabase()) {
-      const rows = await db()<
-        { category_id: string; space: string; opener_tag: string }[]
-      >`
-        select category_id, space, opener_tag from tickets where channel_id = ${channel.id}
-      `.catch(() => [] as { category_id: string; space: string; opener_tag: string }[]);
-      info = rows[0] ?? null;
-      await db()`
-        update tickets set status = 'closed', closed_by = ${interaction.user.tag}, closed_at = now()
-        where channel_id = ${channel.id}
-      `.catch(() => {});
+    await finalizeClose(interaction.client, channel, interaction.user.tag);
+  },
+};
+
+/** Boutons Recrutement Accepter / Refuser (admins et fondateurs uniquement). */
+export const ticketRecruit: ComponentHandler<ButtonInteraction> = {
+  prefix: 'ticket:recruit',
+  async execute(interaction) {
+    const member = interaction.member as GuildMember | null;
+    const level = member ? highestGrade(member)?.level ?? 0 : 0;
+    if (level < GRADES.admin.level) {
+      await interaction.reply({
+        embeds: [errorEmbed('Non autorisé', 'Seuls les admins et fondateurs peuvent traiter un recrutement.')],
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
     }
 
-    // Transcription + envoi dans le salon archives
-    try {
-      const transcript = await buildTranscript(channel);
-      const archive = await interaction.client.channels.fetch(CHANNELS.archivesTicket);
-      if (archive?.isTextBased()) {
-        const embed = new EmbedBuilder()
-          .setColor(BRAND_COLOR)
-          .setTitle('📦 Ticket archivé')
-          .setDescription(
-            `**Salon :** #${channel.name}\n` +
-              (info
-                ? `**Ouvert par :** ${info.opener_tag}\n` +
-                  `**Catégorie :** ${info.category_id}\n` +
-                  `**Espace :** ${info.space}\n`
-                : '') +
-              `**Fermé par :** ${interaction.user.tag}`,
-          )
-          .setTimestamp();
-        const file = new AttachmentBuilder(Buffer.from(transcript, 'utf8'), {
-          name: `transcript-${channel.name}.txt`,
-        });
-        await (archive as TextChannel).send({ embeds: [embed], files: [file] });
-      }
-    } catch (err) {
-      console.error('[ticket] archivage échoué:', err);
+    const action = interaction.customId.split(':')[2];
+    const channel = interaction.channel as TextChannel | null;
+    if (!channel) return;
+
+    if (action === 'accept') {
+      await interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(0x3ba55d)
+            .setTitle('✅ Recrutement accepté')
+            .setDescription(`Recrutement **accepté** par ${interaction.user.tag}.\nRends-toi voir un **Administrateur**.`),
+        ],
+      });
+      return;
     }
 
-    setTimeout(() => {
-      channel.delete('Ticket fermé').catch(() => {});
-    }, 5000);
+    // refuse
+    await interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(0xe0574d)
+          .setTitle('⛔ Recrutement refusé')
+          .setDescription(`Recrutement **refusé** par ${interaction.user.tag}. Fermeture du ticket…`),
+      ],
+    });
+    await finalizeClose(interaction.client, channel, interaction.user.tag);
   },
 };
 
