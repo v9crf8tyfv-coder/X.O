@@ -35,11 +35,14 @@ export async function refreshVoteChannel(): Promise<void> {
 const P = '([A-Za-z0-9_]{2,16})';
 const PATTERNS: RegExp[] = [
   new RegExp('merci\\s+' + P + "\\s+d[' ]", 'i'), // Merci X d'avoir voté
-  new RegExp('joueur\\s+' + P + '\\s+a\\s+vot', 'i'), // Le joueur X a voté
-  new RegExp(P + '\\s+a\\s+vot', 'i'), // X a voté
-  new RegExp(P + '\\s+vien[st]\\s+de\\s+vot', 'i'), // X vient de voter
+  new RegExp('joueur\\s+' + P + '\\s+a\\s+(?:vot|donn)', 'i'), // Le joueur X a voté / a donné
+  new RegExp(P + '\\s+a\\s+(?:vot|donn)', 'i'), // X a voté / X a donné (une flamme)
+  new RegExp(P + '\\s+vien[st]\\s+de\\s+(?:vot|donn)', 'i'), // X vient de voter / de donner (une flamme)
   new RegExp('vote\\s+de\\s+' + P, 'i'), // Vote de X
 ];
+
+// Nom de champ d'embed qui contient le pseudo du votant (Serveurly, etc.).
+const PLAYER_FIELD = /joueur|player|pseudo|votant|voter|utilisateur|^\s*user\s*$/i;
 
 // Pseudos bidon des messages de test (à ne jamais enregistrer).
 const FAKE = new Set([
@@ -85,13 +88,24 @@ export async function handleVoteLogMessage(message: Message): Promise<boolean> {
 
   // Rassemble tout le texte : contenu + embeds (beaucoup de webhooks utilisent des embeds).
   const parts: string[] = [message.content || ''];
+  let fieldPseudo: string | null = null;
   for (const e of message.embeds) {
     if (e.title) parts.push(e.title);
     if (e.description) parts.push(e.description);
     if (e.author?.name) parts.push(e.author.name);
-    for (const f of e.fields) parts.push(f.name, f.value);
+    for (const f of e.fields) {
+      parts.push(f.name, f.value);
+      // Le pseudo est souvent dans un champ « Joueur » (Serveurly…) → source la plus fiable.
+      if (!fieldPseudo && PLAYER_FIELD.test(f.name)) {
+        const v = (f.value || '').replace(/[`*_~|<>@]/g, '').trim();
+        if (/^[A-Za-z0-9_]{2,16}$/.test(v) && !FAKE.has(v.toLowerCase())) fieldPseudo = v;
+      }
+    }
   }
-  const pseudo = parseVotePseudo(parts.join('  '));
+  const joined = parts.join('  ');
+  // Message de test explicite → on ignore (même si un champ contient un pseudo).
+  if (/\[\s*test\s*\]/i.test(joined)) return true;
+  const pseudo = fieldPseudo ?? parseVotePseudo(joined);
   if (pseudo) {
     // Le "site" = le nom du webhook (ex. "Serveurly") pour compter chaque site à part.
     const site = (message.author?.username || 'discord').slice(0, 40);
