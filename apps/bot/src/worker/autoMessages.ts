@@ -33,6 +33,10 @@ function dayKey(d: Date): string {
   return new Intl.DateTimeFormat('fr-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' })
     .format(d);
 }
+/** "YYYY-MM-DD HH" à Paris (pour n'envoyer qu'une fois par heure). */
+function hourKey(d: Date): string {
+  return dayKey(d) + ' ' + new Intl.DateTimeFormat('fr-FR', { timeZone: TZ, hour: '2-digit', hour12: false }).format(d);
+}
 
 function isDue(m: AutoMsg): boolean {
   const now = new Date();
@@ -43,10 +47,12 @@ function isDue(m: AutoMsg): boolean {
     // Une seule fois par jour.
     return !m.last_sent_at || dayKey(m.last_sent_at) !== dayKey(now);
   }
-  // interval
+  // interval aligné sur l'heure pile (0h, Nh, 2Nh…), une fois par heure.
   const hours = m.every_hours && m.every_hours > 0 ? m.every_hours : 2;
-  if (!m.last_sent_at) return true;
-  return now.getTime() - new Date(m.last_sent_at).getTime() >= hours * 3_600_000;
+  const hh = nowHHMM();
+  const hour = Number(hh.slice(0, 2));
+  if (Number(hh.slice(3)) !== 0 || hour % hours !== 0) return false;
+  return !m.last_sent_at || hourKey(new Date(m.last_sent_at)) !== hourKey(now);
 }
 
 async function tick(client: Client): Promise<void> {

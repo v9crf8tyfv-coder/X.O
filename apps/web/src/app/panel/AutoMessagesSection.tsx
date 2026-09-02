@@ -76,7 +76,13 @@ export default function AutoMessagesSection() {
 
   const muted = 'var(--muted, #8a8a94)';
   const timing = (m: Msg) => {
-    if (m.mode !== 'daily') return `toutes les ${m.every_hours ?? 2} h`;
+    if (m.mode !== 'daily') {
+      const n = m.every_hours ?? 2;
+      if (n === 1) return 'toutes les heures (à chaque heure pile)';
+      const hs: string[] = [];
+      for (let h = 0; h < 24; h += n) hs.push(h + 'h');
+      return `toutes les ${n} h — à ${hs.join(', ')}`;
+    }
     const jours = m.days
       ? ' (' + m.days.split(',').map((d) => DAY_LABELS[Number(d) - 1]).join(' ') + ')'
       : '';
