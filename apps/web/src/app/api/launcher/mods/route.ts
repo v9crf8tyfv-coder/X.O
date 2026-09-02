@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireLevel, FOUNDER_LEVEL } from '@/lib/guard';
-import { getManifest, addFile, removeFile, hasToken } from '@/lib/launcher';
+import { getManifest, addFile, removeFile, hasToken, downloadRemote } from '@/lib/launcher';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -45,9 +45,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Le fichier doit finir par ${ext} (donne un nom si l'URL n'en a pas).` }, { status: 400 });
     }
     try {
-      const res = await fetch(url);
-      if (!res.ok) return NextResponse.json({ error: `Téléchargement échoué (${res.status}).` }, { status: 400 });
-      const data = Buffer.from(await res.arrayBuffer());
+      const data = await downloadRemote(url);
+      if (data.length === 0) {
+        return NextResponse.json({ error: 'Le fichier téléchargé est vide.' }, { status: 400 });
+      }
       if (data.length > MAX_URL) {
         return NextResponse.json({ error: `Fichier trop lourd (${(data.length / 1048576).toFixed(1)} Mo, max ${MAX_URL / 1048576} Mo).` }, { status: 413 });
       }
@@ -86,6 +87,12 @@ export async function POST(req: Request) {
   }
   try {
     const data = Buffer.from(await file.arrayBuffer());
+    if (data.length === 0) {
+      return NextResponse.json(
+        { error: 'Fichier vide reçu — il est probablement trop lourd pour l\'upload direct (limite ~4 Mo du panel). Utilise plutôt « Ajouter par lien » avec le lien de la release GitHub.' },
+        { status: 413 },
+      );
+    }
     const manifest = await addFile(kind, file.name, data);
     return NextResponse.json({ ok: true, manifest });
   } catch (e) {

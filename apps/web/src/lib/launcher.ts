@@ -132,6 +132,31 @@ export function sha256(data: Buffer): string {
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
+/**
+ * Télécharge un fichier distant en Buffer. Gère les liens de release GitHub
+ * (y compris repos PRIVÉS) via l'API + le token : on résout l'asset et on le
+ * récupère en application/octet-stream (les liens browser_download_url d'un repo
+ * privé ne sont pas accessibles sans authentification).
+ */
+export async function downloadRemote(url: string): Promise<Buffer> {
+  const m = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/releases\/download\/([^/]+)\/(.+)$/i.exec(url);
+  if (m && hasToken()) {
+    const [, owner, repo, tag, rawName] = m;
+    const name = decodeURIComponent(rawName);
+    const relRes = await gh(`/repos/${owner}/${repo}/releases/tags/${tag}`);
+    if (!relRes.ok) throw new Error(`Release introuvable (${relRes.status}) — le token a-t-il accès à ${owner}/${repo} ?`);
+    const rel = (await relRes.json()) as Release;
+    const asset = rel.assets.find((a) => a.name === name);
+    if (!asset) throw new Error(`Fichier « ${name} » absent de la release ${tag}.`);
+    const bin = await gh(asset.url, { headers: { Accept: 'application/octet-stream' } });
+    if (!bin.ok) throw new Error(`Téléchargement de l'asset échoué (${bin.status}).`);
+    return Buffer.from(await bin.arrayBuffer());
+  }
+  const res = await fetch(url, { redirect: 'follow' });
+  if (!res.ok) throw new Error(`Téléchargement échoué (${res.status}).`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
 /** Ajoute/remplace un fichier (mod ou resourcepack) : upload + maj manifeste. */
 export async function addFile(
   kind: 'mods' | 'resourcepacks',
