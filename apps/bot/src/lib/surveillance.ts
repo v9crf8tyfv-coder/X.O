@@ -97,8 +97,8 @@ export async function logSurveillance(
     try {
       await db()`
         insert into surveillance_logs (category, action, actor, target, source, details, message_id)
-        values (${entry.category}, ${entry.action}, ${entry.actor ?? null},
-                ${entry.target ?? null}, ${source},
+        values (${entry.category ?? 'staff'}, ${entry.action ?? '?'}, ${entry.actor ?? null},
+                ${entry.target ?? null}, ${source ?? 'discord'},
                 ${entry.details ? JSON.stringify(entry.details) : null}::jsonb,
                 ${messageId ?? null})
       `;
