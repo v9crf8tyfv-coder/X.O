@@ -23,6 +23,7 @@ import { startIgActionsWatcher } from './worker/igActionsWatcher.js';
 import { startWatchdog } from './worker/watchdog.js';
 import { startVoteBoardWorker } from './worker/voteBoardWorker.js';
 import { startAutoMessages } from './worker/autoMessages.js';
+import { startCandidatureWatcher } from './worker/candidatureWatcher.js';
 import { logToDiscord, fmtError } from './lib/logWebhook.js';
 
 // Log tout de suite : on saura que le process a bien démarré (avant login).
@@ -81,6 +82,7 @@ client.once('clientReady', () => {
   startWatchdog(client); // détecte une gateway zombie (bot en ligne mais muet) → relance
   startVoteBoardWorker(client); // rafraîchit l'embed du classement des votes (/setup-vote)
   startAutoMessages(client); // messages automatiques configurés dans le panel
+  startCandidatureWatcher(client); // candidatures du forum → embed Discord + bouton "Traité"
 });
 
 // Le bot s'est déconnecté du gateway (coupure réseau / kill hébergeur)

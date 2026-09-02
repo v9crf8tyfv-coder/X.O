@@ -83,20 +83,8 @@ export const TICKET_CATEGORIES_NORMAL = [
     allowedGrades: [],
     onlyOmnipresent: true, // only responsables
   },
-  {
-    id: 'recrutement_com',
-    label: 'Recrutement COM',
-    description: 'Candidature communication',
-    emoji: '📢',
-    allowedGrades: ['admin'], // com retiré : seuls admin + omniprésents (resp/cofonda/fonda) voient les recrutements
-  },
-  {
-    id: 'recrutement_staff',
-    label: 'Recrutement Staff',
-    description: 'Candidature staff (admin, resp, fonda)',
-    emoji: '📝',
-    allowedGrades: ['admin'],
-  },
+  // Tickets de candidature retirés : les candidatures passent désormais par le
+  // forum du site (emeria-site.com/forum → embed Discord + bouton "Traité").
   {
     id: 'bug_report_normal',
     label: 'Bug Report',

@@ -20,6 +20,7 @@ import { bytenutRenew } from './bytenut.js';
 import { roleButton } from './roleButton.js';
 import { shopEnterCode, shopAccept, shopClose, shopCodeModal } from './boutique.js';
 import { trainToggle } from './train.js';
+import { candidatureDone } from './candidature.js';
 
 export const buttons: ComponentHandler<ButtonInteraction>[] = [
   absenceNew,
@@ -35,6 +36,7 @@ export const buttons: ComponentHandler<ButtonInteraction>[] = [
   shopAccept,
   shopClose,
   trainToggle,
+  candidatureDone,
 ];
 
 export const selectMenus: ComponentHandler<StringSelectMenuInteraction>[] = [ticketOpen];
