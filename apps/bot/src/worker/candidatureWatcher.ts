@@ -24,6 +24,20 @@ interface CandidatureEvent {
   title: string | null;
 }
 
+/** Couleur d'embed selon le grade visé (alignée sur les couleurs des cartes staff). */
+function colorFor(grade: string): number {
+  const g = grade.toLowerCase();
+  if (g.startsWith('respons')) return 0x811010;
+  if (g.startsWith('admin')) return 0xdc1a1a;
+  if (g.startsWith('modér') || g.startsWith('moder')) return 0x9b59b6;
+  if (g.startsWith('build')) return 0x3ba55d;
+  if (g.startsWith('commu')) return 0xd98e2b;
+  if (g.startsWith('bêta') || g.startsWith('beta')) return 0x7e8c9c;
+  if (g.startsWith('guide')) return 0x22c55e;
+  if (g.startsWith('dev')) return 0xe0a82b;
+  return 0x7c5cff;
+}
+
 let running = false;
 
 /**
