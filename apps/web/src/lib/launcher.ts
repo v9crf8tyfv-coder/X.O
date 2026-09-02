@@ -144,7 +144,14 @@ export async function downloadRemote(url: string): Promise<Buffer> {
     const [, owner, repo, tag, rawName] = m;
     const name = decodeURIComponent(rawName);
     const relRes = await gh(`/repos/${owner}/${repo}/releases/tags/${tag}`);
-    if (!relRes.ok) throw new Error(`Release introuvable (${relRes.status}) — le token a-t-il accès à ${owner}/${repo} ?`);
+    if (!relRes.ok) {
+      // Distingue « pas d'accès au repo » de « tag/release inexistant ».
+      const repoRes = await gh(`/repos/${owner}/${repo}`);
+      if (!repoRes.ok) {
+        throw new Error(`Le token GH_LAUNCHER_TOKEN n'a pas accès au repo ${owner}/${repo} (${repoRes.status}). Utilise un PAT classique (scope repo) sur ton compte, ou ajoute ${repo} au token, puis mets-le à jour dans Vercel.`);
+      }
+      throw new Error(`Aucune release au tag « ${tag} » sur ${owner}/${repo} (le build de ce tag est-il terminé et réussi ?).`);
+    }
     const rel = (await relRes.json()) as Release;
     const asset = rel.assets.find((a) => a.name === name);
     if (!asset) throw new Error(`Fichier « ${name} » absent de la release ${tag}.`);
