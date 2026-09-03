@@ -101,6 +101,24 @@ export const GRADES = {
     level: 30,
     surveillance: 'staff',
   },
+  // Variantes Modérateur : distinctes UNIQUEMENT sur Discord (rôle + couleur).
+  // IG et effectif = toujours "Modérateur" (voir sectionForGrades / normKey).
+  modo_test: {
+    key: 'modo_test',
+    label: 'Modérateur test',
+    color: 'a78bfa', // mauve plus clair
+    roleId: '1544819766546407496',
+    level: 30,
+    surveillance: 'staff',
+  },
+  modo_x: {
+    key: 'modo_x',
+    label: 'Modérateur X',
+    color: '6d28d9', // mauve plus foncé
+    roleId: '1544819950542262332',
+    level: 30,
+    surveillance: 'staff',
+  },
   // Bêta-testeur : grade bas (accès panel minimal = profil). Pas du staff.
   betatesteur: {
     key: 'betatesteur',

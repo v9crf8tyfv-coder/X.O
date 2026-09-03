@@ -35,6 +35,8 @@ const CANDIDATE = [
   'buildeur',
   'com',
   'modo',
+  'modo_test',
+  'modo_x',
   'betatesteur',
 ];
 

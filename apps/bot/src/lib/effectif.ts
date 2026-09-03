@@ -49,6 +49,7 @@ export function sectionForGrades(grades: string[]): string | null {
   const top = highestGradeKey(grades);
   if (!top) return null;
   if (top === 'responsable' || top.startsWith('resp_')) return 'responsable';
-  if (top === 'admin' || top === 'buildeur' || top === 'modo' || top === 'com' || top === 'betatesteur') return top;
+  if (top === 'modo' || top.startsWith('modo')) return 'modo'; // modo_test / modo_x = effectif Modérateur
+  if (top === 'admin' || top === 'buildeur' || top === 'com' || top === 'betatesteur') return top;
   return null;
 }

@@ -58,6 +58,7 @@ export default function AffichesSection() {
   const [banner, setBanner] = useState(true);
   const [bannerTitle, setBannerTitle] = useState('EmeriaMC');
   const [bannerSub, setBannerSub] = useState('ANNONCE');
+  const [bannerOnly, setBannerOnly] = useState(false);
   const [box, setBox] = useState(true);
   const [title, setTitle] = useState('Titre de l’affiche');
   const [body, setBody] = useState('Écris ton texte ici.\nTu peux utiliser les couleurs Minecraft : §avert §crouge §ejaune §lgras§r.');
@@ -139,6 +140,7 @@ export default function AffichesSection() {
             <>
               <input style={inp} value={bannerTitle} onChange={(e) => setBannerTitle(e.target.value)} placeholder="Titre du bandeau" />
               <input style={{ ...inp, marginTop: 6 }} value={bannerSub} onChange={(e) => setBannerSub(e.target.value)} placeholder="Sous-titre du bandeau" />
+              <label style={{ ...lbl, marginTop: 8 }}><input type="checkbox" checked={bannerOnly} onChange={(e) => setBannerOnly(e.target.checked)} /> Bandeau seul (rien d’autre)</label>
             </>
           )}
 
@@ -174,6 +176,7 @@ export default function AffichesSection() {
                 {bannerSub && <div style={{ fontSize: 13, color: '#e7ddff', letterSpacing: 1 }}>{bannerSub}</div>}
               </div>
             )}
+            {!bannerOnly && (
             <div style={box ? { border: `2px solid ${accent}`, borderRadius: 14, padding: '22px 26px', background: 'rgba(0,0,0,.28)' } : {}}>
               {title && (
                 <div style={{
@@ -189,6 +192,7 @@ export default function AffichesSection() {
                 {mc ? renderMc(body, textColor) : body.split('\n').map((l, i) => <div key={i}>{l || ' '}</div>)}
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
