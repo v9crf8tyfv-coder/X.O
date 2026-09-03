@@ -73,6 +73,7 @@ export default function AffichesSection() {
   const [box, setBox] = useState(false);
   const [mc, setMc] = useState(false);
   const [highlight, setHighlight] = useState(false);
+  const [titleGrad, setTitleGrad] = useState(false);
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -163,6 +164,7 @@ export default function AffichesSection() {
             </>
           )}
           <label style={lbl}><input type="checkbox" checked={mc} onChange={(e) => setMc(e.target.checked)} /> Écriture Minecraft (§ / &amp;)</label>
+          <label style={lbl}><input type="checkbox" checked={titleGrad} onChange={(e) => setTitleGrad(e.target.checked)} /> Titre en dégradé (Accent → Couleur 1)</label>
           <label style={lbl}><input type="checkbox" checked={highlight} onChange={(e) => setHighlight(e.target.checked)} /> Surbrillance du titre</label>
 
           <button onClick={download} disabled={busy} style={{ marginTop: 16, width: '100%', background: '#7c5cff', color: '#fff', border: 0, borderRadius: 10, padding: '12px', fontWeight: 700, cursor: 'pointer', opacity: busy ? .6 : 1 }}>
@@ -184,13 +186,15 @@ export default function AffichesSection() {
                 transform: `scale(${scale})`, transformOrigin: 'top left',
               }}
             >
-              {/* Titre */}
+              {/* Titre (option dégradé : couleurs Accent → Couleur 1, découpé sur le texte) */}
               <div style={{
                 fontSize: bannerMode ? Math.round(size.w * 0.07) : Math.round(size.w * 0.045),
                 fontWeight: 800, fontFamily: font, lineHeight: 1.1,
-                color: highlight ? '#0e0e12' : textColor,
-                background: highlight ? accent : 'transparent',
-                display: 'inline-block', padding: highlight ? '6px 18px' : 0, borderRadius: highlight ? 10 : 0,
+                color: titleGrad ? 'transparent' : (highlight ? '#0e0e12' : textColor),
+                background: titleGrad ? `linear-gradient(90deg, ${accent}, ${c1})` : (highlight ? accent : 'transparent'),
+                WebkitBackgroundClip: titleGrad ? 'text' : undefined,
+                backgroundClip: titleGrad ? 'text' : undefined,
+                display: 'inline-block', padding: highlight && !titleGrad ? '6px 18px' : 0, borderRadius: highlight ? 10 : 0,
                 marginBottom: subtitle || !bannerMode ? 10 : 0,
               }}>{titleNode}</div>
 
