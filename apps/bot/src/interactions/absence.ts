@@ -152,8 +152,13 @@ export const absenceCreate: ComponentHandler<ModalSubmitInteraction> = {
     `;
     const id = rows[0]!.id;
 
-    // marque le staff "en absence" (si présent dans la liste)
-    await db()`update staff set is_absent = true where lower(pseudo) = lower(${pseudo})`;
+    // Marque "en absence" UNIQUEMENT si l'absence couvre aujourd'hui (pas une absence future).
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const sIso = toIsoDate(start), eIso = toIsoDate(end);
+    const activeNow = (!sIso || sIso <= todayIso) && (!eIso || eIso >= todayIso);
+    if (activeNow) {
+      await db()`update staff set is_absent = true where lower(pseudo) = lower(${pseudo})`;
+    }
     await publishEffectif(interaction.client).catch(() => {});
 
     const absence = (await getAbsence(id))!;

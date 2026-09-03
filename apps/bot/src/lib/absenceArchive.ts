@@ -48,4 +48,25 @@ export async function autoArchiveExpired(client: Client): Promise<void> {
   for (const a of rows) {
     await archiveAbsence(client, a).catch((e) => console.error('[auto-archive]', e));
   }
+  await refreshAbsenceFlags().catch((e) => console.error('[absence-flags]', e));
+}
+
+/**
+ * Recalcule `is_absent` de chaque staff à partir de ses absences actives :
+ * true SEULEMENT si une absence active couvre la date du jour. Ainsi une absence
+ * future n'active pas le staff avant sa date de début, et elle s'active toute seule
+ * le bon jour (et se désactive à la fin).
+ */
+export async function refreshAbsenceFlags(): Promise<void> {
+  if (!hasDatabase()) return;
+  await db()`
+    update staff s set is_absent = exists (
+      select 1 from absences a
+      where a.status = 'active'
+        and lower(a.discord_tag) = lower(s.pseudo)
+        and a.start_date <= (now() at time zone 'Europe/Paris')::date
+        and a.end_date   >= (now() at time zone 'Europe/Paris')::date
+    )
+    where s.active = true
+  `;
 }
