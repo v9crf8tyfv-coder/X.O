@@ -15,23 +15,34 @@ const MC_COLORS: Record<string, string> = {
   c: '#FF5555', d: '#FF55FF', e: '#FFFF55', f: '#FFFFFF',
 };
 
+/** Rend un texte avec markdown Discord (**, __, *, ~~) ET codes couleur Minecraft (§/&). */
 function renderMc(text: string, baseColor: string): ReactNode {
   const out: ReactNode[] = [];
-  let cur: CSSProperties = { color: baseColor };
+  let color = baseColor, bold = false, italic = false, underline = false, strike = false;
   let buf = '';
   let key = 0;
-  const flush = () => { if (buf) { out.push(<span key={key++} style={{ ...cur }}>{buf}</span>); buf = ''; } };
+  const styleNow = (): CSSProperties => ({
+    color,
+    fontWeight: bold ? 800 : undefined,
+    fontStyle: italic ? 'italic' : undefined,
+    textDecoration: [underline ? 'underline' : '', strike ? 'line-through' : ''].filter(Boolean).join(' ') || undefined,
+  });
+  const flush = () => { if (buf) { out.push(<span key={key++} style={styleNow()}>{buf}</span>); buf = ''; } };
   for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if ((ch === '§' || ch === '&') && i + 1 < text.length) {
-      const code = text[i + 1].toLowerCase();
-      if (MC_COLORS[code]) { flush(); cur = { ...cur, color: MC_COLORS[code] }; i++; continue; }
-      if (code === 'l') { flush(); cur = { ...cur, fontWeight: 800 }; i++; continue; }
-      if (code === 'o') { flush(); cur = { ...cur, fontStyle: 'italic' }; i++; continue; }
-      if (code === 'n') { flush(); cur = { ...cur, textDecoration: 'underline' }; i++; continue; }
-      if (code === 'm') { flush(); cur = { ...cur, textDecoration: 'line-through' }; i++; continue; }
-      if (code === 'r') { flush(); cur = { color: baseColor }; i++; continue; }
+    const ch = text[i], nx = text[i + 1];
+    if ((ch === '§' || ch === '&') && nx) {
+      const code = nx.toLowerCase();
+      if (MC_COLORS[code]) { flush(); color = MC_COLORS[code]; i++; continue; }
+      if (code === 'l') { flush(); bold = true; i++; continue; }
+      if (code === 'o') { flush(); italic = true; i++; continue; }
+      if (code === 'n') { flush(); underline = true; i++; continue; }
+      if (code === 'm') { flush(); strike = true; i++; continue; }
+      if (code === 'r') { flush(); color = baseColor; bold = italic = underline = strike = false; i++; continue; }
     }
+    if (ch === '*' && nx === '*') { flush(); bold = !bold; i++; continue; }
+    if (ch === '_' && nx === '_') { flush(); underline = !underline; i++; continue; }
+    if (ch === '~' && nx === '~') { flush(); strike = !strike; i++; continue; }
+    if (ch === '*') { flush(); italic = !italic; continue; }
     if (ch === '\n') { flush(); out.push(<br key={key++} />); continue; }
     buf += ch;
   }
@@ -96,8 +107,8 @@ export default function AffichesSection() {
   const chip = (on: boolean): CSSProperties => ({ ...inp, width: 'auto', cursor: 'pointer', borderColor: on ? '#7c5cff' : 'rgba(255,255,255,.12)', color: on ? '#fff' : '#aaa' });
   const row: CSSProperties = { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' };
 
-  const titleNode = mc ? renderMc(title, highlight ? '#0e0e12' : textColor) : title;
-  const bodyNode = mc ? renderMc(body, textColor) : body.split('\n').map((l, i) => <div key={i}>{l || ' '}</div>);
+  const titleNode = renderMc(title, highlight ? '#0e0e12' : textColor);
+  const bodyNode = renderMc(body, textColor);
 
   return (
     <div>
@@ -185,7 +196,7 @@ export default function AffichesSection() {
 
               {subtitle && (
                 <div style={{ fontSize: bannerMode ? Math.round(size.w * 0.028) : Math.round(size.w * 0.026), letterSpacing: 1.5, color: accent, fontWeight: 700, marginBottom: bannerMode ? 0 : 20 }}>
-                  {mc ? renderMc(subtitle, accent) : subtitle}
+                  {renderMc(subtitle, accent)}
                 </div>
               )}
 
