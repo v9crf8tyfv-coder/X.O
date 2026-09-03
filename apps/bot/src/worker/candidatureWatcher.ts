@@ -84,7 +84,7 @@ async function poll(client: Client): Promise<void> {
         returning id, thread_id, grade, player, player_uuid, title
       `;
       if (!claimed.length) continue; // déjà pris ailleurs
-      const ev = claimed[0];
+      const ev = claimed[0]!;
       try {
         const grade = ev.grade || 'Staff';
         const player = ev.player || 'Joueur';
