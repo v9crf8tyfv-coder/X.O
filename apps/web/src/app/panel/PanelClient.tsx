@@ -31,6 +31,7 @@ import ServeursSection from './ServeursSection';
 import LiensSection from './LiensSection';
 import PlaytimeSection from './PlaytimeSection';
 import SanctionsSection from './SanctionsSection';
+import AffichesSection from './AffichesSection';
 import { GradeBadge } from './GradeBadge';
 
 /** Logo du grade (bouclier). Se cache si l'image n'existe pas encore. */
@@ -89,6 +90,7 @@ export default function PanelClient({ account }: Props) {
   }
   if (level >= getGrade('admin').level) {
     sections.push({ id: 'sanctions', label: 'Gestion Sanction(s)', icon: '' });
+    sections.push({ id: 'affiches', label: 'Affiches', icon: '' });
   }
   if (founder) {
     sections.push({ id: 'launcher', label: 'Launcher', icon: '🚀' });
@@ -153,6 +155,8 @@ export default function PanelClient({ account }: Props) {
           <PlaytimeSection />
         ) : current.id === 'sanctions' ? (
           <SanctionsSection />
+        ) : current.id === 'affiches' ? (
+          <AffichesSection />
         ) : (
           <div className="soon-card">
             <div className="soon-emoji">{current.icon}</div>
