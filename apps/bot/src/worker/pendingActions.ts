@@ -39,7 +39,7 @@ export function startPendingActionsWorker(client: Client): void {
     tick(client).catch((e) => console.error('[worker]', e));
     // Suit l'état du timer Bytenut en base (reset/modif depuis le site)
     reconcileServerTimer(client).catch((e) => console.error('[bytenut]', e));
-  }, 8000);
+  }, 15000);
   // Rafraîchit l'effectif régulièrement (absences, changements) — auto-actualisation
   setInterval(() => {
     publishEffectif(client).catch((e) => console.error('[effectif]', e));

@@ -3,7 +3,7 @@ import { db, hasDatabase } from '@xo/db';
 import { getGrade, type SurveillanceCategory } from '@xo/shared';
 import { logSurveillance } from '../lib/surveillance.js';
 
-const EVERY_MS = 15_000;
+const EVERY_MS = 30_000;
 
 interface IgAction {
   id: string;

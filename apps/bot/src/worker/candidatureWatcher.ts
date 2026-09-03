@@ -59,7 +59,7 @@ export function startCandidatureWatcher(client: Client): void {
   console.log('[candidatures] relai forum → Discord démarré (15s)');
   const tick = () => poll(client).catch((e) => console.error('[candidatures]', e));
   setTimeout(tick, 10_000);
-  setInterval(tick, 15_000);
+  setInterval(tick, 30_000);
 }
 
 async function poll(client: Client): Promise<void> {
