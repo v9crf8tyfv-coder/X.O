@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { getGrade, isFounderTier } from '@xo/shared';
+import { getGrade, isFounderTier, gradeLogoKey } from '@xo/shared';
 
 /** Charge une image, la recadre en carré `size`px, renvoie un data URL JPEG */
 async function resizeImage(file: File, size: number): Promise<string> {
@@ -42,7 +42,7 @@ function GradeLogo({ grade }: { grade: string }) {
     // eslint-disable-next-line @next/next/no-img-element
     <img
       className="grade-logo"
-      src={`/logos/${grade}.png`}
+      src={`/logos/${gradeLogoKey(grade)}.png`}
       alt=""
       onError={() => setOk(false)}
     />

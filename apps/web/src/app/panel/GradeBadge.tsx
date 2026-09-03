@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { getGrade } from '@xo/shared';
+import { getGrade, gradeLogoKey } from '@xo/shared';
 
 /**
  * Affiche le LOGO du grade (fichier /logos/<grade>.png) s'il existe,
@@ -16,7 +16,7 @@ export function GradeBadge({ gk }: { gk: string }) {
       // eslint-disable-next-line @next/next/no-img-element
       <img
         className="grade-logo-sm"
-        src={`/logos/${gk}.png`}
+        src={`/logos/${gradeLogoKey(gk)}.png`}
         alt=""
         onError={() => setOk(false)}
       />

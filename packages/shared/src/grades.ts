@@ -184,6 +184,18 @@ export function gradeColorInt(key: string | null | undefined): number {
   return parseInt(getGrade(key).color, 16);
 }
 
+/**
+ * Clé de LOGO à utiliser pour un grade : les variantes partagent le même logo.
+ * modo_test / modo_x → "modo", resp spécialisés → "responsable".
+ * (Le rôle Discord et sa couleur restent distincts ; seul le logo est mutualisé.)
+ */
+export function gradeLogoKey(key: string | null | undefined): string {
+  const k = String(key || '');
+  if (k.startsWith('modo')) return 'modo';
+  if (k === 'responsable' || k.startsWith('resp_')) return 'responsable';
+  return k || 'joueur';
+}
+
 /** Est-ce un fondateur (ou co-fondateur) ? — non surveillé, accès max */
 export function isFounderTier(key: string | null | undefined): boolean {
   return key === 'fondateur' || key === 'cofondateur';
