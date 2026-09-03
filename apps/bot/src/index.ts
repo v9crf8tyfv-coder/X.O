@@ -25,6 +25,7 @@ import { startVoteBoardWorker } from './worker/voteBoardWorker.js';
 import { startAutoMessages } from './worker/autoMessages.js';
 import { startCandidatureWatcher } from './worker/candidatureWatcher.js';
 import { logToDiscord, fmtError } from './lib/logWebhook.js';
+import { acquireLock, startHeartbeat } from './lib/singleton.js';
 
 // Log tout de suite : on saura que le process a bien démarré (avant login).
 void logToDiscord(`🟡 Démarrage du bot… (${new Date().toISOString()})`);
@@ -110,8 +111,19 @@ process.on('uncaughtException', (err) => {
 process.on('SIGINT', () => client.destroy().then(() => process.exit(0)));
 process.on('SIGTERM', () => client.destroy().then(() => process.exit(0)));
 
-// Échec de connexion (mauvais token, coupure au login…) → visible dans le salon logs
-client.login(ENV.DISCORD_TOKEN).catch((err) => {
-  console.error('[login] échec de connexion:', err);
-  void logToDiscord(fmtError('Échec de connexion (login)', err));
-});
+// Verrou instance unique PUIS connexion. Si une autre instance tourne déjà, on s'arrête
+// AVANT de toucher au gateway (sinon les deux se battent = commandes mortes + doublons).
+(async () => {
+  const alone = await acquireLock();
+  if (!alone) {
+    console.log('[singleton] une autre instance du bot tourne déjà → arrêt de ce process.');
+    void logToDiscord('🟠 Instance en double détectée → arrêt (une seule instance doit tourner).');
+    setTimeout(() => process.exit(0), 1000);
+    return;
+  }
+  startHeartbeat();
+  client.login(ENV.DISCORD_TOKEN).catch((err) => {
+    console.error('[login] échec de connexion:', err);
+    void logToDiscord(fmtError('Échec de connexion (login)', err));
+  });
+})();
