@@ -42,9 +42,15 @@ async function memberIdByUsername(guild: Guild | null, username: string): Promis
  * Publie l'effectif dans le salon accueil : UN seul embed (liens utiles + hiérarchie).
  * Édite le message existant.
  */
-export async function publishEffectif(client: Client): Promise<void> {
-  if (!hasDatabase()) return;
+// Anti-spam : une seule publication à la fois, et l'ID du message est gardé en RAM
+// (survit même si la DB échoue) → on ÉDITE toujours le même message d'effectif.
+let _pubBusy = false;
+let _cachedEffId: string | null = null;
 
+export async function publishEffectif(client: Client): Promise<void> {
+  if (!hasDatabase() || _pubBusy) return;
+  _pubBusy = true;
+  try {
   const rows = await db()<EffectifRow[]>`
     select pseudo, grades, discord_id, is_absent from staff where active = true
   `;
@@ -111,20 +117,28 @@ export async function publishEffectif(client: Client): Promise<void> {
 
   const embeds: EmbedBuilder[] = [embed];
 
-  const stored = await db()<{ value: string }[]>`
-    select value from bot_state where key = 'effectif_message_id'
-  `;
-  const id = stored[0]?.value;
+  // ID du message d'effectif : cache RAM d'abord (survit aux erreurs DB), puis DB
+  // (partagée entre instances → converge vers UN seul message au lieu de spammer).
+  let id = _cachedEffId;
+  if (!id) {
+    try {
+      const stored = await db()<{ value: string }[]>`select value from bot_state where key = 'effectif_message_id'`;
+      id = stored[0]?.value ?? null;
+    } catch { /* DB indispo → on postera un seul message, mémorisé en RAM */ }
+  }
   if (id) {
     const msg = await text.messages.fetch(id).catch(() => null);
-    if (msg) {
-      await msg.edit({ embeds });
-      return;
-    }
+    if (msg) { _cachedEffId = id; await msg.edit({ embeds }); return; }
   }
-  const msg = await text.send({ embeds });
-  await db()`
-    insert into bot_state (key, value) values ('effectif_message_id', ${msg.id})
-    on conflict (key) do update set value = ${msg.id}, updated_at = now()
-  `;
+  // Aucun message existant → on en poste UN SEUL et on le mémorise (RAM + DB).
+  const posted = await text.send({ embeds });
+  _cachedEffId = posted.id;
+  try {
+    await db()`insert into bot_state (key, value) values ('effectif_message_id', ${posted.id}) on conflict (key) do update set value = ${posted.id}, updated_at = now()`;
+  } catch { /* pas grave : le cache RAM empêche le spam */ }
+  } catch (e) {
+    console.error('[effectif] publish', e instanceof Error ? e.message : e);
+  } finally {
+    _pubBusy = false;
+  }
 }
