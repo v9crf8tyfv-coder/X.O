@@ -44,7 +44,8 @@ export async function POST(req: Request) {
     const id = Number(body.id);
     const key = String(body.item);
     const done = !!body.done;
-    await db()`update formations set checks = jsonb_set(checks, ${['{' + key + '}']}::text[], ${JSON.stringify(done)}::jsonb, true) where id = ${id}`;
+    // Chemin jsonb = tableau texte avec la SEULE clé (ex ['1.1']) ; valeur = booléen réel.
+    await db()`update formations set checks = jsonb_set(checks, ${[key]}, to_jsonb(${done}::boolean), true) where id = ${id}`;
     return NextResponse.json({ ok: true });
   }
   if (action === 'archive') {
