@@ -19,6 +19,8 @@ const btn: CSSProperties = { background: 'rgba(255,255,255,.06)', border: '1px s
 
 function head(p: string) { return `https://mc-heads.net/avatar/${encodeURIComponent(p)}/48`; }
 function frDate(s: string | null) { return s ? new Date(s).toLocaleDateString('fr-FR') : '—'; }
+/** Date limite = début + 4 semaines (durée max de la formation). */
+function deadline(start: string) { const d = new Date(start); d.setDate(d.getDate() + 28); return d.toLocaleDateString('fr-FR'); }
 
 export default function FormationSection() {
   const [active, setActive] = useState<Formation[]>([]);
@@ -66,7 +68,7 @@ export default function FormationSection() {
           <img src={head(f.pseudo)} alt="" style={{ width: 40, height: 40, borderRadius: 8, imageRendering: 'pixelated' }} />
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 800 }}>{f.pseudo}{f.validated && <span style={{ color: '#16a34a', fontSize: 12, marginLeft: 8 }}>Validé</span>}</div>
-            <div style={{ color: 'var(--muted,#8a8a94)', fontSize: 12 }}>Formation du {frDate(f.started_at)}{f.ended_at ? ` au ${frDate(f.ended_at)}` : ''} · {progress(f)}</div>
+            <div style={{ color: 'var(--muted,#8a8a94)', fontSize: 12 }}>Début {frDate(f.started_at)} · {f.ended_at ? `terminée le ${frDate(f.ended_at)}` : `limite le ${deadline(f.started_at)}`} · {progress(f)}</div>
           </div>
           {editable && <button style={btn} onClick={() => validate(f)}>{f.validated ? 'Annuler validation' : 'Valider'}</button>}
           {editable && <button style={{ ...btn, borderColor: 'rgba(224,65,62,.4)', color: '#ff9b9b' }} onClick={() => archive(f.id)}>Archiver</button>}

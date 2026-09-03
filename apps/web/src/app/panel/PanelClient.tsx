@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { getGrade, isFounderTier, gradeLogoKey } from '@xo/shared';
 
 /** Charge une image, la recadre en carré `size`px, renvoie un data URL JPEG */
@@ -108,11 +108,41 @@ export default function PanelClient({ account }: Props) {
   const [active, setActive] = useState('profil');
   const current = sections.find((s) => s.id === active) ?? sections[0];
 
+  // Thème clair / sombre (choix manuel mémorisé ; sinon suit l'OS).
+  const [isDark, setIsDark] = useState(true);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('xo_theme');
+      if (saved === 'light' || saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', saved);
+        setIsDark(saved === 'dark');
+      } else {
+        setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      }
+    } catch { /* ignore */ }
+  }, []);
+  function toggleTheme() {
+    const next = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('xo_theme', next); } catch { /* ignore */ }
+    setIsDark(next === 'dark');
+  }
+
   return (
     <div className="panel">
       {/* Sidebar */}
       <aside className="sidebar">
-        <div className="sidebar-brand">X.O</div>
+        <div className="sidebar-brand">
+          <span className="brand-mark" aria-hidden="true">XO</span>
+          <span>X.O</span>
+          <button className="theme-toggle" type="button" onClick={toggleTheme} title="Thème clair / sombre" aria-label="Changer de thème">
+            {isDark ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+            )}
+          </button>
+        </div>
         <nav className="sidebar-nav">
           {sections.map((s) => (
             <button
