@@ -77,14 +77,15 @@ async function poll(client: Client): Promise<void> {
     for (const ev of events) {
       try {
         const grade = ev.grade || 'Staff';
-        const face = `https://mc-heads.net/avatar/${encodeURIComponent(ev.player)}/128`;
+        const player = ev.player || 'Joueur';
+        const face = `https://mc-heads.net/avatar/${encodeURIComponent(player)}/128`;
         const link = ev.thread_id ? `${SITE}/forum#thread=${ev.thread_id}` : `${SITE}/forum`;
         const embed = new EmbedBuilder()
-          .setColor(0x7c5cff)
+          .setColor(colorFor(grade))
           .setAuthor({ name: `Nouvelle Candidature — ${grade}`, iconURL: face })
           .setThumbnail(face)
           .setDescription(
-            `**Joueur :** ${ev.player}\n` +
+            `**Joueur :** ${player}\n` +
               `**Grade visé :** ${grade}\n` +
               (ev.title ? `**Sujet :** ${ev.title}\n` : '') +
               `\n[Voir la candidature sur le forum](${link})`,
