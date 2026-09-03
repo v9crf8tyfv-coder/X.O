@@ -54,6 +54,8 @@ export function startCandidatureWatcher(client: Client): void {
     discord_message_id text, handled_by text, handled_at timestamptz,
     created_at timestamptz not null default now()
   )`.catch(() => {});
+  // Récupère les lignes coincées en 'posting' (crash précédent) → repassées en 'new'.
+  db()`update candidature_events set status='new' where status='posting'`.catch(() => {});
   console.log('[candidatures] relai forum → Discord démarré (15s)');
   const tick = () => poll(client).catch((e) => console.error('[candidatures]', e));
   setTimeout(tick, 10_000);
@@ -64,17 +66,25 @@ async function poll(client: Client): Promise<void> {
   if (running) return;
   running = true;
   try {
-    const events = await db()<CandidatureEvent[]>`
-      select id, thread_id, grade, player, player_uuid, title
-      from candidature_events where status = 'new' order by created_at asc limit 5
+    const pending = await db()<{ id: string }[]>`
+      select id from candidature_events where status = 'new' order by created_at asc limit 5
     `;
-    if (!events.length) return;
+    if (!pending.length) return;
 
     const channel = await client.channels.fetch(CANDID_CHANNEL_ID).catch(() => null);
     if (!channel?.isTextBased()) return;
     const text = channel as TextChannel;
 
-    for (const ev of events) {
+    for (const p of pending) {
+      // Réservation ATOMIQUE : une seule tick/instance peut passer 'new' -> 'posting'.
+      // Empêche les doublons (2 process du bot, ou 2 ticks qui se chevauchent).
+      const claimed = await db()<CandidatureEvent[]>`
+        update candidature_events set status = 'posting'
+        where id = ${p.id} and status = 'new'
+        returning id, thread_id, grade, player, player_uuid, title
+      `;
+      if (!claimed.length) continue; // déjà pris ailleurs
+      const ev = claimed[0];
       try {
         const grade = ev.grade || 'Staff';
         const player = ev.player || 'Joueur';
