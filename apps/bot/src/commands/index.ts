@@ -22,6 +22,7 @@ import { setupBoutique } from './setup/setup-boutique.js';
 import { ticketAdd, ticketRemove } from './setup/ticket-members.js';
 import { setupTrain } from './setup/setup-train.js';
 import { setupVote } from './setup/setup-vote.js';
+import { setupSpoilers } from './setup/setup-spoilers.js';
 
 export const commands: SlashCommand[] = [
   ban,
@@ -50,4 +51,5 @@ export const commands: SlashCommand[] = [
   ticketRemove,
   setupTrain,
   setupVote,
+  setupSpoilers,
 ];

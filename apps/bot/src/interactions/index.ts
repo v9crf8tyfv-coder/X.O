@@ -21,6 +21,7 @@ import { roleButton } from './roleButton.js';
 import { shopEnterCode, shopAccept, shopClose, shopCodeModal } from './boutique.js';
 import { trainToggle } from './train.js';
 import { candidatureDone } from './candidature.js';
+import { spoilerView, spoilerInvites } from './spoilers.js';
 
 export const buttons: ComponentHandler<ButtonInteraction>[] = [
   absenceNew,
@@ -37,6 +38,8 @@ export const buttons: ComponentHandler<ButtonInteraction>[] = [
   shopClose,
   trainToggle,
   candidatureDone,
+  spoilerView,
+  spoilerInvites,
 ];
 
 export const selectMenus: ComponentHandler<StringSelectMenuInteraction>[] = [ticketOpen];

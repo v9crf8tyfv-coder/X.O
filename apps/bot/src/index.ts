@@ -26,6 +26,7 @@ import { startAutoMessages } from './worker/autoMessages.js';
 import { startCandidatureWatcher } from './worker/candidatureWatcher.js';
 import { logToDiscord, fmtError } from './lib/logWebhook.js';
 import { acquireLock, startHeartbeat } from './lib/singleton.js';
+import { initSpoilers, cacheInvites, onInviteCreate, onMemberJoin, onMemberLeave } from './lib/spoilers.js';
 
 // Log tout de suite : on saura que le process a bien démarré (avant login).
 void logToDiscord(`🟡 Démarrage du bot… (${new Date().toISOString()})`);
@@ -38,6 +39,7 @@ const client = new Client({
     GatewayIntentBits.GuildModeration, // bans
     GatewayIntentBits.MessageContent, // requis : mode annonce (lire les messages)
     GatewayIntentBits.GuildVoiceStates, // requis : salon vocal "Créer son Salon"
+    GatewayIntentBits.GuildInvites, // requis : suivi des invitations (parrainage / spoilers)
   ],
   partials: [Partials.GuildMember],
   // Allège la mémoire : on ne garde quasi rien en cache (évite la saturation).
@@ -84,6 +86,11 @@ client.once('clientReady', () => {
   startVoteBoardWorker(client); // rafraîchit l'embed du classement des votes (/setup-vote)
   startAutoMessages(client); // messages automatiques configurés dans le panel
   startCandidatureWatcher(client); // candidatures du forum → embed Discord + bouton "Traité"
+  // Parrainage / spoilers : init des tables + cache des invitations du serveur.
+  void initSpoilers().then(async () => {
+    const guild = await client.guilds.fetch(ENV.DISCORD_GUILD_ID).catch(() => null);
+    if (guild) await cacheInvites(guild);
+  });
 });
 
 // Le bot s'est déconnecté du gateway (coupure réseau / kill hébergeur)
@@ -92,6 +99,9 @@ client.on('shardDisconnect', (event) =>
 client.on('error', (err) => void logToDiscord(fmtError('client.error', err)));
 client.on('interactionCreate', (i) => handleInteraction(client, i));
 client.on('guildMemberAdd', (m) => onGuildMemberAdd(client, m));
+client.on('guildMemberAdd', (m) => void onMemberJoin(m)); // parrainage : crédite le parrain
+client.on('guildMemberRemove', (m) => void onMemberLeave(m.id)); // parrainage : invalide l'invitation
+client.on('inviteCreate', (inv) => onInviteCreate(inv)); // maj cache des invitations
 client.on('guildMemberUpdate', (oldM, newM) => onGuildMemberUpdate(client, oldM, newM));
 client.on('messageCreate', (m) => onMessageCreate(client, m));
 client.on('voiceStateUpdate', (o, n) => onVoiceStateUpdate(client, o, n));
