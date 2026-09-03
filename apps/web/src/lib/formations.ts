@@ -33,12 +33,14 @@ export async function ensureFormationTables(): Promise<void> {
     checks jsonb not null default '{}'::jsonb,
     validated boolean not null default false
   )`.catch(() => {});
-  await db()`create table if not exists app_config (key text primary key, value jsonb)`.catch(() => {});
+  // app_config existe déjà (colonnes k/v en text) — on réutilise ce schéma.
+  await db()`create table if not exists app_config (k text primary key, v text)`.catch(() => {});
 }
 
 export async function getFormationTemplate(): Promise<FormationTemplate> {
-  const r = await db()<{ value: unknown }[]>`select value from app_config where key = 'formation_modo_test'`;
-  return (r[0]?.value as FormationTemplate) || DEFAULT_TEMPLATE;
+  const r = await db()<{ v: string }[]>`select v from app_config where k = 'formation_modo_test'`;
+  if (r[0]?.v) { try { return JSON.parse(r[0].v) as FormationTemplate; } catch { /* défaut */ } }
+  return DEFAULT_TEMPLATE;
 }
 
 /** Crée une formation si le pseudo est (ou devient) Modérateur Test. Non bloquant. */

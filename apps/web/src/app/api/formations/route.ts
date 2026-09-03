@@ -67,8 +67,9 @@ export async function POST(req: Request) {
     if (!canEditTemplate(account.site_grade)) return NextResponse.json({ error: 'Réservé aux Responsables et +.' }, { status: 403 });
     const tpl = body.template;
     if (!tpl || !Array.isArray(tpl.items)) return NextResponse.json({ error: 'Modèle invalide.' }, { status: 400 });
-    await db()`insert into app_config (key, value) values ('formation_modo_test', ${JSON.stringify(tpl)}::jsonb)
-      on conflict (key) do update set value = ${JSON.stringify(tpl)}::jsonb`;
+    const json = JSON.stringify(tpl);
+    await db()`insert into app_config (k, v) values ('formation_modo_test', ${json})
+      on conflict (k) do update set v = ${json}`;
     return NextResponse.json({ ok: true });
   }
   return NextResponse.json({ error: 'action' }, { status: 400 });
