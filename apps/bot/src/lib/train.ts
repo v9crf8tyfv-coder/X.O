@@ -227,7 +227,12 @@ async function logResult(
       { name: 'Par', value: staffTag, inline: true },
     )
     .setTimestamp();
-  await (ch as TextChannel).send({ embeds: [embed] }).catch(() => {});
+  // Boutons Correct / Incorrect : pour ton récap avec le modo.
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder().setCustomId('trainmark:ok').setLabel('Correct').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId('trainmark:no').setLabel('Incorrect').setStyle(ButtonStyle.Danger),
+  );
+  await (ch as TextChannel).send({ embeds: [embed], components: [row] }).catch(() => {});
 }
 
 // ---------- panneau de contrôle ----------
