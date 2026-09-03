@@ -12,27 +12,30 @@ const INSTANCE = randomUUID();
 const STALE_SECONDS = 45; // un verrou plus vieux que ça = instance morte → récupérable
 let heartbeat: NodeJS.Timeout | null = null;
 
-/** Tente d'acquérir le verrou. Renvoie true si on est la SEULE instance vivante. */
+/** Tente d'acquérir le verrou. Renvoie true si on est la SEULE instance vivante.
+ *  Ne peut JAMAIS bloquer le démarrage : timeout de 6s → on laisse tourner. */
 export async function acquireLock(): Promise<boolean> {
   if (!hasDatabase()) return true; // pas de base → pas de verrou possible, on laisse tourner
-  try {
-    await db()`create table if not exists bot_lock (
-      id int primary key,
-      instance text not null,
-      beat timestamptz not null default now()
-    )`;
-    const rows = await db()<{ instance: string }[]>`
-      insert into bot_lock (id, instance, beat) values (1, ${INSTANCE}, now())
-      on conflict (id) do update set instance = ${INSTANCE}, beat = now()
-      where bot_lock.beat < now() - ${`${STALE_SECONDS} seconds`}::interval
-         or bot_lock.instance = ${INSTANCE}
-      returning instance
-    `;
-    return rows.length > 0 && rows[0]!.instance === INSTANCE;
-  } catch (e) {
-    console.error('[singleton] verrou indisponible, on continue sans:', e instanceof Error ? e.message : e);
-    return true; // en cas d'erreur DB, on ne bloque pas le bot
-  }
+  const timeout = new Promise<boolean>((resolve) => setTimeout(() => resolve(true), 6000));
+  const attempt = (async () => {
+    try {
+      await db()`create table if not exists bot_lock (
+        id int primary key, instance text not null, beat timestamptz not null default now()
+      )`;
+      const rows = await db()<{ instance: string }[]>`
+        insert into bot_lock (id, instance, beat) values (1, ${INSTANCE}, now())
+        on conflict (id) do update set instance = ${INSTANCE}, beat = now()
+        where bot_lock.beat < now() - ${`${STALE_SECONDS} seconds`}::interval
+           or bot_lock.instance = ${INSTANCE}
+        returning instance
+      `;
+      return rows.length > 0 && rows[0]!.instance === INSTANCE;
+    } catch (e) {
+      console.error('[singleton] verrou indisponible, on continue sans:', e instanceof Error ? e.message : e);
+      return true; // en cas d'erreur DB, on ne bloque pas le bot
+    }
+  })();
+  return Promise.race([attempt, timeout]);
 }
 
 /** Rafraîchit le verrou régulièrement pour signaler que cette instance est vivante. */
