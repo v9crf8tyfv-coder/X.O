@@ -26,6 +26,9 @@ export function db(): ReturnType<typeof postgres> {
       idle_timeout: 15, // libère vite
       connect_timeout: 10,
       prepare: false, // requis pour le pooler "transaction" (port 6543)
+      // Toute valeur `undefined` devient NULL au lieu de faire planter la requête
+      // (fini les "UNDEFINED_VALUE: Undefined values are not allowed" qui cassaient les workers).
+      transform: { undefined: null },
     });
   }
   return _sql;
