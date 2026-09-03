@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getGrade } from '@xo/shared';
 import { requireLevel, RESP_LEVEL, canAssignGrade } from '@/lib/guard';
 import { setStaffGrades, getStaff, removeStaff, syncSiteAccess, queueAction } from '@/lib/staff';
+import { ensureFormationFor } from '@/lib/formations';
 
 export const runtime = 'nodejs';
 
@@ -23,6 +24,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (!staff) return NextResponse.json({ error: 'Staff introuvable.' }, { status: 404 });
 
   await setStaffGrades(params.id, grades);
+  await ensureFormationFor(grades, staff.pseudo); // formation auto si Modérateur Test
   await syncSiteAccess(staff.site_username, grades);
   // Félicitations seulement si le grade le plus haut MONTE (promotion)
   const topLevel = (gs: string[]) => Math.max(0, ...gs.map((x) => getGrade(x).level));

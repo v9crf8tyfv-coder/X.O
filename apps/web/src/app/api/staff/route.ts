@@ -10,6 +10,7 @@ import {
   findActiveStaff,
   setStaffGrades,
 } from '@/lib/staff';
+import { ensureFormationFor } from '@/lib/formations';
 
 export const runtime = 'nodejs';
 
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
   if (existing) {
     const merged = [...new Set([...existing.grades, ...grades])];
     await setStaffGrades(existing.id, merged);
+    await ensureFormationFor(merged, existing.pseudo); // formation auto si Modérateur Test
     await syncSiteAccess(existing.site_username ?? (siteUsername || null), merged);
     await queueAction({
       type: 'staff.apply',
@@ -77,6 +79,7 @@ export async function POST(req: Request) {
     siteUsername: siteUsername || null,
     grades,
   });
+  await ensureFormationFor(grades, minecraftPseudo); // formation auto si Modérateur Test
 
   // Sync accès site (par pseudo site) + file d'attente Discord/IG (bot)
   await syncSiteAccess(siteUsername || null, grades);

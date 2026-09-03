@@ -32,6 +32,7 @@ import LiensSection from './LiensSection';
 import PlaytimeSection from './PlaytimeSection';
 import SanctionsSection from './SanctionsSection';
 import AffichesSection from './AffichesSection';
+import FormationSection from './FormationSection';
 import { GradeBadge } from './GradeBadge';
 
 /** Logo du grade (bouclier). Se cache si l'image n'existe pas encore. */
@@ -91,6 +92,10 @@ export default function PanelClient({ account }: Props) {
   if (level >= getGrade('admin').level) {
     sections.push({ id: 'sanctions', label: 'Gestion Sanction(s)', icon: '' });
     sections.push({ id: 'affiches', label: 'Affiches', icon: '' });
+  }
+  // Gestion Formation : Admins et + OU Modérateur X (formateurs)
+  if (level >= getGrade('admin').level || account.site_grades.includes('modo_x')) {
+    sections.push({ id: 'formation', label: 'Gestion Formation', icon: '' });
   }
   if (founder) {
     sections.push({ id: 'launcher', label: 'Launcher', icon: '🚀' });
@@ -157,6 +162,8 @@ export default function PanelClient({ account }: Props) {
           <SanctionsSection />
         ) : current.id === 'affiches' ? (
           <AffichesSection />
+        ) : current.id === 'formation' ? (
+          <FormationSection />
         ) : (
           <div className="soon-card">
             <div className="soon-emoji">{current.icon}</div>
