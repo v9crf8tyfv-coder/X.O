@@ -55,8 +55,13 @@ function isDue(m: AutoMsg): boolean {
   if (m.mode === 'daily') {
     if (!m.at_hhmm) return false;
     if (m.days && !m.days.split(',').includes(String(nowDay()))) return false; // jours restreints
-    if (nowHHMM() !== m.at_hhmm) return false;
-    // Une seule fois par jour.
+    // Fenêtre de 10 min à partir de l'heure cible : un tick tourne ~toutes les 60s SANS être
+    // aligné sur la minute pile, donc exiger la minute exacte faisait rater l'envoi certains jours.
+    const toMin = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3));
+    const nowM = toMin(nowHHMM());
+    const tgt = toMin(m.at_hhmm);
+    if (nowM < tgt || nowM >= tgt + 10) return false;
+    // Une seule fois par jour (le last_sent_at empêche les répétitions dans la fenêtre).
     return !m.last_sent_at || dayKey(m.last_sent_at) !== dayKey(now);
   }
   // interval aligné sur l'heure pile (0h, Nh, 2Nh…), une fois par heure.
