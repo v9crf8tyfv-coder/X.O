@@ -1,6 +1,18 @@
-import { EmbedBuilder, type Client, type TextChannel } from 'discord.js';
+import { EmbedBuilder, type Client, type TextChannel, type Guild, type MessageCreateOptions } from 'discord.js';
 import { BRAND_COLOR } from '@xo/shared';
 import { db, hasDatabase } from '@xo/db';
+
+/**
+ * Tags par ID : transforme "@<id>" en vraie mention Discord.
+ * Si l'id correspond à un rôle du serveur → mention de rôle <@&id>, sinon membre <@id>.
+ * (On ignore les mentions déjà formatées comme <@id> / <@&id> grâce au lookbehind.)
+ */
+function resolveMentions(content: string, guild: Guild | null): string {
+  if (!guild) return content;
+  return content.replace(/(?<!<)@(\d{17,20})/g, (_full, id: string) =>
+    guild.roles.cache.has(id) ? `<@&${id}>` : `<@${id}>`,
+  );
+}
 
 interface AutoMsg {
   id: number;
@@ -68,15 +80,13 @@ async function tick(client: Client): Promise<void> {
       const ch = await client.channels.fetch(m.channel_id).catch(() => null);
       if (!ch || !ch.isTextBased()) continue;
       const text = ch as TextChannel;
-      if (m.image_url) {
-        const embed = new EmbedBuilder().setColor(BRAND_COLOR).setImage(m.image_url);
-        if (m.content) embed.setDescription(m.content);
-        await text.send({ embeds: [embed] });
-      } else if (m.content) {
-        await text.send({ content: m.content });
-      } else {
-        continue; // rien à envoyer
-      }
+      // Le texte va dans le CORPS du message (pas dans un embed) pour que les mentions PING.
+      const body = m.content ? resolveMentions(m.content, text.guild) : '';
+      const payload: MessageCreateOptions = { allowedMentions: { parse: ['users', 'roles', 'everyone'] } };
+      if (body) payload.content = body;
+      if (m.image_url) payload.embeds = [new EmbedBuilder().setColor(BRAND_COLOR).setImage(m.image_url)];
+      if (!payload.content && !payload.embeds) continue; // rien à envoyer
+      await text.send(payload);
       await sql`update auto_messages set last_sent_at = now() where id = ${m.id}`;
     } catch {
       /* salon injoignable / message invalide : on réessaiera au prochain tick */

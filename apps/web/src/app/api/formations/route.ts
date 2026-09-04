@@ -52,6 +52,12 @@ export async function POST(req: Request) {
     await db()`update formations set archived = true, ended_at = now() where id = ${Number(body.id)}`;
     return NextResponse.json({ ok: true });
   }
+  if (action === 'deleteArchive') {
+    // Suppression définitive d'une archive : Responsables et + uniquement.
+    if (!canEditTemplate(account.site_grade)) return NextResponse.json({ error: 'Réservé aux Responsables et +.' }, { status: 403 });
+    await db()`delete from formations where id = ${Number(body.id)} and archived = true`;
+    return NextResponse.json({ ok: true });
+  }
   if (action === 'validate') {
     await db()`update formations set validated = ${!!body.validated} where id = ${Number(body.id)}`;
     return NextResponse.json({ ok: true });

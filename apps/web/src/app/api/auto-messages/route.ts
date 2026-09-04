@@ -85,7 +85,44 @@ export async function PATCH(req: Request) {
   const b = await req.json().catch(() => ({}));
   const id = Number(b.id);
   if (!id) return NextResponse.json({ error: 'id manquant' }, { status: 400 });
-  await db()`update auto_messages set enabled = ${!!b.enabled} where id = ${id}`;
+
+  // Sans `edit` : simple bascule actif/pause (comportement historique).
+  if (!b.edit) {
+    await db()`update auto_messages set enabled = ${!!b.enabled} where id = ${id}`;
+    return NextResponse.json({ ok: true });
+  }
+
+  // Édition complète du message (mêmes règles que la création).
+  const target = b.target === 'discord' ? 'discord' : 'game';
+  const channelId = target === 'discord' ? String(b.channelId || '').trim() : '';
+  const content = String(b.content || '').trim();
+  const imageUrl = String(b.imageUrl || '').trim() || null;
+  const mode = b.mode === 'daily' ? 'daily' : 'interval';
+  const everyHours = mode === 'interval' ? Math.max(1, Math.min(168, Number(b.everyHours) || 2)) : null;
+  const atHHMM = mode === 'daily' ? String(b.atHHMM || '').trim() : null;
+  let days: string | null = null;
+  if (mode === 'daily' && Array.isArray(b.days)) {
+    const set = [...new Set(b.days.map((n: unknown) => Number(n)).filter((n: number) => n >= 1 && n <= 7))].sort();
+    if (set.length > 0 && set.length < 7) days = set.join(',');
+  }
+  if (target === 'discord' && !/^\d{5,25}$/.test(channelId)) {
+    return NextResponse.json({ error: 'ID de salon invalide.' }, { status: 400 });
+  }
+  if (!content && !imageUrl) {
+    return NextResponse.json({ error: 'Mets au moins un texte (ou une image).' }, { status: 400 });
+  }
+  if (mode === 'daily' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(atHHMM || '')) {
+    return NextResponse.json({ error: 'Heure invalide (format HH:MM, ex. 19:00).' }, { status: 400 });
+  }
+  if (imageUrl && !/^https?:\/\//.test(imageUrl)) {
+    return NextResponse.json({ error: 'Le lien image doit commencer par http(s)://' }, { status: 400 });
+  }
+
+  await db()`
+    update auto_messages set
+      channel_id = ${channelId}, content = ${content}, image_url = ${imageUrl},
+      mode = ${mode}, every_hours = ${everyHours}, at_hhmm = ${atHHMM}, days = ${days}
+    where id = ${id}`;
   return NextResponse.json({ ok: true });
 }
 

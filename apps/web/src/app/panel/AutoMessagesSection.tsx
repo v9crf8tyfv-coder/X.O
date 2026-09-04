@@ -31,6 +31,7 @@ export default function AutoMessagesSection() {
   const [atHHMM, setAtHHMM] = useState('19:00');
   const [days, setDays] = useState<number[]>([1, 2, 3, 4, 5, 6, 7]); // tous par défaut
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
   const toggleDay = (d: number) => setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()));
 
@@ -49,17 +50,35 @@ export default function AutoMessagesSection() {
   }
   useEffect(() => { load(); }, []);
 
-  async function add() {
+  function resetForm() {
+    setEditingId(null); setTarget('game'); setChannelId(''); setContent(''); setImageUrl('');
+    setMode('interval'); setEveryHours('2'); setAtHHMM('19:00'); setDays([1, 2, 3, 4, 5, 6, 7]);
+  }
+  function startEdit(m: Msg) {
+    setEditingId(m.id);
+    setTarget(m.channel_id ? 'discord' : 'game');
+    setChannelId(m.channel_id || '');
+    setContent(m.content || '');
+    setImageUrl(m.image_url || '');
+    setMode(m.mode === 'daily' ? 'daily' : 'interval');
+    setEveryHours(String(m.every_hours ?? 2));
+    setAtHHMM(m.at_hhmm || '19:00');
+    setDays(m.days ? m.days.split(',').map(Number) : [1, 2, 3, 4, 5, 6, 7]);
+    setError('');
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  async function save() {
     setSaving(true);
     setError('');
+    const payload = { target, channelId, content, imageUrl, mode, everyHours: Number(everyHours), atHHMM, days };
     const r = await fetch('/api/auto-messages', {
-      method: 'POST',
+      method: editingId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target, channelId, content, imageUrl, mode, everyHours: Number(everyHours), atHHMM, days }),
+      body: JSON.stringify(editingId ? { id: editingId, edit: true, ...payload } : payload),
     });
     setSaving(false);
-    if (r.ok) { setContent(''); setImageUrl(''); await load(); }
-    else setError((await r.json().catch(() => ({}))).error || 'Échec de l’ajout.');
+    if (r.ok) { resetForm(); await load(); }
+    else setError((await r.json().catch(() => ({}))).error || 'Échec.');
   }
   async function toggle(m: Msg) {
     await fetch('/api/auto-messages', {
@@ -104,7 +123,7 @@ export default function AutoMessagesSection() {
       )}
 
       <div className="lchr-card">
-        <h3>Nouveau message</h3>
+        <h3>{editingId ? 'Modifier le message' : 'Nouveau message'}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
           <select className="btn-sec" value={target} onChange={(e) => setTarget(e.target.value as 'game' | 'discord')} style={{ padding: '10px 12px' }}>
             <option value="game">En jeu (chat Minecraft)</option>
@@ -132,7 +151,12 @@ export default function AutoMessagesSection() {
             ) : (
               <input className="btn-sec" type="time" value={atHHMM} onChange={(e) => setAtHHMM(e.target.value)} style={{ padding: '10px 12px' }} />
             )}
-            <button className="btn-accent" onClick={add} disabled={saving}>{saving ? '…' : 'Ajouter'}</button>
+            <button className="btn-accent" onClick={save} disabled={saving}>{saving ? '…' : editingId ? 'Enregistrer' : 'Ajouter'}</button>
+            {editingId && <button className="btn-sec" onClick={resetForm} disabled={saving} style={{ padding: '10px 12px' }}>Annuler</button>}
+          </div>
+          <div style={{ color: muted, fontSize: 12.5 }}>
+            Tag : écris <b>@</b> suivi de l’ID d’un rôle ou d’un membre (ex. <code>@1544819766546407496</code>) →
+            ça devient une vraie mention qui ping. (Discord uniquement.)
           </div>
           {mode === 'daily' && (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -180,6 +204,7 @@ export default function AutoMessagesSection() {
                   </span>
                   <span style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                     <button className="lchr-x" onClick={() => setPreview(preview === m.id ? null : m.id)}>Voir en chat</button>
+                    <button className="lchr-x" onClick={() => startEdit(m)}>Éditer</button>
                     <button className="lchr-x" onClick={() => toggle(m)}>{m.enabled ? 'Pause' : 'Activer'}</button>
                     <button className="lchr-x" onClick={() => del(m.id)}>Suppr.</button>
                   </span>

@@ -51,6 +51,7 @@ export default function FormationSection() {
     await post({ action: 'toggle', id: f.id, item, done });
   }
   async function archive(id: number) { if (!confirm('Archiver cette formation ?')) return; if (await post({ action: 'archive', id })) load(); }
+  async function deleteArchive(id: number) { if (!confirm('Supprimer définitivement cette archive ? (irréversible)')) return; if (await post({ action: 'deleteArchive', id })) load(); }
   async function validate(f: Formation) { if (await post({ action: 'validate', id: f.id, validated: !f.validated })) load(); }
 
   function progress(f: Formation): string {
@@ -72,6 +73,7 @@ export default function FormationSection() {
           </div>
           {editable && <button style={btn} onClick={() => validate(f)}>{f.validated ? 'Annuler validation' : 'Valider'}</button>}
           {editable && <button style={{ ...btn, borderColor: 'rgba(224,65,62,.4)', color: '#ff9b9b' }} onClick={() => archive(f.id)}>Archiver</button>}
+          {!editable && canEdit && <button style={{ ...btn, borderColor: 'rgba(224,65,62,.4)', color: '#ff9b9b' }} onClick={() => deleteArchive(f.id)}>Supprimer</button>}
         </div>
         <div>
           {template?.items.map((it) => it.section ? (
