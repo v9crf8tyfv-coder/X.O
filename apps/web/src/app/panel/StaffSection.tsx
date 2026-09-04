@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getGrade } from '@xo/shared';
 import { GradeBadge } from './GradeBadge';
 
@@ -61,6 +61,10 @@ export default function StaffSection({ myGrade }: { myGrade: string }) {
   const [recType, setRecType] = useState<'warn' | 'blame' | 'note'>('warn');
   const [recReason, setRecReason] = useState('');
 
+  // Compteur de modifs en cours : tant qu'une modif optimiste n'est pas confirmée,
+  // le rafraîchissement automatique NE réécrit PAS la liste (sinon le bouton "revient").
+  const pending = useRef(0);
+
   const load = useCallback(async () => {
     try {
       const r = await fetch('/api/staff');
@@ -68,8 +72,8 @@ export default function StaffSection({ myGrade }: { myGrade: string }) {
         setError('Accès refusé ou erreur serveur.');
         return;
       }
-      setStaff(await r.json());
-      setError('');
+      const data = await r.json();
+      if (pending.current === 0) setStaff(data); // ne pas écraser une modif optimiste en vol
     } catch {
       setError('Impossible de contacter le serveur.');
     } finally {
@@ -117,16 +121,28 @@ export default function StaffSection({ myGrade }: { myGrade: string }) {
       return;
     }
     setError('');
-    const res = await fetch(`/api/staff/${s.id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ grades: next }),
-    });
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      setError(d.error ?? 'Modification refusée.');
+    const prev = s.grades;
+    // Mise à jour OPTIMISTE : le bouton change instantanément, l'envoi se fait en arrière-plan.
+    setStaff((list) => list.map((x) => (x.id === s.id ? { ...x, grades: next } : x)));
+    pending.current++;
+    try {
+      const res = await fetch(`/api/staff/${s.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ grades: next }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error ?? 'Modification refusée.');
+        // Échec : on remet l'état d'avant.
+        setStaff((list) => list.map((x) => (x.id === s.id ? { ...x, grades: prev } : x)));
+      }
+    } catch {
+      setError('Impossible de contacter le serveur.');
+      setStaff((list) => list.map((x) => (x.id === s.id ? { ...x, grades: prev } : x)));
+    } finally {
+      pending.current--;
     }
-    load();
   }
 
   async function removeStaff(s: Staff) {
