@@ -49,6 +49,7 @@ export async function getVoteRanking(limit = 7): Promise<VoteRow[]> {
     try {
       const res = await fetch(`https://api.top-serveurs.net/v1/servers/${token}/players-ranking`, {
         headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(6000),
       });
       if (res.ok) {
         const j = (await res.json()) as { players?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>;

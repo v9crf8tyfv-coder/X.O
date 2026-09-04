@@ -14,6 +14,7 @@ export async function logToDiscord(content: string): Promise<void> {
   try {
     await fetch(url, {
       method: 'POST',
+      signal: AbortSignal.timeout(6000),
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username: 'X.O — Logs',

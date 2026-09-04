@@ -47,8 +47,17 @@ export async function headEmoji(client: Client, pseudo: string): Promise<string>
   if (cached) return `<:${name}:${cached}>`;
   try {
     // wsrv.nl arrondit l'image côté serveur (mask=circle) → aucun traitement sur le bot.
+    // Timeout 6s : si le service externe traîne, on abandonne cette tête au lieu de BLOQUER
+    // tout l'effectif (c'était la cause du "/effectif charge à l'infini").
     const src = `mc-heads.net/avatar/${encodeURIComponent(pseudo)}/64`;
-    const res = await fetch(`https://wsrv.nl/?url=${encodeURIComponent(src)}&mask=circle&output=png`);
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 6000);
+    let res: Response;
+    try {
+      res = await fetch(`https://wsrv.nl/?url=${encodeURIComponent(src)}&mask=circle&output=png`, { signal: ctrl.signal });
+    } finally {
+      clearTimeout(to);
+    }
     if (!res.ok) return '';
     const buf = Buffer.from(await res.arrayBuffer());
     const emoji = await client.application.emojis.create({ attachment: buf, name });

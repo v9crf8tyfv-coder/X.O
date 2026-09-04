@@ -22,12 +22,13 @@ export function db(): ReturnType<typeof postgres> {
   if (!_sql) {
     _sql = postgres(process.env.DATABASE_URL, {
       ssl: 'require',
-      max: 3, // peu de connexions (pooler Supabase limité)
-      idle_timeout: 15, // libère vite
+      max: 8, // assez de connexions pour que le pool ne s'épuise jamais (workers + commandes)
+      idle_timeout: 20, // libère les connexions inactives
+      max_lifetime: 60 * 5, // recycle chaque connexion toutes les 5 min -> tue les connexions "zombies" du pooler
       connect_timeout: 10,
       prepare: false, // requis pour le pooler "transaction" (port 6543)
-      // Toute valeur `undefined` devient NULL au lieu de faire planter la requête
-      // (fini les "UNDEFINED_VALUE: Undefined values are not allowed" qui cassaient les workers).
+      onnotice: () => {}, // supprime le spam "relation already exists"
+      // Toute valeur `undefined` devient NULL au lieu de faire planter la requête.
       transform: { undefined: null },
     });
   }

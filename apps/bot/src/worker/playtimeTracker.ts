@@ -28,7 +28,7 @@ async function resolveUuid(name: string): Promise<string | null> {
   const key = name.toLowerCase();
   if (uuidCache.has(key)) return uuidCache.get(key)!;
   try {
-    const r = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`);
+    const r = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`, { signal: AbortSignal.timeout(5000) });
     if (r.ok) {
       const j = (await r.json()) as { id?: string };
       if (j.id) {
