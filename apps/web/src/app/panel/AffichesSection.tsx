@@ -59,6 +59,17 @@ const SIZES: Record<Fmt, { w: number; h: number; label: string }> = {
 };
 type Mode = 'affiche' | 'banniere';
 
+/** Polices disponibles — piles 100% système : elles s'exportent toujours correctement en PNG. */
+const FONTS: { label: string; css: string }[] = [
+  { label: 'Sans', css: "'Helvetica Neue', Arial, sans-serif" },
+  { label: 'Impact', css: "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif" },
+  { label: 'Serif', css: "Georgia, 'Times New Roman', serif" },
+  { label: 'Arrondi', css: "'Trebuchet MS', 'Segoe UI', system-ui, sans-serif" },
+  { label: 'Condensé', css: "'Arial Narrow', 'Roboto Condensed', 'Helvetica Neue', sans-serif" },
+  { label: 'Manuscrite', css: "'Snell Roundhand', 'Brush Script MT', cursive" },
+  { label: 'Minecraft (mono)', css: "'Courier New', monospace" },
+];
+
 export default function AffichesSection() {
   const [fmt, setFmt] = useState<Fmt>('landscape');
   const [mode, setMode] = useState<Mode>('affiche');
@@ -71,14 +82,14 @@ export default function AffichesSection() {
   const [subtitle, setSubtitle] = useState('ANNONCE');
   const [body, setBody] = useState('Écris ton texte ici.\n§eTu peux utiliser les couleurs Minecraft §aavec §cles codes §.');
   const [box, setBox] = useState(false);
-  const [mc, setMc] = useState(false);
   const [highlight, setHighlight] = useState(false);
   const [titleGrad, setTitleGrad] = useState(false);
+  const [fontIdx, setFontIdx] = useState(0);
   const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const size = SIZES[fmt];
-  const font = mc ? "'Courier New', monospace" : "'Helvetica Neue', Arial, sans-serif";
+  const font = FONTS[fontIdx].css;
   const bg = gradient ? `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)` : c1;
   const bannerMode = mode === 'banniere';
   const scale = Math.min(1, 560 / size.w); // aperçu réduit pour tenir dans le panel
@@ -134,6 +145,13 @@ export default function AffichesSection() {
             ))}
           </div>
 
+          <label style={lbl}>Police</label>
+          <div style={row}>
+            {FONTS.map((f, i) => (
+              <button key={f.label} onClick={() => setFontIdx(i)} style={{ ...chip(fontIdx === i), fontFamily: f.css }}>{f.label}</button>
+            ))}
+          </div>
+
           <label style={lbl}>Fond</label>
           <div style={row}>
             <button onClick={() => setGradient(true)} style={chip(gradient)}>Dégradé</button>
@@ -163,7 +181,6 @@ export default function AffichesSection() {
               <label style={lbl}><input type="checkbox" checked={box} onChange={(e) => setBox(e.target.checked)} /> Encadré autour du texte</label>
             </>
           )}
-          <label style={lbl}><input type="checkbox" checked={mc} onChange={(e) => setMc(e.target.checked)} /> Écriture Minecraft (§ / &amp;)</label>
           <label style={lbl}><input type="checkbox" checked={titleGrad} onChange={(e) => setTitleGrad(e.target.checked)} /> Titre en dégradé (Accent → Couleur 1)</label>
           <label style={lbl}><input type="checkbox" checked={highlight} onChange={(e) => setHighlight(e.target.checked)} /> Surbrillance du titre</label>
 
