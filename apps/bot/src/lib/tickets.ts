@@ -49,8 +49,16 @@ export function buildTicketPanelEmbed(space: TicketSpace): EmbedBuilder {
     .setColor(BRAND_COLOR)
     .setTitle(space === 'staff' ? '🎫 Tickets Staff' : '🎫 Ouvrir un ticket')
     .setDescription(
-      'Sélectionne une **catégorie** dans le menu ci-dessous pour ouvrir un ticket.\n' +
-        'Un salon privé sera créé rien que pour toi.',
+      space === 'staff'
+        ? 'Sélectionne une **catégorie** dans le menu ci-dessous pour ouvrir un ticket.\n' +
+            'Un salon privé sera créé rien que pour toi.'
+        : 'Une question, un problème ou une demande particulière ?\n' +
+            'Notre système de tickets vous permet de contacter directement l’équipe EmeriaMC dans un espace privé et dédié.\n\n' +
+            'Avant d’ouvrir un ticket, merci de sélectionner la catégorie correspondant le mieux à votre demande. Cela permettra à notre équipe d’identifier rapidement votre besoin et de vous apporter une réponse adaptée.\n\n' +
+            'Chaque ticket est strictement privé : seuls vous et les membres de l’équipe autorisés pourront y accéder.\n\n' +
+            '**Les tickets Support sont aussi disponibles pour des problèmes uniquement résolvables par des responsables ou fondateurs**\n' +
+            '-# —> https://emeria-site.com/\n\n' +
+            '> <:EmeriaMC:1541095551511298139>  **L’équipe d\'EmeriaMC.**',
     )
     .setFooter({ text: 'X.O • Tickets' });
 }
