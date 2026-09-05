@@ -33,6 +33,8 @@ import PlaytimeSection from './PlaytimeSection';
 import SanctionsSection from './SanctionsSection';
 import AffichesSection from './AffichesSection';
 import FormationSection from './FormationSection';
+import AccessSection from './AccessSection';
+import { PANEL_SECTIONS } from '@/lib/panelSections';
 import { GradeBadge } from './GradeBadge';
 
 /** Logo du grade (bouclier). Se cache si l'image n'existe pas encore. */
@@ -73,37 +75,22 @@ export default function PanelClient({ account }: Props) {
   const founder = isFounderTier(account.site_grade);
   const level = grade.level;
 
-  // Sections visibles selon le grade (émojis gardés seulement pour Staff & Site)
-  const sections: Section[] = [{ id: 'profil', label: 'Profil', icon: '' }];
-  // Liens utiles + Gestion Staff : à partir d'admin (en dessous = juste Profil)
-  if (level >= getGrade('admin').level) {
-    sections.push({ id: 'liens', label: 'Liens utiles', icon: '🔗' });
-    sections.push({ id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', soon: true });
-  }
-  if (founder) {
-    sections.push({ id: 'serveurs', label: 'Gestion Serveurs', icon: '🖥️' });
-  }
-  if (level >= getGrade('admin').level) {
-    sections.push({ id: 'playtime', label: 'Temps de jeu', icon: '⏱️' });
-  }
-  if (level >= getGrade('responsable').level) {
-    sections.push({ id: 'reseaux', label: 'Gestion Réseaux', icon: '', soon: true });
-  }
-  if (level >= getGrade('admin').level) {
-    sections.push({ id: 'sanctions', label: 'Gestion Sanction(s)', icon: '' });
-    sections.push({ id: 'affiches', label: 'Affiches', icon: '' });
-  }
-  // Gestion Formation : Admins et + OU Modérateur X (formateurs)
-  if (level >= getGrade('admin').level || account.site_grades.includes('modo_x')) {
-    sections.push({ id: 'formation', label: 'Gestion Formation', icon: '' });
-  }
-  if (founder) {
-    sections.push({ id: 'launcher', label: 'Launcher', icon: '🚀' });
-    sections.push({ id: 'support', label: 'Support', icon: '🎫' });
-    sections.push({ id: 'trafic', label: 'Trafic du site', icon: '📈' });
-    sections.push({ id: 'automsg', label: 'Messages auto', icon: '💬' });
-    sections.push({ id: 'site', label: 'Gestion Site', icon: '🔐' });
-  }
+  // Config d'accès par catégorie (définie par les Fondateurs dans la section « Accès »).
+  const [access, setAccess] = useState<Record<string, number>>({});
+  useEffect(() => {
+    fetch('/api/panel-access')
+      .then((r) => (r.ok ? r.json() : { access: {} }))
+      .then((d) => setAccess(d.access || {}))
+      .catch(() => {});
+  }, []);
+
+  // Sections visibles = registre filtré par la config d'accès (niveau par défaut si non configuré).
+  const sections: Section[] = PANEL_SECTIONS.filter((s) => {
+    if (s.founderOnly) return founder; // ex : la config d'accès elle-même
+    const min = access[s.id] ?? s.defaultLevel;
+    if (level >= min) return true;
+    return Boolean(s.extraGrade && account.site_grades.includes(s.extraGrade));
+  }).map((s) => ({ id: s.id, label: s.label, icon: s.icon, soon: s.soon }));
 
   const [active, setActive] = useState('profil');
   const current = sections.find((s) => s.id === active) ?? sections[0];
@@ -182,6 +169,8 @@ export default function PanelClient({ account }: Props) {
           <VisitsSection />
         ) : current.id === 'automsg' ? (
           <AutoMessagesSection />
+        ) : current.id === 'acces' ? (
+          <AccessSection initial={access} />
         ) : current.id === 'staff' ? (
           <StaffSection myGrade={account.site_grade} />
         ) : current.id === 'serveurs' ? (
