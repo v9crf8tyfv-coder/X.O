@@ -5,11 +5,11 @@ import { getCurrentAccount } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 
-/** Config d'accès : { sectionId: niveau minimum requis }. Stockée dans app_config (k/v). */
-async function readAccess(): Promise<Record<string, number>> {
+/** Config d'accès : { sectionId: [grades autorisés] }. Stockée dans app_config (k/v). */
+async function readAccess(): Promise<Record<string, string[]>> {
   try {
     const r = await db()<{ v: string }[]>`select v from app_config where k = 'panel_access' limit 1`;
-    return r[0]?.v ? (JSON.parse(r[0].v) as Record<string, number>) : {};
+    return r[0]?.v ? (JSON.parse(r[0].v) as Record<string, string[]>) : {};
   } catch {
     return {};
   }
@@ -32,11 +32,13 @@ export async function POST(req: Request) {
   if (!access || typeof access !== 'object') {
     return NextResponse.json({ error: 'Config invalide.' }, { status: 400 });
   }
-  // Ne garde que des paires id -> niveau entier 0..100.
-  const clean: Record<string, number> = {};
+  // Ne garde que des paires id -> liste de grades (clés string), max 20 par section.
+  const clean: Record<string, string[]> = {};
   for (const [k, v] of Object.entries(access)) {
-    const n = Number(v);
-    if (typeof k === 'string' && Number.isFinite(n) && n >= 0 && n <= 100) clean[k] = Math.round(n);
+    if (typeof k === 'string' && Array.isArray(v)) {
+      const arr = [...new Set(v.filter((x): x is string => typeof x === 'string'))].slice(0, 20);
+      clean[k] = arr;
+    }
   }
   const json = JSON.stringify(clean);
   await db()`insert into app_config (k, v) values ('panel_access', ${json})

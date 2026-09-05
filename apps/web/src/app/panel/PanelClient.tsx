@@ -76,7 +76,7 @@ export default function PanelClient({ account }: Props) {
   const level = grade.level;
 
   // Config d'accès par catégorie (définie par les Fondateurs dans la section « Accès »).
-  const [access, setAccess] = useState<Record<string, number>>({});
+  const [access, setAccess] = useState<Record<string, string[]>>({});
   useEffect(() => {
     fetch('/api/panel-access')
       .then((r) => (r.ok ? r.json() : { access: {} }))
@@ -84,11 +84,18 @@ export default function PanelClient({ account }: Props) {
       .catch(() => {});
   }, []);
 
-  // Sections visibles = registre filtré par la config d'accès (niveau par défaut si non configuré).
+  // Sections visibles = registre filtré par la config d'accès.
+  // Si des grades précis sont cochés pour une section : seuls ces grades y accèdent.
+  // Sinon : accès par défaut (niveau du grade). Les fondateurs voient tout.
+  const mine = [account.site_grade, ...(account.site_grades || [])];
   const sections: Section[] = PANEL_SECTIONS.filter((s) => {
     if (s.founderOnly) return founder; // ex : la config d'accès elle-même
-    const min = access[s.id] ?? s.defaultLevel;
-    if (level >= min) return true;
+    const allowed = access[s.id];
+    if (Array.isArray(allowed) && allowed.length > 0) {
+      if (founder || mine.some((g) => allowed.includes(g))) return true;
+      return Boolean(s.extraGrade && account.site_grades.includes(s.extraGrade));
+    }
+    if (level >= s.defaultLevel) return true;
     return Boolean(s.extraGrade && account.site_grades.includes(s.extraGrade));
   }).map((s) => ({ id: s.id, label: s.label, icon: s.icon, soon: s.soon }));
 

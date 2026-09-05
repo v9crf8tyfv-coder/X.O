@@ -30,12 +30,21 @@ export const PANEL_SECTIONS: PanelSectionDef[] = [
   { id: 'acces', label: 'Accès (Fonda)', icon: '🔑', defaultLevel: 100, founderOnly: true },
 ];
 
-/** Paliers proposés dans l'UI de config d'accès (par grade). */
-export const ACCESS_LEVELS: { label: string; level: number }[] = [
-  { label: 'Tout le monde', level: 0 },
-  { label: 'Modérateur et +', level: 30 },
-  { label: 'Admin et +', level: 50 },
-  { label: 'Responsable et +', level: 70 },
-  { label: 'Co-fondateur et +', level: 90 },
-  { label: 'Fondateur', level: 100 },
+/**
+ * Grades sélectionnables dans l'UI de config d'accès.
+ * On coche 1 ou plusieurs grades par catégorie. Aucun coché = accès par défaut (niveau).
+ */
+export const ACCESS_GRADES: { key: string; label: string }[] = [
+  { key: 'joueur', label: 'Joueur' },
+  { key: 'betatesteur', label: 'Bêta-testeur' },
+  { key: 'com', label: 'Com / Graphiste' },
+  { key: 'buildeur', label: 'Buildeur' },
+  { key: 'dev', label: 'Dev' },
+  { key: 'modo', label: 'Modérateur' },
+  { key: 'modo_test', label: 'Modérateur Test' },
+  { key: 'modo_x', label: 'Modérateur X' },
+  { key: 'admin', label: 'Admin' },
+  { key: 'responsable', label: 'Responsable' },
+  { key: 'cofondateur', label: 'Co-fondateur' },
+  { key: 'fondateur', label: 'Fondateur' },
 ];
