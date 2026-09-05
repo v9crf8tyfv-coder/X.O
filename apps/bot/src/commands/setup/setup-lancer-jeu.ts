@@ -46,7 +46,12 @@ export const setupLancerJeu: SlashCommand = {
 
     const embed = new EmbedBuilder()
       .setColor(BRAND_COLOR)
-      .setDescription('**Installe le launcher pour jouer, choisis ta version ci-dessous.**');
+      .setDescription(
+        'Bonjour,\n\n' +
+          'Voici les différents installateurs disponibles. Pour plus d’informations, n’hésitez pas à consulter notre site internet. ' +
+          'Les versions **MacBook, Windows et Linux** sont disponibles juste ci-dessous.\n\n' +
+          'Bonne installation !',
+      );
 
     // Image : fichier local prioritaire, sinon URL, sinon rien
     const files: AttachmentBuilder[] = [];
