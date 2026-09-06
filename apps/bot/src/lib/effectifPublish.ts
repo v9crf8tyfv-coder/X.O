@@ -55,6 +55,25 @@ export async function publishEffectif(client: Client): Promise<void> {
     select pseudo, grades, discord_id, is_absent from staff where active = true
   `;
 
+  // Absences actives couvrant aujourd'hui (par pseudo) — sert aussi aux FONDATEURS,
+  // qui ne sont pas des cartes staff (donc pas de colonne is_absent pour eux).
+  const absentSet = new Set<string>();
+  try {
+    const abs = await db()<{ tag: string }[]>`
+      select lower(discord_tag) as tag from absences
+      where status = 'active' and discord_tag is not null
+        and start_date <= (now() at time zone 'Europe/Paris')::date
+        and end_date   >= (now() at time zone 'Europe/Paris')::date
+    `;
+    for (const a of abs) absentSet.add(a.tag);
+  } catch { /* pas grave : on continue sans les absences fonda */ }
+  const fmtFounder = (head: string, pseudo: string, mention: string): string => {
+    const name = absentSet.has(pseudo.toLowerCase())
+      ? `⏰ **Absent** : ${pseudo}`
+      : `**${pseudo}**`;
+    return `> ${head ? head + ' ' : ''}${name} — ${mention}`;
+  };
+
   const channel = await client.channels.fetch(CHANNELS.accueil).catch(() => null);
   if (!channel?.isTextBased()) return;
   const text = channel as TextChannel;
@@ -72,7 +91,10 @@ export async function publishEffectif(client: Client): Promise<void> {
               members.map(async (m) => {
                 const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
                 const th = await headEmoji(client, m.pseudo);
-                return `> ${th ? th + ' ' : ''}${m.is_absent ? '⏰ ' : ''}**${escMd(m.pseudo)}**${dc}`;
+                const name = m.is_absent
+                  ? `⏰ **Absent** : ${escMd(m.pseudo)}`
+                  : `**${escMd(m.pseudo)}**`;
+                return `> ${th ? th + ' ' : ''}${name}${dc}`;
               }),
             )
           ).join('\n')
@@ -91,8 +113,8 @@ export async function publishEffectif(client: Client): Promise<void> {
   const orionHead = await headEmoji(client, 'Orionyx84');
   const fondateurBlock =
     `${fondaTag ? fondaTag + ' ' : ''}**Fondateur** — 2\n` +
-    `> ${xtazzHead ? xtazzHead + ' ' : ''}**Xtazzking** — ${xtazzMention}\n` +
-    `> ${orionHead ? orionHead + ' ' : ''}**Orionyx84** — ${orionMention}`;
+    fmtFounder(xtazzHead, 'Xtazzking', xtazzMention) + '\n' +
+    fmtFounder(orionHead, 'Orionyx84', orionMention);
 
   const description =
     '__**Liens utiles**__\n' +

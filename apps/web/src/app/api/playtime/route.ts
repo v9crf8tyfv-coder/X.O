@@ -68,7 +68,6 @@ export async function GET(req: Request) {
     canSee(g.account.site_grade, s.grades),
   );
   const pseudos = visible.map((s) => s.pseudo);
-  const discordIds = visible.map((s) => s.discord_id).filter(Boolean) as string[];
 
   // Minutes par (pseudo, jour)
   const pt = pseudos.length
@@ -78,13 +77,17 @@ export async function GET(req: Request) {
       `
     : [];
 
-  // Absences chevauchant la semaine
-  const abs = discordIds.length
-    ? await db()<{ discord_id: string; start_date: string; end_date: string }[]>`
-        select discord_id, to_char(start_date,'YYYY-MM-DD') as start_date,
+  // Absences chevauchant la semaine — matchées par PSEUDO (comme le reste du système),
+  // pas par discord_id : sinon les fonda (discord_id null) et les absences posées par
+  // quelqu'un d'autre ne s'affichaient jamais dans le temps de jeu.
+  const absPseudos = pseudos.map((p) => p.toLowerCase());
+  const abs = absPseudos.length
+    ? await db()<{ tag: string; start_date: string; end_date: string }[]>`
+        select lower(discord_tag) as tag,
+               to_char(start_date,'YYYY-MM-DD') as start_date,
                to_char(end_date,'YYYY-MM-DD') as end_date
         from absences
-        where discord_id = any(${discordIds})
+        where lower(discord_tag) = any(${absPseudos})
           and coalesce(start_date,'0001-01-01') <= ${sunday}
           and coalesce(end_date,'9999-12-31') >= ${monday}
       `.catch(() => [])
@@ -95,8 +98,9 @@ export async function GET(req: Request) {
       const perDay: Record<string, number> = {};
       for (const d of days) perDay[d] = 0;
       for (const r of pt) if (r.pseudo === s.pseudo) perDay[r.day] = r.minutes;
+      const pseudoLower = s.pseudo.toLowerCase();
       const absentDays = days.filter((d) =>
-        abs.some((a) => a.discord_id === s.discord_id && a.start_date <= d && a.end_date >= d),
+        abs.some((a) => a.tag === pseudoLower && a.start_date <= d && a.end_date >= d),
       );
       const total = Object.values(perDay).reduce((a, b) => a + b, 0);
       return { id: s.id, pseudo: s.pseudo, grades: s.grades, perDay, absentDays, total };
