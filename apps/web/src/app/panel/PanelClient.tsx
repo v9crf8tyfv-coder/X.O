@@ -124,6 +124,25 @@ export default function PanelClient({ account }: Props) {
 
   return (
     <div className="panel">
+      {/* Bouton vers le vrai site Emeria — visible pour tout grade sauf joueur */}
+      {account.site_grade !== 'joueur' && (
+        <a
+          href="https://emeria-site.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Aller sur le site EmeriaMC"
+          style={{
+            position: 'fixed', top: 14, right: 16, zIndex: 60,
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '9px 16px', borderRadius: 10, textDecoration: 'none',
+            background: '#7c5cff', color: '#fff', fontWeight: 700, fontSize: 14,
+            boxShadow: '0 4px 14px rgba(124,92,255,.35)',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+          Site
+        </a>
+      )}
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
