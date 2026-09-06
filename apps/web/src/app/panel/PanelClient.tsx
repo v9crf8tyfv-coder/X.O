@@ -31,6 +31,7 @@ import ServeursSection from './ServeursSection';
 import LiensSection from './LiensSection';
 import PlaytimeSection from './PlaytimeSection';
 import SanctionsSection from './SanctionsSection';
+import BackgroundSection from './BackgroundSection';
 import AffichesSection from './AffichesSection';
 import FormationSection from './FormationSection';
 import AccessSection from './AccessSection';
@@ -187,6 +188,8 @@ export default function PanelClient({ account }: Props) {
           <LiensSection myGrade={account.site_grade} />
         ) : current.id === 'site' ? (
           <SiteSection myGrade={account.site_grade} isChief={account.is_founder_chief} />
+        ) : current.id === 'fond' ? (
+          <BackgroundSection />
         ) : current.id === 'launcher' ? (
           <LauncherSection />
         ) : current.id === 'support' ? (

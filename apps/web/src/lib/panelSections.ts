@@ -27,6 +27,7 @@ export const PANEL_SECTIONS: PanelSectionDef[] = [
   { id: 'trafic', label: 'Trafic du site', icon: '📈', defaultLevel: 90 },
   { id: 'automsg', label: 'Messages auto', icon: '💬', defaultLevel: 90 },
   { id: 'site', label: 'Gestion Site', icon: '🔐', defaultLevel: 90 },
+  { id: 'fond', label: 'Arrière-plan site', icon: '🖼️', defaultLevel: 70 },
   { id: 'acces', label: 'Accès (Fonda)', icon: '🔑', defaultLevel: 100, founderOnly: true },
 ];
 
