@@ -85,20 +85,28 @@ export async function publishEffectif(client: Client): Promise<void> {
       const members = rows.filter((r) => sectionForGrades(r.grades) === sec.key);
       const tag = emojiTag(guild, sec.emoji);
       const header = `${tag ? tag + ' ' : ''}**${sec.label}** — ${members.length}`;
-      const body = members.length
-        ? (
-            await Promise.all(
-              members.map(async (m) => {
-                const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
-                const th = await headEmoji(client, m.pseudo);
-                const name = m.is_absent
-                  ? `⏰ **Absent** : ${escMd(m.pseudo)}`
-                  : `**${escMd(m.pseudo)}**`;
-                return `> ${th ? th + ' ' : ''}${name}${dc}`;
-              }),
-            )
-          ).join('\n')
-        : '> *—*';
+
+      // Présents d'abord, puis le regroupement des absents (n'apparaît que s'il y en a).
+      const present = members.filter((m) => !m.is_absent);
+      const absent = members.filter((m) => m.is_absent);
+
+      const presentLines = await Promise.all(
+        present.map(async (m) => {
+          const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
+          const th = await headEmoji(client, m.pseudo);
+          return `> ${th ? th + ' ' : ''}**${escMd(m.pseudo)}**${dc}`;
+        }),
+      );
+      const absentLines = await Promise.all(
+        absent.map(async (m) => {
+          const dc = m.discord_id ? ` — <@${m.discord_id}>` : '';
+          const th = await headEmoji(client, m.pseudo);
+          return `> ${th ? th + ' ' : ''}⏰ **Absent** : ${escMd(m.pseudo)}${dc}`;
+        }),
+      );
+
+      const parts = [...presentLines, ...absentLines];
+      const body = parts.length ? parts.join('\n') : '> *—*';
       return `${header}\n${body}`;
     }),
   );
