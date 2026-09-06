@@ -1,33 +1,52 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+const SITE = 'https://emeria-site.com';
+const MAX_MB = 3;
 
 export default function BackgroundSection() {
-  const [url, setUrl] = useState('');
-  const [saved, setSaved] = useState('');
+  const [ver, setVer] = useState(0); // >0 = une image est enregistrée
+  const [preview, setPreview] = useState(''); // aperçu local après sélection
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch('/api/site-bg')
-      .then((r) => (r.ok ? r.json() : { url: '' }))
-      .then((d) => { setUrl(d.url ?? ''); setSaved(d.url ?? ''); })
+      .then((r) => (r.ok ? r.json() : { ver: 0 }))
+      .then((d) => setVer(d.ver ?? 0))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  async function save(next: string) {
+  function pickFile(file: File) {
+    setMsg('');
+    if (!file.type.startsWith('image/')) { setMsg('Ce n\'est pas une image.'); return; }
+    if (file.size > MAX_MB * 1024 * 1024) { setMsg(`Image trop lourde (max ${MAX_MB} Mo).`); return; }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = String(reader.result || '');
+      setPreview(dataUrl); // aperçu instantané
+      const comma = dataUrl.indexOf(',');
+      const base64 = comma >= 0 ? dataUrl.slice(comma + 1) : '';
+      await upload(base64, file.type);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function upload(base64: string, mime: string) {
     setBusy(true);
     setMsg('');
     try {
       const r = await fetch('/api/site-bg', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: next }),
+        body: JSON.stringify({ data: base64, mime }),
       });
       const d = await r.json().catch(() => ({}));
-      if (r.ok) { setSaved(next); setMsg('Enregistré ✅ (visible sur le site dans ~1 min)'); }
+      if (r.ok) { setVer(d.ver ?? Date.now()); setMsg('Enregistré ✅ (visible sur le site dans ~1 min)'); }
       else setMsg(d.error ?? 'Erreur.');
     } catch {
       setMsg('Impossible de contacter le serveur.');
@@ -36,6 +55,27 @@ export default function BackgroundSection() {
     }
   }
 
+  async function remove() {
+    setBusy(true);
+    setMsg('');
+    try {
+      const r = await fetch('/api/site-bg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: '' }),
+      });
+      if (r.ok) { setVer(0); setPreview(''); setMsg('Image retirée (fond par défaut).'); }
+      else setMsg('Erreur.');
+    } catch {
+      setMsg('Impossible de contacter le serveur.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Aperçu : le fichier local si on vient d'en choisir un, sinon l'image enregistrée (servie par le site).
+  const previewBg = preview || (ver > 0 ? `${SITE}/api/status?img=1&v=${ver}` : '');
+
   return (
     <div style={{ maxWidth: 760 }}>
       <h2 className="section-title">Arrière-plan du site</h2>
@@ -43,44 +83,36 @@ export default function BackgroundSection() {
         Change l&apos;image de fond de la page d&apos;accueil du site. Réservé aux Responsables et Fondateurs.
       </p>
 
-      <div style={{ margin: '18px 0' }}>
-        <label style={{ display: 'block', fontWeight: 600, marginBottom: 8 }}>URL de l&apos;image</label>
+      <div style={{ margin: '18px 0', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <input
-          type="text"
-          value={url}
-          placeholder="https://…/mon-image.jpg"
-          onChange={(e) => setUrl(e.target.value)}
-          disabled={loading || busy}
-          style={{
-            width: '100%', boxSizing: 'border-box', padding: '11px 13px', borderRadius: 10,
-            border: '1px solid var(--line)', background: 'rgba(255,255,255,.04)', color: 'var(--txt)',
-            font: 'inherit',
-          }}
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          style={{ display: 'none' }}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) pickFile(f); e.target.value = ''; }}
         />
-        <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={loading || busy}
+          className="btn-accent"
+          style={{ padding: '10px 20px', borderRadius: 10 }}
+        >
+          {busy ? 'Envoi…' : ver > 0 ? 'Changer l’image' : 'Choisir une image'}
+        </button>
+        {ver > 0 && (
           <button
-            onClick={() => save(url.trim())}
-            disabled={loading || busy || url.trim() === saved.trim()}
-            className="btn-accent"
-            style={{ padding: '9px 18px', borderRadius: 10 }}
+            onClick={remove}
+            disabled={busy}
+            style={{
+              padding: '10px 16px', borderRadius: 10, cursor: 'pointer',
+              border: '1px solid rgba(214,69,69,.4)', background: 'transparent', color: '#e88', fontWeight: 600,
+            }}
           >
-            {busy ? 'Enregistrement…' : 'Enregistrer'}
+            Retirer l&apos;image
           </button>
-          {saved && (
-            <button
-              onClick={() => { setUrl(''); save(''); }}
-              disabled={busy}
-              style={{
-                padding: '9px 16px', borderRadius: 10, cursor: 'pointer',
-                border: '1px solid rgba(214,69,69,.4)', background: 'transparent', color: '#e88', fontWeight: 600,
-              }}
-            >
-              Retirer l&apos;image
-            </button>
-          )}
-        </div>
-        {msg && <p style={{ marginTop: 10, color: 'var(--muted)' }}>{msg}</p>}
+        )}
       </div>
+      {msg && <p style={{ margin: '0 0 14px', color: 'var(--muted)' }}>{msg}</p>}
 
       {/* Aperçu */}
       <div>
@@ -88,22 +120,21 @@ export default function BackgroundSection() {
         <div
           style={{
             width: '100%', aspectRatio: '16 / 9', borderRadius: 14, border: '1px solid var(--line)',
-            background: url
-              ? `linear-gradient(rgba(11,11,15,.55), rgba(11,11,15,.55)), url("${url}") center/cover no-repeat`
+            background: previewBg
+              ? `linear-gradient(rgba(9,9,13,.55), rgba(9,9,13,.55)), url("${previewBg}") center/cover no-repeat`
               : 'var(--panel)',
             display: 'grid', placeItems: 'center', color: 'var(--muted)',
           }}
         >
-          {!url && 'Aucune image (fond par défaut)'}
+          {!previewBg && (loading ? 'Chargement…' : 'Aucune image (fond par défaut)')}
         </div>
       </div>
 
       <div style={{ marginTop: 20, padding: 14, borderRadius: 12, background: 'rgba(124,92,255,.08)', border: '1px solid var(--line)', fontSize: 13, color: 'var(--muted)' }}>
-        <strong style={{ color: 'var(--txt)' }}>Format recommandé :</strong> image <strong>paysage</strong> (16:9),
-        au moins <strong>1920 × 1080 px</strong> (idéalement 2560 × 1440), en <strong>JPG</strong> ou
-        <strong> WebP</strong>, &lt; 2–3 Mo. Colle une <strong>URL directe</strong> vers l&apos;image
-        (lien qui finit par .jpg/.png/.webp — depuis Discord, imgur, etc.). L&apos;image est automatiquement
-        recadrée pour remplir l&apos;écran, donc n&apos;importe quelle taille marche, mais du paysage rend le mieux.
+        <strong style={{ color: 'var(--txt)' }}>Conseils :</strong> image <strong>paysage</strong> (16:9),
+        idéalement <strong>1920 × 1080</strong> ou plus, en <strong>JPG</strong> / <strong>WebP</strong> / PNG,
+        <strong> max 3 Mo</strong>. L&apos;image est recadrée automatiquement pour remplir l&apos;écran, avec un
+        voile sombre par-dessus pour garder le texte lisible.
       </div>
     </div>
   );
