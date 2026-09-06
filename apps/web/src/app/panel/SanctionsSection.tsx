@@ -40,6 +40,8 @@ export default function SanctionsSection() {
   const [error, setError] = useState('');
   const [searched, setSearched] = useState('');
   const [filter, setFilter] = useState<string | null>(null); // null = tous
+  const [canDelete, setCanDelete] = useState(false); // fonda uniquement
+  const [busy, setBusy] = useState(false);
 
   async function search() {
     const q = pseudo.trim();
@@ -58,6 +60,7 @@ export default function SanctionsSection() {
       } else {
         const data = await r.json();
         setResults(data.sanctions ?? []);
+        setCanDelete(!!data.canDelete);
         setSearched(q);
       }
     } catch {
@@ -65,6 +68,43 @@ export default function SanctionsSection() {
       setResults(null);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function deleteOne(id: string) {
+    if (!confirm('Supprimer cette sanction ? Elle disparaîtra aussi de l\'historique en jeu.')) return;
+    setBusy(true);
+    try {
+      const r = await fetch('/api/sanctions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pseudo: searched, id }),
+      });
+      if (r.ok) setResults((prev) => (prev ? prev.filter((s) => s.id !== id) : prev));
+      else setError(r.status === 403 ? 'Réservé aux fondateurs.' : 'Suppression échouée.');
+    } catch {
+      setError('Impossible de contacter le serveur.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteAll() {
+    if (!results?.length) return;
+    if (!confirm(`Supprimer TOUTES les sanctions de ${searched} ? Elles disparaîtront aussi en jeu.`)) return;
+    setBusy(true);
+    try {
+      const r = await fetch('/api/sanctions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pseudo: searched }),
+      });
+      if (r.ok) setResults([]);
+      else setError(r.status === 403 ? 'Réservé aux fondateurs.' : 'Suppression échouée.');
+    } catch {
+      setError('Impossible de contacter le serveur.');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -107,6 +147,19 @@ export default function SanctionsSection() {
             <>
               <p className="sanctions-count">
                 {results.length} sanction(s) pour <strong>{results[0]!.target}</strong>
+                {canDelete && (
+                  <button
+                    onClick={deleteAll}
+                    disabled={busy}
+                    style={{
+                      marginLeft: 12, padding: '4px 10px', borderRadius: 8, cursor: 'pointer',
+                      border: '1px solid #d64545', background: 'rgba(214,69,69,.12)', color: '#e88',
+                      fontSize: 12, fontWeight: 700,
+                    }}
+                  >
+                    Tout supprimer
+                  </button>
+                )}
               </p>
 
               {presentTypes.length > 1 && (
@@ -149,6 +202,20 @@ export default function SanctionsSection() {
                         </div>
                         {s.details && <div className="sanction-details">{s.details}</div>}
                       </div>
+                      {canDelete && (
+                        <button
+                          onClick={() => deleteOne(s.id)}
+                          disabled={busy}
+                          title="Supprimer cette sanction"
+                          style={{
+                            marginLeft: 'auto', width: 28, height: 28, flexShrink: 0, cursor: 'pointer',
+                            borderRadius: 8, border: '1px solid rgba(214,69,69,.4)',
+                            background: 'transparent', color: '#e88', fontSize: 16, lineHeight: 1,
+                          }}
+                        >
+                          ×
+                        </button>
+                      )}
                     </li>
                   );
                 })}
