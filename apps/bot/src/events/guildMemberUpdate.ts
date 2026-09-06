@@ -4,29 +4,14 @@ import {
   type GuildMember,
   type PartialGuildMember,
 } from 'discord.js';
-import { ALL_GRADES, getGrade, type SurveillanceCategory } from '@xo/shared';
+import { ALL_GRADES, getGrade } from '@xo/shared';
 import { logSurveillance } from '../lib/surveillance.js';
+import { memberTopGrade } from '../lib/surveillanceCategory.js';
 
 /** roleId -> clé de grade (uniquement les rôles-grades) */
 const ROLE_TO_GRADE = new Map<string, string>();
 for (const g of Object.values(ALL_GRADES)) {
   if (g.roleId) ROLE_TO_GRADE.set(g.roleId, g.key);
-}
-
-/** Catégorie de surveillance d'un membre = celle de son grade le plus élevé */
-function memberCategory(member: GuildMember): SurveillanceCategory {
-  let best: SurveillanceCategory = 'none';
-  let lvl = -1;
-  for (const roleId of member.roles.cache.keys()) {
-    const gk = ROLE_TO_GRADE.get(roleId);
-    if (!gk) continue;
-    const g = getGrade(gk);
-    if (g.level > lvl) {
-      lvl = g.level;
-      best = g.surveillance;
-    }
-  }
-  return best;
 }
 
 /**
@@ -52,31 +37,33 @@ export async function onGuildMemberUpdate(
   if (!exec) return;
   if (exec.id === client.user?.id) return; // fait par le bot → worker s'en charge
 
-  const category = memberCategory(exec);
-  if (category === 'none') return; // fonda/co-fonda ou non-staff → pas surveillé
+  const top = memberTopGrade(exec);
+  if (top.surveillance === 'none') return; // fonda/co-fonda ou non-staff → pas surveillé
+  const common = {
+    category: top.surveillance,
+    actor: exec.user.tag,
+    actorGradeKey: top.key,
+    actorAvatar: exec.displayAvatarURL({ size: 64 }),
+    target: newMember.user.tag,
+    source: 'discord' as const,
+  };
 
   for (const roleId of added) {
     const gk = ROLE_TO_GRADE.get(roleId);
     if (!gk) continue;
     await logSurveillance(client, {
-      category,
+      ...common,
       action: 'Ajout de rôle',
-      actor: exec.user.tag,
-      target: newMember.user.tag,
-      source: 'discord',
-      fields: [{ name: 'Rôle', value: getGrade(gk).label }],
+      fields: [{ name: '🎭 Rôle', value: getGrade(gk).label }],
     });
   }
   for (const roleId of removed) {
     const gk = ROLE_TO_GRADE.get(roleId);
     if (!gk) continue;
     await logSurveillance(client, {
-      category,
+      ...common,
       action: 'Retrait de rôle',
-      actor: exec.user.tag,
-      target: newMember.user.tag,
-      source: 'discord',
-      fields: [{ name: 'Rôle', value: getGrade(gk).label }],
+      fields: [{ name: '🎭 Rôle', value: getGrade(gk).label }],
     });
   }
 }

@@ -1,6 +1,6 @@
 import { AuditLogEvent, type Client, type Guild, type GuildAuditLogsEntry } from 'discord.js';
 import { logSurveillance } from '../lib/surveillance.js';
-import { memberSurveillanceCategory } from '../lib/surveillanceCategory.js';
+import { memberTopGrade } from '../lib/surveillanceCategory.js';
 
 /** Actions d'audit suivies -> nom lisible. (MemberRoleUpdate est déjà géré ailleurs, avec le détail du grade.) */
 const ACTION_NAMES: Partial<Record<AuditLogEvent, string>> = {
@@ -43,8 +43,8 @@ export async function onAuditLog(client: Client, entry: GuildAuditLogsEntry, gui
   const member = await guild.members.fetch(executorId).catch(() => null);
   if (!member) return;
 
-  const category = memberSurveillanceCategory(member);
-  if (category === 'none') return; // fonda / co-fonda / non-staff -> pas surveillé
+  const top = memberTopGrade(member);
+  if (top.surveillance === 'none') return; // fonda / co-fonda / non-staff -> pas surveillé
 
   let target: string | null = null;
   if (entry.targetId) {
@@ -52,12 +52,14 @@ export async function onAuditLog(client: Client, entry: GuildAuditLogsEntry, gui
   }
 
   const fields: { name: string; value: string }[] = [];
-  if (entry.reason) fields.push({ name: 'Raison', value: entry.reason.slice(0, 1000) });
+  if (entry.reason) fields.push({ name: '📝 Raison', value: entry.reason.slice(0, 1000) });
 
   await logSurveillance(client, {
-    category,
+    category: top.surveillance,
     action,
     actor: member.user.tag,
+    actorGradeKey: top.key,
+    actorAvatar: member.displayAvatarURL({ size: 64 }),
     target,
     source: 'discord',
     fields: fields.length ? fields : undefined,

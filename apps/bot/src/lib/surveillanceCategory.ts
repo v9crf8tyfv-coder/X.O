@@ -9,6 +9,12 @@ for (const g of Object.values(ALL_GRADES)) {
 
 /** Catégorie de surveillance d'un membre = celle de son grade le plus élevé ('none' = pas surveillé). */
 export function memberSurveillanceCategory(member: GuildMember): SurveillanceCategory {
+  return memberTopGrade(member).surveillance;
+}
+
+/** Grade le plus élevé d'un membre (clé + catégorie). key = null si aucun grade staff. */
+export function memberTopGrade(member: GuildMember): { key: string | null; surveillance: SurveillanceCategory } {
+  let bestKey: string | null = null;
   let best: SurveillanceCategory = 'none';
   let lvl = -1;
   for (const roleId of member.roles.cache.keys()) {
@@ -18,7 +24,8 @@ export function memberSurveillanceCategory(member: GuildMember): SurveillanceCat
     if (g.level > lvl) {
       lvl = g.level;
       best = g.surveillance;
+      bestKey = gk;
     }
   }
-  return best;
+  return { key: bestKey, surveillance: best };
 }

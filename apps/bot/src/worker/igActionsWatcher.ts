@@ -27,8 +27,8 @@ async function ensureTable(): Promise<void> {
   `;
 }
 
-/** Catégorie de surveillance d'un pseudo MC (via sa fiche staff / compte). */
-async function categoryForPseudo(pseudo: string): Promise<SurveillanceCategory> {
+/** Grade le plus élevé d'un pseudo MC (via sa fiche staff / compte) → catégorie + clé. */
+async function gradeForPseudo(pseudo: string): Promise<{ category: SurveillanceCategory; key: string | null }> {
   const staff = await db()<{ grades: string[] }[]>`
     select grades from staff where lower(pseudo) = lower(${pseudo}) and active = true limit 1
   `;
@@ -40,15 +40,17 @@ async function categoryForPseudo(pseudo: string): Promise<SurveillanceCategory> 
     grades = acc[0]?.site_grades ?? [];
   }
   let best: SurveillanceCategory = 'none';
+  let key: string | null = null;
   let lvl = -1;
   for (const gk of grades) {
     const g = getGrade(gk);
     if (g.level > lvl) {
       lvl = g.level;
       best = g.surveillance;
+      key = gk;
     }
   }
-  return best;
+  return { category: best, key };
 }
 
 async function tick(client: Client): Promise<void> {
@@ -59,15 +61,17 @@ async function tick(client: Client): Promise<void> {
   `;
   for (const r of rows) {
     try {
-      const category = await categoryForPseudo(r.actor);
+      const { category, key } = await gradeForPseudo(r.actor);
       if (category !== 'none') {
         await logSurveillance(client, {
           category,
           action: r.action,
           actor: r.actor,
+          actorGradeKey: key,
+          actorAvatar: `https://mc-heads.net/avatar/${encodeURIComponent(r.actor)}/64`,
           target: r.target,
           source: 'ig',
-          fields: r.details ? [{ name: 'Détails', value: r.details.slice(0, 1000) }] : undefined,
+          fields: r.details ? [{ name: '📋 Détails', value: r.details.slice(0, 1000) }] : undefined,
         });
       }
     } catch (e) {
