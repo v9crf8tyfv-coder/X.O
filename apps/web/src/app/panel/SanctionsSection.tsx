@@ -81,7 +81,7 @@ export default function SanctionsSection() {
         body: JSON.stringify({ pseudo: searched, id }),
       });
       if (r.ok) setResults((prev) => (prev ? prev.filter((s) => s.id !== id) : prev));
-      else setError(r.status === 403 ? 'Réservé aux fondateurs.' : 'Suppression échouée.');
+      else setError(r.status === 403 ? 'Réservé aux Responsables et +.' : 'Suppression échouée.');
     } catch {
       setError('Impossible de contacter le serveur.');
     } finally {
@@ -100,7 +100,7 @@ export default function SanctionsSection() {
         body: JSON.stringify({ pseudo: searched }),
       });
       if (r.ok) setResults([]);
-      else setError(r.status === 403 ? 'Réservé aux fondateurs.' : 'Suppression échouée.');
+      else setError(r.status === 403 ? 'Réservé aux Responsables et +.' : 'Suppression échouée.');
     } catch {
       setError('Impossible de contacter le serveur.');
     } finally {

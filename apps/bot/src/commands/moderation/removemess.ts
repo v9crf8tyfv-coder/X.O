@@ -31,16 +31,44 @@ export const removemess: SlashCommand = {
       await interaction.editReply({ embeds: [errorEmbed('Erreur', 'Salon introuvable.')] });
       return;
     }
-    // bulkDelete ignore les messages > 14 jours (filtre auto = true)
-    const deleted = await channel.bulkDelete(nombre, true).catch(() => null);
-    if (!deleted) {
+
+    // Récupère les N derniers messages, puis on gère les < 14j (bulk) et les ≥ 14j (un par un).
+    const fetched = await channel.messages.fetch({ limit: nombre }).catch(() => null);
+    if (!fetched || fetched.size === 0) {
       await interaction.editReply({
-        embeds: [errorEmbed('Impossible', 'Messages trop vieux (>14j) ou permissions manquantes.')],
+        embeds: [errorEmbed('Rien à supprimer', 'Aucun message trouvé (ou permissions manquantes).')],
       });
       return;
     }
+
+    const TWO_WEEKS = 14 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const recent = fetched.filter((m) => now - m.createdTimestamp < TWO_WEEKS && !m.pinned);
+    const old = fetched.filter((m) => now - m.createdTimestamp >= TWO_WEEKS && !m.pinned);
+
+    let count = 0;
+    // 1) Récents (< 14j) : suppression groupée (rapide).
+    if (recent.size >= 2) {
+      const del = await channel.bulkDelete(recent, true).catch(() => null);
+      count += del?.size ?? 0;
+    } else if (recent.size === 1) {
+      if (await recent.first()!.delete().then(() => true).catch(() => false)) count++;
+    }
+    // 2) Vieux (≥ 14j) : un par un (discord.js gère la limite de débit tout seul).
+    let oldDeleted = 0;
+    for (const m of old.values()) {
+      if (await m.delete().then(() => true).catch(() => false)) { count++; oldDeleted++; }
+    }
+
+    if (count === 0) {
+      await interaction.editReply({
+        embeds: [errorEmbed('Impossible', 'Aucun message supprimé (épinglés ignorés ou permissions manquantes).')],
+      });
+      return;
+    }
+    const extra = oldDeleted > 0 ? ` (dont ${oldDeleted} de plus de 14 jours)` : '';
     await interaction.editReply({
-      embeds: [successEmbed('Nettoyé', `${deleted.size} message(s) supprimé(s).`)],
+      embeds: [successEmbed('Nettoyé', `${count} message(s) supprimé(s)${extra}.`)],
     });
   },
 };

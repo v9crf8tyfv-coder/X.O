@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, hasDatabase } from '@xo/db';
 import { getGrade } from '@xo/shared';
-import { requireLevel, ADMIN_LEVEL, FOUNDER_LEVEL } from '@/lib/guard';
+import { requireLevel, ADMIN_LEVEL, RESP_LEVEL } from '@/lib/guard';
 
 export const runtime = 'nodejs';
 
@@ -48,17 +48,17 @@ export async function GET(req: Request) {
     limit 200
   `.catch(() => [] as never[]);
 
-  const canDelete = getGrade(g.account.site_grade).level >= FOUNDER_LEVEL;
+  const canDelete = getGrade(g.account.site_grade).level >= RESP_LEVEL;
   return NextResponse.json({ pseudo, sanctions: rows, canDelete });
 }
 
 /**
- * Suppression de sanctions — RÉSERVÉ AUX FONDATEURS.
+ * Suppression de sanctions — Responsables et + (fonda inclus).
  * Body : { pseudo, id? }. Avec `id` → supprime cette sanction ; sans → toutes celles du pseudo.
  * Supprime dans `ig_actions` (vue panel) ET crée un ordre pour effacer l'historique IG (ModStore).
  */
 export async function DELETE(req: Request) {
-  const g = await requireLevel(FOUNDER_LEVEL);
+  const g = await requireLevel(RESP_LEVEL);
   if (g instanceof NextResponse) return g;
   if (!hasDatabase()) return NextResponse.json({ error: 'no database' }, { status: 500 });
 
