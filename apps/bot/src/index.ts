@@ -26,7 +26,7 @@ import { startAutoMessages } from './worker/autoMessages.js';
 import { startCandidatureWatcher } from './worker/candidatureWatcher.js';
 import { startAbsenceWatcher } from './worker/absenceWatcher.js';
 import { logToDiscord, fmtError } from './lib/logWebhook.js';
-import { acquireLock, startHeartbeat } from './lib/singleton.js';
+import { acquireLock, startHeartbeat, releaseLock } from './lib/singleton.js';
 import { initSpoilers, cacheInvites, onInviteCreate, onMemberJoin, onMemberLeave } from './lib/spoilers.js';
 
 // Log tout de suite : on saura que le process a bien démarré (avant login).
@@ -120,8 +120,9 @@ process.on('uncaughtException', (err) => {
 });
 
 // Arrêt propre
-process.on('SIGINT', () => client.destroy().then(() => process.exit(0)));
-process.on('SIGTERM', () => client.destroy().then(() => process.exit(0)));
+const _shutdown = () => releaseLock().finally(() => client.destroy().finally(() => process.exit(0)));
+process.on('SIGINT', _shutdown);
+process.on('SIGTERM', _shutdown);
 
 // Verrou instance unique PUIS connexion. Si une autre instance tourne déjà, on s'arrête
 // AVANT de toucher au gateway (sinon les deux se battent = commandes mortes + doublons).

@@ -45,3 +45,13 @@ export function startHeartbeat(): void {
     db()`update bot_lock set beat = now() where instance = ${INSTANCE}`.catch(() => {});
   }, 15_000);
 }
+
+/** Libère le verrou à l'arrêt → un redémarrage reprend IMMÉDIATEMENT (plus d'attente 45s). */
+export async function releaseLock(): Promise<void> {
+  if (!hasDatabase()) return;
+  try {
+    await db()`delete from bot_lock where instance = ${INSTANCE}`;
+  } catch {
+    /* peu importe : le verrou expirera de lui-même après 45s */
+  }
+}
