@@ -21,7 +21,7 @@ import {
 } from '../lib/absence.js';
 import { parseFrDate, toIsoDate } from '../lib/dates.js';
 import { publishEffectif } from '../lib/effectifPublish.js';
-import { autoArchiveExpired } from '../lib/absenceArchive.js';
+import { autoArchiveExpired, archiveAbsence } from '../lib/absenceArchive.js';
 
 // ---------- helpers ----------
 
@@ -201,29 +201,21 @@ export const absenceArchive: ComponentHandler<ButtonInteraction> = {
       return;
     }
 
-    absence.status = 'finished';
-    // poste dans le salon archives
-    const archiveChannel = (await interaction.client.channels.fetch(
-      CHANNELS.archivesAbsence,
-    )) as TextChannel;
-    const archiveMsg = await archiveChannel.send({
-      embeds: [buildAbsenceEmbed(absence, true)],
-    });
-
-    await db()`
-      update absences
-      set status = 'finished', finished_at = now(), archive_message_id = ${archiveMsg.id}
-      where id = ${id}
-    `;
-    await db()`update staff set is_absent = false where lower(pseudo) = lower(${absence.discord_tag})`;
-    await publishEffectif(interaction.client).catch(() => {});
-
-    // supprime le message original dans le salon absences
-    await interaction.message.delete().catch(() => {});
-    await interaction.reply({
-      embeds: [successEmbed('Absence archivée', 'Déplacée dans les archives.')],
-      flags: MessageFlags.Ephemeral,
-    });
+    // Accuse réception tout de suite : l'archivage (envoi + requêtes + effectif)
+    // peut dépasser les 3 s d'interaction Discord.
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    try {
+      await archiveAbsence(interaction.client, absence);
+      await interaction.message.delete().catch(() => {});
+      await interaction.editReply({
+        embeds: [successEmbed('Absence archivée', 'Déplacée dans les archives.')],
+      });
+    } catch (e) {
+      console.error('[absence:archive]', e);
+      await interaction.editReply({
+        embeds: [errorEmbed('Erreur', `L'archivage a échoué : ${(e as Error).message}`)],
+      });
+    }
   },
 };
 

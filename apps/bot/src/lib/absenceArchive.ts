@@ -11,10 +11,16 @@ export async function archiveAbsence(client: Client, absence: AbsenceRecord): Pr
   let archiveMsgId: string | null = null;
   const archiveCh = await client.channels.fetch(CHANNELS.archivesAbsence).catch(() => null);
   if (archiveCh?.isTextBased()) {
-    const m = await (archiveCh as TextChannel).send({
-      embeds: [buildAbsenceEmbed(absence, true)],
-    });
-    archiveMsgId = m.id;
+    // L'envoi dans les archives ne doit jamais bloquer l'archivage lui-même
+    // (salon injoignable ou permission manquante) : on log et on continue.
+    try {
+      const m = await (archiveCh as TextChannel).send({
+        embeds: [buildAbsenceEmbed(absence, true)],
+      });
+      archiveMsgId = m.id;
+    } catch (e) {
+      console.error('[archive] envoi salon archives échoué:', e);
+    }
   }
 
   await db()`
