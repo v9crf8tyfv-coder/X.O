@@ -25,7 +25,7 @@ async function exportNode(node: HTMLElement, name: string, opaque: string | null
   const { toBlob } = await import('html-to-image');
   const blob = await toBlob(node, {
     pixelRatio,
-    cacheBust: true,
+    cacheBust: false, // le buste est déjà embarqué en data URL
     backgroundColor: opaque ?? undefined, // null => transparent
     style: { margin: '0', transform: 'none' },
     filter: (n: HTMLElement) => !(n instanceof HTMLElement && n.dataset && n.dataset.noexport === '1'),
@@ -92,8 +92,26 @@ export default function DaSection() {
   const [accent, setAccent] = useState(ACC);
   const [pseudo, setPseudo] = useState('');
   const [showSkin, setShowSkin] = useState(true);
+  const [bustData, setBustData] = useState(''); // buste en data URL (embarqué → présent dans l'export)
   const pageRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
+
+  // Récupère le buste NMSR et le convertit en data URL (débounce). Ainsi html-to-image
+  // n'a rien à télécharger au moment de l'export : l'image est déjà dans la page.
+  useEffect(() => {
+    const p = pseudo.trim();
+    setBustData('');
+    if (p.length < 2) return;
+    let cancel = false;
+    const t = setTimeout(() => {
+      fetch(`https://nmsr.nickac.dev/bust/${encodeURIComponent(p)}?width=800`, { mode: 'cors' })
+        .then((r) => (r.ok ? r.blob() : Promise.reject(new Error('nmsr'))))
+        .then((b) => new Promise<string>((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.onerror = rej; fr.readAsDataURL(b); }))
+        .then((d) => { if (!cancel) setBustData(d); })
+        .catch(() => {});
+    }, 450);
+    return () => { cancel = true; clearTimeout(t); };
+  }, [pseudo]);
 
   useEffect(() => {
     if (!document.getElementById('sora-font')) {
@@ -119,7 +137,6 @@ export default function DaSection() {
     }
   }, []);
 
-  const bustUrl = pseudo.trim() ? `https://nmsr.nickac.dev/bust/${encodeURIComponent(pseudo.trim())}?width=800` : '';
   const rootVars = { ['--acc' as string]: accent } as CSSProperties;
 
   const card: CSSProperties = { borderRadius: 14, padding: 18, position: 'relative', overflow: 'hidden' };
@@ -294,13 +311,13 @@ export default function DaSection() {
             <div style={{ width: 768, height: 432, position: 'relative', overflow: 'hidden', background: `repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 1px, transparent 1px 26px), ${DARK}`, color: '#fff' }}>
               <div style={{ position: 'absolute', inset: 18, border: '1px solid color-mix(in srgb, var(--acc) 40%, transparent)' }} />
               {[{ top: 12, left: 12 }, { top: 12, right: 12 }, { bottom: 12, left: 12 }, { bottom: 12, right: 12 }].map((p, i) => <span key={i} style={{ position: 'absolute', width: 9, height: 9, transform: 'rotate(45deg)', background: 'var(--acc)', ...p }} />)}
-              <div style={{ position: 'absolute', left: 48, top: '50%', transform: 'translateY(-50%)', width: 290, height: 300, display: 'grid', placeItems: 'center' }}>
-                {showSkin && bustUrl
+              <div style={{ position: 'absolute', left: 34, top: '50%', transform: 'translateY(-50%)', width: 420, height: 420, display: 'grid', placeItems: 'center' }}>
+                {showSkin && bustData
                   // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={bustUrl} alt="" crossOrigin="anonymous" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 16px 26px rgba(0,0,0,.65))' }} />
-                  : <span style={{ fontSize: 9, color: MUT }}>render du buste (PNG transparent)</span>}
+                  ? <img src={bustData} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 18px 30px rgba(0,0,0,.7))' }} />
+                  : <span style={{ fontSize: 9, color: MUT }}>{showSkin && pseudo.trim() ? 'chargement du buste…' : 'render du buste (PNG transparent)'}</span>}
               </div>
-              <div style={{ position: 'absolute', right: 52, top: '50%', transform: 'translateY(-50%)', textAlign: 'right', maxWidth: 470 }}>
+              <div style={{ position: 'absolute', right: 48, top: '50%', transform: 'translateY(-50%)', textAlign: 'right', maxWidth: 380 }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#ffffff10', border: '1px solid color-mix(in srgb, var(--acc) 50%, transparent)', borderRadius: 8, padding: '5px 10px', marginBottom: 14 }}><Mark s={18} /><Edit init="Emeria" style={{ fontSize: 13, fontWeight: 700 }} /></div>
                 <Edit init="Xtazzking" block style={{ fontSize: 58, fontWeight: 800, lineHeight: 1, letterSpacing: -1 }} />
                 <Edit init="Responsable Administrateur" block style={{ fontSize: 18, fontWeight: 700, letterSpacing: 5, textTransform: 'uppercase', color: 'var(--acc)', marginTop: 12 }} />
