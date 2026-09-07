@@ -52,8 +52,8 @@ function Edit({ init, style, block }: { init: string; style?: CSSProperties; blo
 }
 
 /** Cellule exportable : contenu + légende (hors export élément) + bouton télécharger au survol. */
-function Item({ name, opaque = null, pr = 2, caption, children, cellStyle }:
-  { name: string; opaque?: string | null; pr?: number; caption?: string; children: ReactNode; cellStyle?: CSSProperties }) {
+function Item({ name, opaque = null, pr = 2, caption, children, cellStyle, full }:
+  { name: string; opaque?: string | null; pr?: number; caption?: string; children: ReactNode; cellStyle?: CSSProperties; full?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <div className="da-item" style={cellStyle}>
@@ -61,7 +61,7 @@ function Item({ name, opaque = null, pr = 2, caption, children, cellStyle }:
         onClick={() => ref.current && exportNode(ref.current, name, opaque, pr).catch((e) => alert('Export impossible : ' + (e as Error).message))}>
         ⬇ PNG
       </button>
-      <div ref={ref} style={{ display: 'inline-block' }}>{children}</div>
+      <div ref={ref} style={full ? { display: 'block', width: '100%' } : { display: 'inline-block' }}>{children}</div>
       {caption && <div className="da-cap">{caption}</div>}
     </div>
   );
@@ -119,7 +119,7 @@ export default function DaSection() {
     }
   }, []);
 
-  const skinUrl = pseudo.trim() ? `https://nmsr.nickac.dev/fullbody/${encodeURIComponent(pseudo.trim())}?width=1000` : '';
+  const bustUrl = pseudo.trim() ? `https://nmsr.nickac.dev/bust/${encodeURIComponent(pseudo.trim())}?width=800` : '';
   const rootVars = { ['--acc' as string]: accent } as CSSProperties;
 
   const card: CSSProperties = { borderRadius: 14, padding: 18, position: 'relative', overflow: 'hidden' };
@@ -220,12 +220,12 @@ export default function DaSection() {
             </Item>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18, marginTop: 26 }}>
-            <Item name="cadre-double-losange" cellStyle={{}} caption="cadre 4 — double filet + losange">
+            <Item name="cadre-double-losange" full cellStyle={{}} caption="cadre 4 — double filet + losange">
               <div style={{ position: 'relative', width: '100%', height: 120, background: 'color-mix(in srgb, var(--acc) 6%, transparent)', border: '1px solid var(--acc)', outline: '1px solid var(--acc)', outlineOffset: 3 }}>
                 {[{ top: -4, left: -4 }, { top: -4, right: -4 }, { bottom: -4, left: -4 }, { bottom: -4, right: -4 }].map((p, i) => <span key={i} style={{ position: 'absolute', width: 7, height: 7, transform: 'rotate(45deg)', background: 'var(--acc)', ...p }} />)}
               </div>
             </Item>
-            <Item name="cadre-equerres" cellStyle={{}} caption="cadre 2 — équerres d'angle">
+            <Item name="cadre-equerres" full cellStyle={{}} caption="cadre 2 — équerres d'angle">
               <div style={{ position: 'relative', width: '100%', height: 120, background: 'color-mix(in srgb, var(--acc) 4%, transparent)' }}>
                 {[['top', 'left'], ['top', 'right'], ['bottom', 'left'], ['bottom', 'right']].map(([v, h], i) => (
                   <span key={i} style={{ position: 'absolute', width: 22, height: 22, [v]: 0, [h]: 0, borderTop: v === 'top' ? '2px solid var(--acc)' : 'none', borderBottom: v === 'bottom' ? '2px solid var(--acc)' : 'none', borderLeft: h === 'left' ? '2px solid var(--acc)' : 'none', borderRight: h === 'right' ? '2px solid var(--acc)' : 'none' } as CSSProperties} />
@@ -233,7 +233,7 @@ export default function DaSection() {
                 <span style={{ position: 'absolute', top: '50%', left: '50%', width: 6, height: 6, transform: 'translate(-50%,-50%) rotate(45deg)', background: 'var(--acc)' }} />
               </div>
             </Item>
-            <Item name="cadre-simple" cellStyle={{}} caption="cadre 1 — filet ligne simple">
+            <Item name="cadre-simple" full cellStyle={{}} caption="cadre 1 — filet ligne simple">
               <div style={{ width: '100%', height: 120, border: '1px solid var(--acc)' }} />
             </Item>
           </div>
@@ -242,13 +242,13 @@ export default function DaSection() {
         {/* 04 MOTIFS DE FOND */}
         <SecTitle n="04">MOTIFS DE FOND</SecTitle>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
-          <Item name="fond-clair" cellStyle={{}} caption="treillis facettes — fond clair">
+          <Item name="fond-clair" full cellStyle={{}} caption="treillis facettes — fond clair">
             <div style={{ width: '100%', height: 110, borderRadius: 12, background: `repeating-linear-gradient(45deg, rgba(124,92,255,.06) 0 1px, transparent 1px 22px), repeating-linear-gradient(-45deg, rgba(124,92,255,.06) 0 1px, transparent 1px 22px), #fbfaff`, border: '1px solid #e6e2ef' }} />
           </Item>
-          <Item name="fond-sombre" opaque={CARD_DARK} cellStyle={{}} caption="treillis facettes — fond sombre">
+          <Item name="fond-sombre" full opaque={CARD_DARK} cellStyle={{}} caption="treillis facettes — fond sombre">
             <div style={{ width: '100%', height: 110, borderRadius: 12, background: `repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 1px, transparent 1px 24px), ${CARD_DARK}` }} />
           </Item>
-          <Item name="fond-points" opaque={CARD_DARK} cellStyle={{}} caption="trame de points — discrète">
+          <Item name="fond-points" full opaque={CARD_DARK} cellStyle={{}} caption="trame de points — discrète">
             <div style={{ width: '100%', height: 110, borderRadius: 12, background: `radial-gradient(rgba(124,92,255,.5) 1.4px, transparent 1.6px) 0 0 / 30px 30px, ${CARD_DARK}` }} />
           </Item>
         </div>
@@ -261,7 +261,7 @@ export default function DaSection() {
           <Item name="bouton-sombre" opaque={CARD_DARK} cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, background: CARD_DARK, color: '#fff', fontWeight: 700, fontSize: 16, display: 'inline-flex', gap: 8 }}><span style={{ color: 'var(--acc)' }}>+</span><Edit init="Voir le règlement" /></div></Item>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
-          <Item name="cartouche" cellStyle={{}} caption="cartouche d'information">
+          <Item name="cartouche" full cellStyle={{}} caption="cartouche d'information">
             <div style={{ ...lightCard, width: '100%', padding: 18 }}>
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ width: 4, borderRadius: 3, background: 'var(--acc)' }} />
@@ -276,7 +276,7 @@ export default function DaSection() {
               </div>
             </div>
           </Item>
-          <Item name="typo" opaque={CARD_DARK} cellStyle={{}} caption="hiérarchie typographique">
+          <Item name="typo" full opaque={CARD_DARK} cellStyle={{}} caption="hiérarchie typographique">
             <div style={{ ...card, width: '100%', background: CARD_DARK, padding: 20 }}>
               <Edit init="Titre" style={{ display: 'block', fontSize: 34, fontWeight: 800, color: '#fff', lineHeight: 1 }} />
               <Edit init="SOUS-TITRE CAPS" style={{ display: 'block', fontSize: 15, fontWeight: 700, letterSpacing: 3, color: 'var(--acc)', marginTop: 10 }} />
@@ -294,11 +294,11 @@ export default function DaSection() {
             <div style={{ width: 768, height: 432, position: 'relative', overflow: 'hidden', background: `repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 1px, transparent 1px 26px), ${DARK}`, color: '#fff' }}>
               <div style={{ position: 'absolute', inset: 18, border: '1px solid color-mix(in srgb, var(--acc) 40%, transparent)' }} />
               {[{ top: 12, left: 12 }, { top: 12, right: 12 }, { bottom: 12, left: 12 }, { bottom: 12, right: 12 }].map((p, i) => <span key={i} style={{ position: 'absolute', width: 9, height: 9, transform: 'rotate(45deg)', background: 'var(--acc)', ...p }} />)}
-              <div style={{ position: 'absolute', left: 44, top: 44, bottom: 44, width: 150, border: '1px dashed color-mix(in srgb, var(--acc) 45%, transparent)', display: 'grid', placeItems: 'end center', paddingBottom: 8, background: 'rgba(124,92,255,.05)' }}>
-                {showSkin && skinUrl
+              <div style={{ position: 'absolute', left: 48, top: '50%', transform: 'translateY(-50%)', width: 290, height: 300, display: 'grid', placeItems: 'center' }}>
+                {showSkin && bustUrl
                   // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={skinUrl} alt="" crossOrigin="anonymous" style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', height: '112%', objectFit: 'contain', filter: 'drop-shadow(0 12px 20px rgba(0,0,0,.6))' }} />
-                  : <span style={{ fontSize: 9, color: MUT }}>render du skin (PNG transparent)</span>}
+                  ? <img src={bustUrl} alt="" crossOrigin="anonymous" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 16px 26px rgba(0,0,0,.65))' }} />
+                  : <span style={{ fontSize: 9, color: MUT }}>render du buste (PNG transparent)</span>}
               </div>
               <div style={{ position: 'absolute', right: 52, top: '50%', transform: 'translateY(-50%)', textAlign: 'right', maxWidth: 470 }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#ffffff10', border: '1px solid color-mix(in srgb, var(--acc) 50%, transparent)', borderRadius: 8, padding: '5px 10px', marginBottom: 14 }}><Mark s={18} /><Edit init="Emeria" style={{ fontSize: 13, fontWeight: 700 }} /></div>
