@@ -34,6 +34,7 @@ import SanctionsSection from './SanctionsSection';
 import BackgroundSection from './BackgroundSection';
 import EntryStatsSection from './EntryStatsSection';
 import Skins3DSection from './Skins3DSection';
+import DaSection from './DaSection';
 import AffichesSection from './AffichesSection';
 import FormationSection from './FormationSection';
 import AccessSection from './AccessSection';
@@ -196,6 +197,8 @@ export default function PanelClient({ account }: Props) {
           <EntryStatsSection />
         ) : current.id === 'skins3d' ? (
           <Skins3DSection />
+        ) : current.id === 'da' ? (
+          <DaSection />
         ) : current.id === 'launcher' ? (
           <LauncherSection />
         ) : current.id === 'support' ? (

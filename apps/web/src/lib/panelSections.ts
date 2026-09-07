@@ -30,6 +30,7 @@ export const PANEL_SECTIONS: PanelSectionDef[] = [
   { id: 'fond', label: 'Arrière-plan site', icon: '🖼️', defaultLevel: 70 },
   { id: 'entree', label: "Statistiques d'entrée", icon: '📊', defaultLevel: 70 },
   { id: 'skins3d', label: 'Skins 3D', icon: '🧍', defaultLevel: 90 },
+  { id: 'da', label: 'DA', icon: '🎨', defaultLevel: 40 },
   { id: 'acces', label: 'Accès (Fonda)', icon: '🔑', defaultLevel: 100, founderOnly: true },
 ];
 
