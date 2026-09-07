@@ -78,14 +78,16 @@ function SecTitle({ n, children }: { n: string; children: string }) {
 }
 
 /* ---- briques de marque ---- */
-function Mark({ s = 40, variant = 'full' }: { s?: number; variant?: 'full' | 'outline' | 'faint' }) {
-  const bg = variant === 'full' ? 'var(--acc)' : 'transparent';
-  const bd = variant === 'outline' ? `${Math.max(2, s * 0.05)}px solid var(--acc)` : 'none';
-  const col = variant === 'full' ? '#fff' : variant === 'faint' ? 'color-mix(in srgb, var(--acc) 35%, #cfc8dd)' : 'var(--acc)';
+// brand=true → garde le violet de marque (ignore la couleur d'accent choisie).
+function Mark({ s = 40, variant = 'full', brand = false }: { s?: number; variant?: 'full' | 'outline' | 'faint'; brand?: boolean }) {
+  const a = brand ? ACC : 'var(--acc)';
+  const bg = variant === 'full' ? a : 'transparent';
+  const bd = variant === 'outline' ? `${Math.max(2, s * 0.05)}px solid ${a}` : 'none';
+  const col = variant === 'full' ? '#fff' : variant === 'faint' ? `color-mix(in srgb, ${a} 35%, #cfc8dd)` : a;
   return <div style={{ width: s, height: s, borderRadius: s * 0.28, display: 'grid', placeItems: 'center', background: bg, border: bd, color: col, fontWeight: 800, fontFamily: FONT, fontSize: s * 0.5 }}>E</div>;
 }
-function Lockup({ dark = false, s = 30 }: { dark?: boolean; s?: number }) {
-  return <div style={{ display: 'inline-flex', alignItems: 'center', gap: s * 0.4 }}><Mark s={s} /><span style={{ fontSize: s * 0.62, fontWeight: 800, letterSpacing: s * 0.12, color: dark ? '#fff' : INK }}>EMERIA</span></div>;
+function Lockup({ dark = false, s = 30, brand = false }: { dark?: boolean; s?: number; brand?: boolean }) {
+  return <div style={{ display: 'inline-flex', alignItems: 'center', gap: s * 0.4 }}><Mark s={s} brand={brand} /><span style={{ fontSize: s * 0.62, fontWeight: 800, letterSpacing: s * 0.12, color: dark ? '#fff' : INK }}>EMERIA</span></div>;
 }
 
 export default function DaSection() {
@@ -318,7 +320,7 @@ export default function DaSection() {
                   : <span style={{ fontSize: 9, color: MUT }}>{showSkin && pseudo.trim() ? 'chargement du buste…' : 'render du buste (PNG transparent)'}</span>}
               </div>
               <div style={{ position: 'absolute', right: 48, top: '50%', transform: 'translateY(-50%)', textAlign: 'right', maxWidth: 380 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#ffffff10', border: '1px solid color-mix(in srgb, var(--acc) 50%, transparent)', borderRadius: 8, padding: '5px 10px', marginBottom: 14 }}><Mark s={18} /><Edit init="Emeria" style={{ fontSize: 13, fontWeight: 700 }} /></div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#ffffff10', border: `1px solid color-mix(in srgb, ${ACC} 50%, transparent)`, borderRadius: 8, padding: '5px 10px', marginBottom: 14 }}><Mark s={18} brand /><Edit init="Emeria" style={{ fontSize: 13, fontWeight: 700 }} /></div>
                 <Edit init="Xtazzking" block style={{ fontSize: 58, fontWeight: 800, lineHeight: 1, letterSpacing: -1 }} />
                 <Edit init="Responsable Administrateur" block style={{ fontSize: 18, fontWeight: 700, letterSpacing: 5, textTransform: 'uppercase', color: 'var(--acc)', marginTop: 12 }} />
               </div>
@@ -329,7 +331,7 @@ export default function DaSection() {
             <div style={{ width: 768, height: 432, position: 'relative', overflow: 'hidden', background: `repeating-linear-gradient(45deg, rgba(124,92,255,.05) 0 1px, transparent 1px 26px), #f7f5fc`, color: INK }}>
               <div style={{ position: 'absolute', inset: 20, border: '2px solid var(--acc)' }} />
               <div style={{ position: 'absolute', inset: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 36 }}>
-                <div style={{ marginBottom: 16 }}><Lockup s={26} /></div>
+                <div style={{ marginBottom: 16 }}><Lockup s={26} brand /></div>
                 <Edit init="Nous recrutons des builders" block style={{ fontSize: 40, fontWeight: 800, lineHeight: 1.05, letterSpacing: -1 }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '14px 0' }}><div style={{ width: 40, height: 1, background: 'var(--acc)' }} /><span style={{ width: 6, height: 6, transform: 'rotate(45deg)', background: 'var(--acc)' }} /><div style={{ width: 40, height: 1, background: 'var(--acc)' }} /></div>
                 <Edit init="Les profils recherchés :" style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }} />
