@@ -74,7 +74,7 @@ export default function Skins3DSection() {
       <h2 className="section-title">Skins 3D</h2>
       <p className="section-sub">
         Rendu 3D haute qualité d&apos;un skin (ombres, relief, épaisseur) à partir du pseudo Minecraft.
-        Fond transparent — parfait pour tes affiches et montages. 100% gratuit.
+        Fond transparent — parfait pour tes affiches et montages.
       </p>
 
       {/* Contrôles */}
@@ -164,7 +164,7 @@ export default function Skins3DSection() {
       {msg && <p style={{ marginTop: 10, color: 'var(--muted)' }}>{msg}</p>}
 
       <p style={{ marginTop: 18, fontSize: 12.5, color: 'var(--muted)' }}>
-        Rendu par NMSR (gratuit). Les poses proposées sont les poses natives du moteur — pour une pose
+        Les poses proposées sont les poses natives du moteur — pour une pose
         100% custom (bras écartés précis, etc.), il faut Blender.
       </p>
     </div>
