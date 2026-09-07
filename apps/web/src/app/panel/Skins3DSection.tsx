@@ -18,15 +18,23 @@ export default function Skins3DSection() {
   const [pseudo, setPseudo] = useState('');
   const [target, setTarget] = useState(''); // pseudo réellement rendu
   const [mode, setMode] = useState('fullbody');
+  const [arms, setArms] = useState(0); // écartement/levée des bras
+  const [yaw, setYaw] = useState(0); // rotation horizontale
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [bust, setBust] = useState(0); // pour forcer le rechargement de l'image
 
   // Résolution max acceptée par NMSR (~1024 px ; un peu moins pour les vues en pied très hautes).
   const width = mode === 'fullbody' || mode === 'frontfull' ? 1000 : 1024;
-  const url = target
-    ? `${NMSR}/${mode}/${encodeURIComponent(target)}?width=${width}${bust ? `&_=${bust}` : ''}`
-    : '';
+  const showPose = mode === 'fullbody' || mode === 'frontfull' || mode === 'fullbodyiso';
+  const url = (() => {
+    if (!target) return '';
+    const p = new URLSearchParams({ width: String(width) });
+    if (showPose && arms) p.set('arms', String(arms));
+    if (showPose && yaw) p.set('yaw', String(yaw));
+    if (bust) p.set('_', String(bust));
+    return `${NMSR}/${mode}/${encodeURIComponent(target)}?${p.toString()}`;
+  })();
 
   function generate() {
     const p = pseudo.trim();
@@ -104,6 +112,20 @@ export default function Skins3DSection() {
           </button>
         ))}
       </div>
+
+      {/* Pose : bras + rotation (uniquement sur les vues en pied) */}
+      {showPose && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 18, maxWidth: 520 }}>
+          <label style={{ fontSize: 13 }}>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>Bras : {arms}°</div>
+            <input type="range" min={-15} max={90} value={arms} onChange={(e) => setArms(Number(e.target.value))} style={{ width: '100%' }} />
+          </label>
+          <label style={{ fontSize: 13 }}>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>Rotation : {yaw}°</div>
+            <input type="range" min={-60} max={60} value={yaw} onChange={(e) => setYaw(Number(e.target.value))} style={{ width: '100%' }} />
+          </label>
+        </div>
+      )}
 
       {/* Aperçu */}
       <div
