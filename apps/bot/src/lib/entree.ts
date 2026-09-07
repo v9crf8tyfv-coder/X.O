@@ -21,7 +21,7 @@ export function buildEntreeMessage() {
   const menu = new StringSelectMenuBuilder()
     .setCustomId(ENTRY_SELECT_ID)
     .setPlaceholder('Comment as-tu connu EmeriaMC ?')
-    .addOptions(ENTRY_SOURCES.map((s) => ({ label: s.label, value: s.value, emoji: s.emoji })));
+    .addOptions(ENTRY_SOURCES.map((s) => ({ label: s.label, value: s.value, emoji: { name: s.emoji } })));
 
   const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu);
   return { embeds: [embed], components: [row] };
