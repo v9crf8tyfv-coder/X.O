@@ -23,11 +23,11 @@ export async function GET() {
   `.catch(() => [] as never[]);
 
   const counts = new Map(rows.map((r) => [r.source, Number(r.n)]));
-  const stats = ENTRY_SOURCES.map((s) => ({ value: s.value, label: s.label, count: counts.get(s.value) ?? 0 }));
+  const stats = ENTRY_SOURCES.map((s) => ({ value: s.value, label: s.label, emoji: s.emoji, count: counts.get(s.value) ?? 0 }));
   // Sources éventuelles absentes de la liste (au cas où).
   for (const r of rows) {
     if (!ENTRY_SOURCES.some((s) => s.value === r.source)) {
-      stats.push({ value: r.source, label: r.source, count: Number(r.n) });
+      stats.push({ value: r.source, label: r.source, emoji: '❓', count: Number(r.n) });
     }
   }
   const total = stats.reduce((a, b) => a + b.count, 0);

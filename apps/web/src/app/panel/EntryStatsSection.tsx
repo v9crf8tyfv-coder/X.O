@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 interface Stat {
   value: string;
   label: string;
+  emoji?: string;
   count: number;
 }
 
@@ -67,7 +68,7 @@ export default function EntryStatsSection() {
               <div key={s.value} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center', padding: '12px 16px', borderTop: i === 0 ? 'none' : '1px solid var(--line)' }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
-                    <span style={{ fontWeight: 700 }}>{s.label}</span>
+                    <span style={{ fontWeight: 700 }}>{s.emoji ? `${s.emoji} ` : ''}{s.label}</span>
                     <span style={{ color: 'var(--muted)', fontSize: 13, whiteSpace: 'nowrap' }}>
                       <strong style={{ color: 'var(--txt)' }}>{s.count}</strong> · {pct}%
                     </span>

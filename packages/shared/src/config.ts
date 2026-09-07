@@ -129,16 +129,16 @@ export const BRAND_COLOR = 0x5865f2; // violet Discord — TODO: couleur finale 
 export const ROLE_INCONNU = '1538983147473993778';
 
 /** "Comment as-tu connu EmeriaMC ?" — options du menu d'entrée + libellés des stats. */
-export const ENTRY_SOURCES: { value: string; label: string }[] = [
-  { value: 'bouche', label: 'Bouche à oreille' },
-  { value: 'staff', label: "Demande d'un staff" },
-  { value: 'invite', label: 'Invitation Discord' },
-  { value: 'site', label: 'Site internet' },
-  { value: 'event', label: 'Un event' },
-  { value: 'forum', label: 'Un forum' },
-  { value: 'vote', label: 'Un site de vote' },
-  { value: 'video', label: 'Une vidéo' },
-  { value: 'tiktok', label: 'TikTok / Shorts' },
-  { value: 'reseau', label: 'Un autre réseau' },
-  { value: 'autre', label: 'Autre' },
+export const ENTRY_SOURCES: { value: string; label: string; emoji: string }[] = [
+  { value: 'bouche', label: 'Bouche à oreille', emoji: '🗣️' },
+  { value: 'staff', label: "Demande d'un staff", emoji: '🛡️' },
+  { value: 'invite', label: 'Invitation Discord', emoji: '💌' },
+  { value: 'site', label: 'Site internet', emoji: '🌐' },
+  { value: 'event', label: 'Un event', emoji: '🎉' },
+  { value: 'forum', label: 'Un forum', emoji: '💬' },
+  { value: 'vote', label: 'Un site de vote', emoji: '🗳️' },
+  { value: 'video', label: 'Une vidéo', emoji: '🎬' },
+  { value: 'tiktok', label: 'TikTok / Shorts', emoji: '📱' },
+  { value: 'reseau', label: 'Un autre réseau', emoji: '🔗' },
+  { value: 'autre', label: 'Autre', emoji: '✨' },
 ];
