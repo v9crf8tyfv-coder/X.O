@@ -1,97 +1,99 @@
 'use client';
 
-import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 /**
- * Direction Artistique (DA) Emeria : éditeur d'affiches + éléments de marque.
- *  - Affiches (annonce staff / recrutement) : texte éditable + skin 3D optionnel → export PNG (1920×1080).
- *  - Éléments (logo, boutons, badges) → export PNG transparent.
- * Export via html-to-image (comme la section Affiches).
+ * DA Emeria (fidèle au kit) : éditeur d'affiches + éléments de marque.
+ * Police Sora, violet #7c5cff. Export via html-to-image (PNG, transparent pour les éléments).
  */
 
 const PURPLE = '#7c5cff';
 const DARK = '#0b0a12';
+const LIGHT = '#f2f0f7';
 const NMSR = 'https://nmsr.nickac.dev';
 const W = 1920, H = 1080;
+const FONT = "'Sora', system-ui, sans-serif";
 
 async function exportNode(node: HTMLElement, name: string, transparent: boolean, w: number, h: number) {
+  try { await (document as unknown as { fonts?: { ready?: Promise<unknown> } }).fonts?.ready; } catch { /* ok */ }
   const { toPng } = await import('html-to-image');
   const url = await toPng(node, {
-    pixelRatio: 2,
-    cacheBust: true,
-    width: w,
-    height: h,
-    backgroundColor: transparent ? undefined : DARK,
+    pixelRatio: 2, cacheBust: true, width: w, height: h,
+    backgroundColor: transparent ? undefined : 'transparent',
     style: { margin: '0', transform: 'none', left: '0', top: '0' },
   });
   const a = document.createElement('a');
-  a.href = url;
-  a.download = `${name}-${Date.now()}.png`;
-  a.click();
+  a.href = url; a.download = `${name}-${Date.now()}.png`; a.click();
 }
 
-/* ---------------- Éléments de marque (téléchargeables transparent) ---------------- */
+/* ---------- petits composants de marque ---------- */
 
-function LogoE({ size = 120 }: { size?: number }) {
+function LogoMark({ s = 44, outline = false }: { s?: number; outline?: boolean }) {
   return (
     <div style={{
-      width: size, height: size, borderRadius: size * 0.22, background: PURPLE,
-      display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 800,
-      fontSize: size * 0.55, fontFamily: 'system-ui, sans-serif', boxShadow: `0 ${size*0.06}px ${size*0.15}px rgba(124,92,255,.4)`,
+      width: s, height: s, borderRadius: s * 0.28, display: 'grid', placeItems: 'center',
+      background: outline ? 'transparent' : PURPLE, border: outline ? `2px solid ${PURPLE}` : 'none',
+      color: outline ? PURPLE : '#fff', fontWeight: 800, fontFamily: FONT, fontSize: s * 0.5,
     }}>E</div>
   );
 }
 
-function BrandButton({ label, variant }: { label: string; variant: 'fill' | 'outline' }) {
+function Lockup({ dark = false }: { dark?: boolean }) {
   return (
-    <div style={{
-      display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 30px', borderRadius: 14,
-      fontFamily: 'system-ui, sans-serif', fontWeight: 700, fontSize: 26,
-      background: variant === 'fill' ? PURPLE : 'transparent',
-      color: variant === 'fill' ? '#fff' : PURPLE,
-      border: `2px solid ${PURPLE}`,
-      boxShadow: variant === 'fill' ? `0 8px 24px rgba(124,92,255,.35)` : 'none',
-    }}>{label}</div>
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 14, fontFamily: FONT }}>
+      <LogoMark s={52} />
+      <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: 4, color: dark ? '#fff' : '#15131c' }}>EMERIA</span>
+    </div>
   );
 }
 
-/* ---------------- Fond d'affiche (motif DA) ---------------- */
-function afficheBg(accent: string): CSSProperties {
-  return {
-    width: W, height: H, position: 'relative', overflow: 'hidden',
-    background:
-      `radial-gradient(120% 120% at 15% 0%, ${accent}22 0%, transparent 45%), ` +
-      `repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 2px, transparent 2px 26px), ` +
-      DARK,
-    fontFamily: 'system-ui, "Segoe UI", sans-serif',
-    color: '#fff',
-  };
+function ServerBadge({ variant }: { variant: 'dark' | 'purple' | 'outline' }) {
+  const bg = variant === 'dark' ? '#17141f' : variant === 'purple' ? PURPLE : 'transparent';
+  const bd = variant === 'outline' ? `1.5px solid ${PURPLE}` : 'none';
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, background: bg, border: bd, fontFamily: FONT }}>
+      <LogoMark s={22} />
+      <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>Emeria</span>
+    </div>
+  );
 }
 
+function GradeChip({ label }: { label: string }) {
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 999, background: '#17141f', fontFamily: FONT }}>
+      <span style={{ color: PURPLE, fontWeight: 800 }}>+</span>
+      <span style={{ color: '#fff', fontWeight: 700, fontSize: 15, letterSpacing: 1, textTransform: 'uppercase' }}>{label}</span>
+    </div>
+  );
+}
+
+function BrandButton({ label, variant }: { label: string; variant: 'fill' | 'outline' | 'dark' }) {
+  const st: CSSProperties =
+    variant === 'fill' ? { background: PURPLE, color: '#fff', border: `2px solid ${PURPLE}` }
+    : variant === 'outline' ? { background: 'transparent', color: PURPLE, border: `2px solid ${PURPLE}` }
+    : { background: '#17141f', color: '#fff', border: '2px solid #17141f' };
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 26px', borderRadius: 12, fontFamily: FONT, fontWeight: 700, fontSize: 22, whiteSpace: 'nowrap', ...st }}>
+      {variant === 'dark' && <span style={{ opacity: .8 }}>›</span>}{label}
+    </div>
+  );
+}
+
+/* ---------- section ---------- */
+
 export default function DaSection() {
-  const [tab, setTab] = useState<'staff' | 'recrutement' | 'elements'>('staff');
-  const [accent, setAccent] = useState(PURPLE);
+  const [tab, setTab] = useState<'affiches' | 'elements'>('affiches');
 
-  // Affiche staff
-  const [pseudo, setPseudo] = useState('');
-  const [showSkin, setShowSkin] = useState(true);
-  const [name, setName] = useState('Pseudo');
-  const [role, setRole] = useState('Responsable Administrateur');
-  const [badge, setBadge] = useState('Emeria');
-  const [footer, setFooter] = useState('EmeriaMC · Serveur Minecraft');
+  // charge la police Sora une fois
+  useEffect(() => {
+    if (document.getElementById('sora-font')) return;
+    const l = document.createElement('link');
+    l.id = 'sora-font'; l.rel = 'stylesheet';
+    l.href = 'https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap';
+    document.head.appendChild(l);
+  }, []);
 
-  // Affiche recrutement
-  const [recTitre, setRecTitre] = useState('Nous recrutons des builders');
-  const [recProfils, setRecProfils] = useState('Autonome, Mature, Passionné');
-  const [recBtn, setRecBtn] = useState('Postuler sur le forum');
-
-  const staffRef = useRef<HTMLDivElement>(null);
-  const recRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
-
-  const skinUrl = pseudo.trim() ? `${NMSR}/fullbody/${encodeURIComponent(pseudo.trim())}?width=1000` : '';
-  const scale = 560 / W; // aperçu réduit
-
   async function dl(node: HTMLElement | null, base: string, transparent: boolean, w = W, h = H) {
     if (!node) return;
     setBusy(true);
@@ -105,154 +107,180 @@ export default function DaSection() {
   const tabBtn = (on: boolean): CSSProperties => ({ padding: '8px 16px', borderRadius: 999, cursor: 'pointer', font: 'inherit', fontWeight: 700, fontSize: 13, border: '1px solid ' + (on ? PURPLE : 'var(--line)'), background: on ? PURPLE : 'transparent', color: on ? '#fff' : 'var(--txt)' });
 
   return (
-    <div style={{ maxWidth: 900 }}>
+    <div style={{ maxWidth: 940 }}>
       <h2 className="section-title">DA · Direction Artistique</h2>
-      <p className="section-sub">
-        Éditeur d&apos;affiches Emeria (texte personnalisable, skin 3D) et éléments de marque à télécharger.
-      </p>
+      <p className="section-sub">Kit Emeria : affiches personnalisables (export PNG 1920×1080) et éléments à télécharger en transparent.</p>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '14px 0 20px' }}>
-        <button style={tabBtn(tab === 'staff')} onClick={() => setTab('staff')}>Affiche staff</button>
-        <button style={tabBtn(tab === 'recrutement')} onClick={() => setTab('recrutement')}>Affiche recrutement</button>
+        <button style={tabBtn(tab === 'affiches')} onClick={() => setTab('affiches')}>Affiches</button>
         <button style={tabBtn(tab === 'elements')} onClick={() => setTab('elements')}>Éléments (transparent)</button>
       </div>
 
-      {/* Couleur d'accent commune */}
-      {tab !== 'elements' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-          <span style={{ fontWeight: 700, fontSize: 13 }}>Couleur :</span>
-          <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} style={{ width: 40, height: 30, borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer' }} />
-          <button onClick={() => setAccent(PURPLE)} style={{ ...inp, width: 'auto', cursor: 'pointer' }}>Violet Emeria</button>
-        </div>
-      )}
-
-      {/* ---------------- AFFICHE STAFF ---------------- */}
-      {tab === 'staff' && (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={lbl}>Pseudo (skin 3D)</label>
-              <input style={inp} value={pseudo} placeholder="Pseudo Minecraft" onChange={(e) => { setPseudo(e.target.value); if (e.target.value.trim() && name === 'Pseudo') setName(e.target.value.trim()); }} />
-            </div>
-            <div>
-              <label style={lbl}>Nom affiché (gros titre)</label>
-              <input style={inp} value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div>
-              <label style={lbl}>Rôle / sous-titre</label>
-              <input style={inp} value={role} onChange={(e) => setRole(e.target.value)} />
-            </div>
-            <div>
-              <label style={lbl}>Badge (haut)</label>
-              <input style={inp} value={badge} onChange={(e) => setBadge(e.target.value)} />
-            </div>
-            <div>
-              <label style={lbl}>Bas de page</label>
-              <input style={inp} value={footer} onChange={(e) => setFooter(e.target.value)} />
-            </div>
-            <label style={{ ...lbl, display: 'flex', alignItems: 'center', gap: 8, marginTop: 24 }}>
-              <input type="checkbox" checked={showSkin} onChange={(e) => setShowSkin(e.target.checked)} /> Afficher le skin
-            </label>
-          </div>
-
-          <div style={{ margin: '16px 0 8px', color: 'var(--muted)', fontSize: 12 }}>Aperçu — export {W}×{H}</div>
-          <div style={{ width: W * scale, height: H * scale, overflow: 'hidden', borderRadius: 10, border: '1px solid var(--line)' }}>
-            <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-              <div ref={staffRef} style={afficheBg(accent)}>
-                {/* cadre fin + coins */}
-                <div style={{ position: 'absolute', inset: 40, border: `2px solid ${accent}55`, borderRadius: 6 }} />
-                {/* skin */}
-                {showSkin && skinUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={skinUrl} alt="" crossOrigin="anonymous"
-                    style={{ position: 'absolute', left: 90, bottom: 0, height: H - 90, objectFit: 'contain', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,.6))' }} />
-                )}
-                {/* bloc texte */}
-                <div style={{ position: 'absolute', right: 120, top: '50%', transform: 'translateY(-50%)', textAlign: 'right', maxWidth: 1000 }}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,.06)', border: `1px solid ${accent}55`, borderRadius: 12, padding: '10px 18px', marginBottom: 26 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 8, background: accent, display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 800, fontSize: 20 }}>E</div>
-                    <span style={{ fontSize: 26, fontWeight: 700, letterSpacing: 1 }}>{badge}</span>
-                  </div>
-                  <div style={{ fontSize: 118, fontWeight: 800, lineHeight: 1, letterSpacing: -2 }}>{name}</div>
-                  <div style={{ fontSize: 40, fontWeight: 700, letterSpacing: 6, textTransform: 'uppercase', color: accent, marginTop: 18 }}>{role}</div>
-                </div>
-                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 60, textAlign: 'center', color: 'rgba(255,255,255,.35)', fontSize: 22, letterSpacing: 2 }}>{footer}</div>
-              </div>
-            </div>
-          </div>
-          <button className="btn-accent" disabled={busy} onClick={() => dl(staffRef.current, 'affiche-staff', false)} style={{ marginTop: 14, padding: '11px 22px', borderRadius: 10 }}>
-            {busy ? '…' : 'Télécharger PNG (1920×1080)'}
-          </button>
-        </>
-      )}
-
-      {/* ---------------- AFFICHE RECRUTEMENT ---------------- */}
-      {tab === 'recrutement' && (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div><label style={lbl}>Titre</label><input style={inp} value={recTitre} onChange={(e) => setRecTitre(e.target.value)} /></div>
-            <div><label style={lbl}>Profils recherchés (séparés par des virgules)</label><input style={inp} value={recProfils} onChange={(e) => setRecProfils(e.target.value)} /></div>
-            <div><label style={lbl}>Texte du bouton</label><input style={inp} value={recBtn} onChange={(e) => setRecBtn(e.target.value)} /></div>
-          </div>
-
-          <div style={{ margin: '16px 0 8px', color: 'var(--muted)', fontSize: 12 }}>Aperçu — export {W}×{H}</div>
-          <div style={{ width: W * scale, height: H * scale, overflow: 'hidden', borderRadius: 10, border: '1px solid var(--line)' }}>
-            <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-              <div ref={recRef} style={afficheBg(accent)}>
-                <div style={{ position: 'absolute', inset: 60, border: `2px solid ${accent}55`, borderRadius: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 80 }}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, marginBottom: 30 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: accent, display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 800, fontSize: 24 }}>E</div>
-                    <span style={{ fontSize: 30, fontWeight: 700, letterSpacing: 2 }}>EMERIA</span>
-                  </div>
-                  <div style={{ fontSize: 92, fontWeight: 800, lineHeight: 1.05, letterSpacing: -1 }}>{recTitre}</div>
-                  <div style={{ fontSize: 30, color: 'rgba(255,255,255,.6)', margin: '36px 0 20px', fontWeight: 700 }}>Les profils recherchés :</div>
-                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-                    {recProfils.split(',').map((p) => p.trim()).filter(Boolean).map((p, i) => (
-                      <span key={i} style={{ padding: '12px 24px', borderRadius: 999, border: `2px solid ${accent}`, color: '#fff', fontSize: 28, fontWeight: 700 }}>{p}</span>
-                    ))}
-                  </div>
-                  <div style={{ marginTop: 50, background: accent, color: '#fff', padding: '20px 44px', borderRadius: 16, fontSize: 32, fontWeight: 800, boxShadow: `0 12px 30px ${accent}55` }}>{recBtn}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <button className="btn-accent" disabled={busy} onClick={() => dl(recRef.current, 'affiche-recrutement', false)} style={{ marginTop: 14, padding: '11px 22px', borderRadius: 10 }}>
-            {busy ? '…' : 'Télécharger PNG (1920×1080)'}
-          </button>
-        </>
-      )}
-
-      {/* ---------------- ÉLÉMENTS (transparent) ---------------- */}
-      {tab === 'elements' && (
-        <ElementsGrid busy={busy} onDl={dl} />
-      )}
+      {tab === 'affiches' ? <Affiches dl={dl} busy={busy} lbl={lbl} inp={inp} /> : <Elements dl={dl} busy={busy} lbl={lbl} inp={inp} />}
     </div>
   );
 }
 
-/* Grille d'éléments téléchargeables en PNG transparent. */
-function ElementsGrid({ busy, onDl }: { busy: boolean; onDl: (n: HTMLElement | null, base: string, t: boolean, w?: number, h?: number) => void }) {
-  const items: { name: string; w: number; h: number; node: ReactNode }[] = [
-    { name: 'logo-emeria', w: 260, h: 260, node: <LogoE size={220} /> },
-    { name: 'bouton-postuler', w: 420, h: 100, node: <BrandButton label="Postuler sur le forum" variant="fill" /> },
-    { name: 'bouton-rejoindre', w: 360, h: 100, node: <BrandButton label="Rejoindre Emeria" variant="outline" /> },
-    { name: 'bouton-reglement', w: 340, h: 100, node: <BrandButton label="Vers le règlement" variant="outline" /> },
+/* ================= AFFICHES ================= */
+function Affiches({ dl, busy, lbl, inp }: { dl: (n: HTMLElement | null, b: string, t: boolean, w?: number, h?: number) => void; busy: boolean; lbl: CSSProperties; inp: CSSProperties }) {
+  const [which, setWhich] = useState<'staff' | 'recrutement'>('staff');
+  const [accent, setAccent] = useState(PURPLE);
+  // staff
+  const [pseudo, setPseudo] = useState('');
+  const [showSkin, setShowSkin] = useState(true);
+  const [name, setName] = useState('Xtazzking');
+  const [role, setRole] = useState('Responsable Administrateur');
+  // recrutement
+  const [titre, setTitre] = useState('Nous recrutons des builders');
+  const [profils, setProfils] = useState('Autonome, Mature, Passionné');
+  const [accroche, setAccroche] = useState('Des visions de grandeur ? Donnez-leur forme sur Emeria.');
+  const [btn, setBtn] = useState('Postulez sur le forum');
+
+  const staffRef = useRef<HTMLDivElement>(null);
+  const recRef = useRef<HTMLDivElement>(null);
+  const skinUrl = pseudo.trim() ? `${NMSR}/fullbody/${encodeURIComponent(pseudo.trim())}?width=1000` : '';
+  const scale = 600 / W;
+
+  const corner = (pos: CSSProperties): CSSProperties => ({ position: 'absolute', width: 26, height: 26, ...pos });
+
+  return (
+    <>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <button onClick={() => setWhich('staff')} style={{ ...inp, width: 'auto', cursor: 'pointer', borderColor: which === 'staff' ? PURPLE : undefined }}>Annonce staff</button>
+        <button onClick={() => setWhich('recrutement')} style={{ ...inp, width: 'auto', cursor: 'pointer', borderColor: which === 'recrutement' ? PURPLE : undefined }}>Recrutement</button>
+        <label style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>Couleur</span>
+          <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} style={{ width: 38, height: 30, borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer' }} />
+        </label>
+      </div>
+
+      {which === 'staff' ? (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div><label style={lbl}>Pseudo (skin)</label><input style={inp} value={pseudo} placeholder="Pseudo Minecraft" onChange={(e) => setPseudo(e.target.value)} /></div>
+            <div><label style={lbl}>Nom (gros titre)</label><input style={inp} value={name} onChange={(e) => setName(e.target.value)} /></div>
+            <div><label style={lbl}>Rôle / sous-titre</label><input style={inp} value={role} onChange={(e) => setRole(e.target.value)} /></div>
+            <label style={{ ...lbl, display: 'flex', alignItems: 'center', gap: 8, marginTop: 22 }}><input type="checkbox" checked={showSkin} onChange={(e) => setShowSkin(e.target.checked)} /> Afficher le skin</label>
+          </div>
+          <Preview scale={scale}>
+            <div ref={staffRef} style={{ width: W, height: H, position: 'relative', overflow: 'hidden', background: `repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 2px, transparent 2px 30px), ${DARK}`, fontFamily: FONT, color: '#fff' }}>
+              <div style={{ position: 'absolute', inset: 40, border: `1.5px solid ${accent}44`, borderRadius: 4 }} />
+              {[{ top: 30, left: 30 }, { top: 30, right: 30 }, { bottom: 30, left: 30 }, { bottom: 30, right: 30 }].map((p, i) => (
+                <div key={i} style={corner(p)}><div style={{ position: 'absolute', top: 12, left: 0, right: 0, height: 2, background: accent }} /><div style={{ position: 'absolute', left: 12, top: 0, bottom: 0, width: 2, background: accent }} /></div>
+              ))}
+              {showSkin && skinUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={skinUrl} alt="" crossOrigin="anonymous" style={{ position: 'absolute', left: 110, bottom: 0, height: H - 60, objectFit: 'contain', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,.6))' }} />
+              )}
+              <div style={{ position: 'absolute', right: 130, top: '50%', transform: 'translateY(-50%)', textAlign: 'right', maxWidth: 1050 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#ffffff12', border: `1px solid ${accent}55`, borderRadius: 10, padding: '8px 14px', marginBottom: 24 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 7, background: accent, display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 16 }}>E</div>
+                  <span style={{ fontSize: 20, fontWeight: 700 }}>Emeria</span>
+                </div>
+                <div style={{ fontSize: 124, fontWeight: 800, lineHeight: 1, letterSpacing: -2 }}>{name}</div>
+                <div style={{ fontSize: 38, fontWeight: 700, letterSpacing: 8, textTransform: 'uppercase', color: accent, marginTop: 16 }}>{role}</div>
+              </div>
+            </div>
+          </Preview>
+          <button className="btn-accent" disabled={busy} onClick={() => dl(staffRef.current, 'affiche-staff', false)} style={{ marginTop: 14, padding: '11px 22px', borderRadius: 10 }}>{busy ? '…' : 'Télécharger PNG (1920×1080)'}</button>
+        </>
+      ) : (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div><label style={lbl}>Titre</label><input style={inp} value={titre} onChange={(e) => setTitre(e.target.value)} /></div>
+            <div><label style={lbl}>Profils (virgules)</label><input style={inp} value={profils} onChange={(e) => setProfils(e.target.value)} /></div>
+            <div><label style={lbl}>Accroche (italique)</label><input style={inp} value={accroche} onChange={(e) => setAccroche(e.target.value)} /></div>
+            <div><label style={lbl}>Bouton</label><input style={inp} value={btn} onChange={(e) => setBtn(e.target.value)} /></div>
+          </div>
+          <Preview scale={scale}>
+            <div ref={recRef} style={{ width: W, height: H, position: 'relative', overflow: 'hidden', background: LIGHT, fontFamily: FONT, color: '#15131c' }}>
+              <div style={{ position: 'absolute', inset: 55, border: `2px solid ${accent}`, borderRadius: 8 }} />
+              <div style={{ position: 'absolute', inset: 55, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 90 }}>
+                <div style={{ marginBottom: 34 }}><Lockup /></div>
+                <div style={{ fontSize: 92, fontWeight: 800, lineHeight: 1.05, letterSpacing: -1 }}>{titre}</div>
+                <div style={{ width: 90, height: 3, background: accent, margin: '30px 0' }} />
+                <div style={{ fontSize: 30, fontWeight: 700, marginBottom: 20 }}>Les profils recherchés :</div>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {profils.split(',').map((p) => p.trim()).filter(Boolean).map((p, i) => (
+                    <span key={i} style={{ display: 'inline-flex', gap: 8, padding: '12px 24px', borderRadius: 999, background: `${accent}1e`, color: '#3a2f52', fontSize: 26, fontWeight: 700 }}><span style={{ color: accent }}>+</span>{p}</span>
+                  ))}
+                </div>
+                <div style={{ fontSize: 26, fontStyle: 'italic', color: '#6b6478', margin: '34px 0 30px' }}>{accroche}</div>
+                <div style={{ background: accent, color: '#fff', padding: '18px 40px', borderRadius: 14, fontSize: 30, fontWeight: 800, boxShadow: `0 12px 30px ${accent}55` }}>{btn}</div>
+              </div>
+            </div>
+          </Preview>
+          <button className="btn-accent" disabled={busy} onClick={() => dl(recRef.current, 'affiche-recrutement', false)} style={{ marginTop: 14, padding: '11px 22px', borderRadius: 10 }}>{busy ? '…' : 'Télécharger PNG (1920×1080)'}</button>
+        </>
+      )}
+    </>
+  );
+}
+
+function Preview({ scale, children }: { scale: number; children: ReactNode }) {
+  return (
+    <>
+      <div style={{ margin: '16px 0 8px', color: 'var(--muted)', fontSize: 12 }}>Aperçu — export {W}×{H}</div>
+      <div style={{ width: W * scale, height: H * scale, overflow: 'hidden', borderRadius: 10, border: '1px solid var(--line)' }}>
+        <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>{children}</div>
+      </div>
+    </>
+  );
+}
+
+/* ================= ÉLÉMENTS (transparent) ================= */
+function Elements({ dl, busy, lbl, inp }: { dl: (n: HTMLElement | null, b: string, t: boolean, w?: number, h?: number) => void; busy: boolean; lbl: CSSProperties; inp: CSSProperties }) {
+  // boutons éditables
+  const [btnLabel, setBtnLabel] = useState('Postulez sur le forum');
+  const [btnVariant, setBtnVariant] = useState<'fill' | 'outline' | 'dark'>('fill');
+  const btnRef = useRef<HTMLDivElement>(null);
+
+  const cell: CSSProperties = { border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center', background: 'repeating-conic-gradient(rgba(255,255,255,.03) 0% 25%, transparent 0% 50%) 50% / 20px 20px, var(--panel)' };
+
+  // éléments fixes (logos, badges, chips)
+  const fixed: { name: string; w: number; h: number; node: ReactNode }[] = [
+    { name: 'logo-E', w: 160, h: 160, node: <LogoMark s={140} /> },
+    { name: 'logo-E-contour', w: 160, h: 160, node: <LogoMark s={140} outline /> },
+    { name: 'lockup-emeria', w: 340, h: 90, node: <div style={{ transform: 'scale(1)' }}><Lockup dark /></div> },
+    { name: 'badge-emeria', w: 200, h: 70, node: <ServerBadge variant="purple" /> },
+    { name: 'chip-joueur', w: 200, h: 60, node: <GradeChip label="Joueur" /> },
+    { name: 'chip-moderateur', w: 240, h: 60, node: <GradeChip label="Modérateur" /> },
+    { name: 'chip-administrateur', w: 280, h: 60, node: <GradeChip label="Administrateur" /> },
+    { name: 'chip-fondateur', w: 240, h: 60, node: <GradeChip label="Fondateur" /> },
   ];
   const refs = useRef<(HTMLDivElement | null)[]>([]);
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-      {items.map((it, i) => (
-        <div key={it.name} style={{ border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center', background: 'repeating-conic-gradient(rgba(255,255,255,.03) 0% 25%, transparent 0% 50%) 50% / 20px 20px, var(--panel)' }}>
-          <div style={{ display: 'grid', placeItems: 'center', minHeight: 140, overflow: 'hidden' }}>
-            <div ref={(el) => { refs.current[i] = el; }} style={{ width: it.w, height: it.h, display: 'grid', placeItems: 'center', transform: `scale(${Math.min(1, 200 / it.w)})` }}>
-              {it.node}
-            </div>
-          </div>
-          <button className="btn-accent" disabled={busy} onClick={() => onDl(refs.current[i], it.name, true, it.w, it.h)} style={{ marginTop: 10, padding: '8px 14px', borderRadius: 10, fontSize: 13 }}>
-            Télécharger (transparent)
-          </button>
+    <div>
+      {/* Bouton éditable */}
+      <h3 style={{ fontSize: 15, fontWeight: 800, margin: '4px 0 10px' }}>Bouton personnalisable</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'end', marginBottom: 12 }}>
+        <div><label style={lbl}>Texte du bouton</label><input style={inp} value={btnLabel} onChange={(e) => setBtnLabel(e.target.value)} /></div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {(['fill', 'outline', 'dark'] as const).map((v) => (
+            <button key={v} onClick={() => setBtnVariant(v)} style={{ ...inp, width: 'auto', cursor: 'pointer', borderColor: btnVariant === v ? PURPLE : undefined }}>{v === 'fill' ? 'Plein' : v === 'outline' ? 'Contour' : 'Sombre'}</button>
+          ))}
         </div>
-      ))}
+      </div>
+      <div style={{ ...cell, marginBottom: 24 }}>
+        <div style={{ display: 'grid', placeItems: 'center', minHeight: 90, overflow: 'hidden' }}>
+          <div ref={btnRef} style={{ display: 'inline-block', padding: 6 }}><BrandButton label={btnLabel} variant={btnVariant} /></div>
+        </div>
+        <button className="btn-accent" disabled={busy} onClick={() => dl(btnRef.current, 'bouton', true, 0, 0)} style={{ marginTop: 10, padding: '8px 16px', borderRadius: 10, fontSize: 13 }}>Télécharger (transparent)</button>
+      </div>
+
+      {/* Logos, badges, chips */}
+      <h3 style={{ fontSize: 15, fontWeight: 800, margin: '4px 0 10px' }}>Logos & badges</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 16 }}>
+        {fixed.map((it, i) => (
+          <div key={it.name} style={cell}>
+            <div style={{ display: 'grid', placeItems: 'center', minHeight: 130, overflow: 'hidden' }}>
+              <div ref={(el) => { refs.current[i] = el; }} style={{ display: 'inline-block', padding: 6 }}>{it.node}</div>
+            </div>
+            <button className="btn-accent" disabled={busy} onClick={() => dl(refs.current[i], it.name, true, 0, 0)} style={{ marginTop: 10, padding: '8px 14px', borderRadius: 10, fontSize: 13 }}>Télécharger (transparent)</button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
