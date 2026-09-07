@@ -133,6 +133,7 @@ export const ENTRY_SOURCES: { value: string; label: string; emoji: string }[] = 
   { value: 'bouche', label: 'Bouche à oreille', emoji: '🗣️' },
   { value: 'staff', label: "Demande d'un staff", emoji: '🛡️' },
   { value: 'invite', label: 'Invitation Discord', emoji: '💌' },
+  { value: 'tag', label: 'Tags Discord', emoji: '🏷️' },
   { value: 'site', label: 'Site internet', emoji: '🌐' },
   { value: 'event', label: 'Un event', emoji: '🎉' },
   { value: 'forum', label: 'Un forum', emoji: '💬' },
