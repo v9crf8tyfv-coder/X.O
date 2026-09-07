@@ -22,8 +22,10 @@ export default function Skins3DSection() {
   const [msg, setMsg] = useState('');
   const [bust, setBust] = useState(0); // pour forcer le rechargement de l'image
 
+  // Résolution max acceptée par NMSR (~1024 px ; un peu moins pour les vues en pied très hautes).
+  const width = mode === 'fullbody' || mode === 'frontfull' ? 1000 : 1024;
   const url = target
-    ? `${NMSR}/${mode}/${encodeURIComponent(target)}${bust ? `?_=${bust}` : ''}`
+    ? `${NMSR}/${mode}/${encodeURIComponent(target)}?width=${width}${bust ? `&_=${bust}` : ''}`
     : '';
 
   function generate() {
