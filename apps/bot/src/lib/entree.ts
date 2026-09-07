@@ -1,4 +1,9 @@
-import { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder } from 'discord.js';
+import {
+  EmbedBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  ActionRowBuilder,
+} from 'discord.js';
 import { ENTRY_SOURCES } from '@xo/shared';
 
 export const ENTRY_SELECT_ID = 'entry:source';
@@ -21,7 +26,11 @@ export function buildEntreeMessage() {
   const menu = new StringSelectMenuBuilder()
     .setCustomId(ENTRY_SELECT_ID)
     .setPlaceholder('Comment as-tu connu EmeriaMC ?')
-    .addOptions(ENTRY_SOURCES.map((s) => ({ label: s.label, value: s.value, emoji: { name: s.emoji } })));
+    .addOptions(
+      ENTRY_SOURCES.map((s) =>
+        new StringSelectMenuOptionBuilder().setLabel(s.label).setValue(s.value).setEmoji(s.emoji),
+      ),
+    );
 
   const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu);
   return { embeds: [embed], components: [row] };
