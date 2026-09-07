@@ -124,3 +124,21 @@ export const OWNER_DISCORD_ID = '1098211189059756115';
 
 /** Couleur de marque du bot X.O (embeds génériques) */
 export const BRAND_COLOR = 0x5865f2; // violet Discord — TODO: couleur finale du serveur
+
+/** Rôle donné à l'arrivée (accès à un seul salon, tant que la source n'est pas choisie). */
+export const ROLE_INCONNU = '1538983147473993778';
+
+/** "Comment as-tu connu EmeriaMC ?" — options du menu d'entrée + libellés des stats. */
+export const ENTRY_SOURCES: { value: string; label: string }[] = [
+  { value: 'bouche', label: 'Bouche à oreille' },
+  { value: 'staff', label: "Demande d'un staff" },
+  { value: 'invite', label: 'Invitation Discord' },
+  { value: 'site', label: 'Site internet' },
+  { value: 'event', label: 'Un event' },
+  { value: 'forum', label: 'Un forum' },
+  { value: 'vote', label: 'Un site de vote' },
+  { value: 'video', label: 'Une vidéo' },
+  { value: 'tiktok', label: 'TikTok / Shorts' },
+  { value: 'reseau', label: 'Un autre réseau' },
+  { value: 'autre', label: 'Autre' },
+];

@@ -1,10 +1,11 @@
 import type { Client, GuildMember } from 'discord.js';
-import { GRADE_JOUEUR } from '@xo/shared';
+import { ROLE_INCONNU } from '@xo/shared';
 import { db, hasDatabase } from '@xo/db';
 
 /**
- * À l'arrivée d'un membre : lui donne le rôle Joueur (grade par défaut) + les rôles
- * auto configurés (via /panel ou le site). Les bots sont ignorés.
+ * À l'arrivée d'un membre : lui donne le rôle INCONNU (accès à un seul salon, où il doit
+ * choisir comment il a connu EmeriaMC) + les rôles auto configurés. Le rôle Joueur (accès
+ * complet) n'est donné qu'après ce choix (voir interactions/entree.ts). Les bots sont ignorés.
  */
 export async function onGuildMemberAdd(
   _client: Client,
@@ -12,14 +13,14 @@ export async function onGuildMemberAdd(
 ): Promise<void> {
   if (member.user.bot) return;
 
-  // 1) Rôle Joueur d'office (grade d'arrivée) — indépendant de la base
+  // 1) Rôle Inconnu d'office — accès limité tant que la source d'entrée n'est pas choisie.
   try {
-    const joueur = member.guild.roles.cache.get(GRADE_JOUEUR.roleId);
-    if (joueur && !member.roles.cache.has(joueur.id)) {
-      await member.roles.add(joueur, "Grade Joueur (arrivée)").catch(() => {});
+    const inconnu = member.guild.roles.cache.get(ROLE_INCONNU);
+    if (inconnu && !member.roles.cache.has(inconnu.id)) {
+      await member.roles.add(inconnu, "Arrivée (à définir : comment a-t-il connu Emeria)").catch(() => {});
     }
   } catch (err) {
-    console.error('[guildMemberAdd] erreur rôle Joueur:', err);
+    console.error('[guildMemberAdd] erreur rôle Inconnu:', err);
   }
 
   // 2) Rôles auto configurés (panel_auto_roles)

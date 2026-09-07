@@ -23,6 +23,7 @@ import { trainToggle } from './train.js';
 import { candidatureDone } from './candidature.js';
 import { spoilerView, spoilerInvites } from './spoilers.js';
 import { trainMark } from './trainMark.js';
+import { entreeSelect } from './entree.js';
 
 export const buttons: ComponentHandler<ButtonInteraction>[] = [
   absenceNew,
@@ -44,7 +45,7 @@ export const buttons: ComponentHandler<ButtonInteraction>[] = [
   trainMark,
 ];
 
-export const selectMenus: ComponentHandler<StringSelectMenuInteraction>[] = [ticketOpen];
+export const selectMenus: ComponentHandler<StringSelectMenuInteraction>[] = [ticketOpen, entreeSelect];
 
 export const roleSelects: ComponentHandler<RoleSelectMenuInteraction>[] = [panelAutoRole];
 
