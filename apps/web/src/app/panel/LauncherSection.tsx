@@ -15,6 +15,8 @@ export default function LauncherSection() {
   const [staged, setStaged] = useState<{ file: File; kind: Kind }[]>([]);
   const [impl, setImpl] = useState<{ on: boolean; done: number; total: number }>({ on: false, done: 0, total: 0 });
   const [implemented, setImplemented] = useState(false);
+  const [backup, setBackup] = useState<{ available: boolean; counts?: { mods: number; resourcepacks: number; optional: number } } | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   const [build, setBuild] = useState<{ on: boolean; pct: number; label: string; done: boolean; ok: boolean; url: string | null }>(
     { on: false, pct: 0, label: '', done: false, ok: false, url: null },
@@ -38,7 +40,28 @@ export default function LauncherSection() {
       setLoading(false);
     }
   }
-  useEffect(() => { load(); }, []);
+  async function loadBackup() {
+    try {
+      const r = await fetch('/api/launcher/restore');
+      if (r.ok) setBackup(await r.json());
+    } catch { /* ignore */ }
+  }
+  useEffect(() => { load(); loadBackup(); }, []);
+
+  /** Restaure le manifeste depuis la sauvegarde automatique (au cas où une manip a tout effacé). */
+  async function restore() {
+    if (!confirm('Restaurer la dernière sauvegarde du launcher ? La liste actuelle sera remplacée par la sauvegarde.')) return;
+    setError('');
+    setRestoring(true);
+    try {
+      const r = await fetch('/api/launcher/restore', { method: 'POST' });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) { setManifest(j.manifest); setImplemented(true); }
+      else setError(j.error || 'Échec de la restauration.');
+    } finally {
+      setRestoring(false);
+    }
+  }
 
   function stage(kind: Kind, files: FileList | null) {
     if (!files) return;
@@ -165,6 +188,20 @@ export default function LauncherSection() {
       {error && (
         <div style={{ background: 'rgba(220,60,60,.14)', border: '1px solid rgba(220,60,60,.4)', color: '#ffb4b4', padding: '10px 14px', borderRadius: 10, marginBottom: 16 }}>
           {error}
+        </div>
+      )}
+
+      {/* Sauvegarde de sécurité : restaurer la liste si une manip a tout effacé */}
+      {backup?.available && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'rgba(124,92,255,.08)', border: '1px solid rgba(124,92,255,.35)', padding: '10px 14px', borderRadius: 10, marginBottom: 16 }}>
+          <span style={{ fontSize: 13, color: 'var(--muted, #8a8a94)' }}>
+            Sauvegarde disponible : {backup.counts?.mods ?? 0} mods, {backup.counts?.resourcepacks ?? 0} resourcepacks
+            {backup.counts?.optional ? `, ${backup.counts.optional} optionnel(s)` : ''}. En cas de suppression accidentelle, restaure-la.
+          </span>
+          <button className="lchr-btn" onClick={restore} disabled={restoring}
+            style={{ background: '#7c5cff', color: '#fff', border: 'none', padding: '9px 16px', borderRadius: 9, cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap' }}>
+            {restoring ? 'Restauration…' : 'Restaurer la sauvegarde'}
+          </button>
         </div>
       )}
 

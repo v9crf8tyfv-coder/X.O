@@ -74,13 +74,47 @@ export async function getModsRelease(): Promise<Release> {
 
 const EMPTY: Manifest = { mods: [], resourcepacks: [], optional: [], axiomAllowed: [] };
 
-/** Lit manifest.json depuis la release (ou un manifeste vide s'il n'existe pas). */
+/**
+ * Lit manifest.json depuis la release.
+ * IMPORTANT : si l'asset EXISTE mais est illisible (fetch KO / JSON invalide), on LÈVE une
+ * erreur au lieu de renvoyer un manifeste vide — sinon une lecture ratée suivie d'une écriture
+ * (addFile/removeFile) écraserait TOUS les mods par une liste vide. On ne renvoie « vide » que
+ * si aucun manifest.json n'existe encore (toute 1ère configuration).
+ */
 export async function getManifest(rel?: Release): Promise<Manifest> {
   const release = rel ?? (await getModsRelease());
   const asset = release.assets.find((a) => a.name === 'manifest.json');
   if (!asset) return { ...EMPTY };
   const r = await gh(asset.url, { headers: { Accept: 'application/octet-stream' } });
-  if (!r.ok) return { ...EMPTY };
+  if (!r.ok) throw new Error(`Lecture du manifeste impossible (${r.status}) — opération annulée pour ne pas risquer d'effacer les mods.`);
+  let j: Record<string, unknown>;
+  try {
+    j = JSON.parse(await r.text());
+  } catch {
+    throw new Error("Manifeste illisible (JSON invalide) — opération annulée pour ne pas risquer d'effacer les mods.");
+  }
+  return {
+    mods: Array.isArray(j.mods) ? (j.mods as ManifestEntry[]) : [],
+    resourcepacks: Array.isArray(j.resourcepacks) ? (j.resourcepacks as ManifestEntry[]) : [],
+    optional: Array.isArray(j.optional) ? (j.optional as OptionalEntry[]) : [],
+    axiomAllowed: Array.isArray(j.axiomAllowed) ? (j.axiomAllowed as string[]) : [],
+  };
+}
+
+function isEmptyManifest(m: Manifest): boolean {
+  return m.mods.length + m.resourcepacks.length + m.optional.length === 0;
+}
+
+/** Nom de l'asset de sauvegarde du manifeste. */
+const BACKUP_NAME = 'manifest.backup.json';
+
+/** Lit la sauvegarde du manifeste (ou null si absente/illisible). */
+export async function getBackup(rel?: Release): Promise<Manifest | null> {
+  const release = rel ?? (await getModsRelease());
+  const asset = release.assets.find((a) => a.name === BACKUP_NAME);
+  if (!asset) return null;
+  const r = await gh(asset.url, { headers: { Accept: 'application/octet-stream' } });
+  if (!r.ok) return null;
   try {
     const j = JSON.parse(await r.text());
     return {
@@ -90,8 +124,17 @@ export async function getManifest(rel?: Release): Promise<Manifest> {
       axiomAllowed: Array.isArray(j.axiomAllowed) ? j.axiomAllowed : [],
     };
   } catch {
-    return { ...EMPTY };
+    return null;
   }
+}
+
+/** Restaure le manifeste depuis la sauvegarde (écrit directement, sans re-sauvegarder par-dessus). */
+export async function restoreBackup(): Promise<Manifest> {
+  const release = await getModsRelease();
+  const bak = await getBackup(release);
+  if (!bak || isEmptyManifest(bak)) throw new Error('Aucune sauvegarde exploitable disponible.');
+  await uploadAsset(release, 'manifest.json', Buffer.from(JSON.stringify(bak, null, 2)), 'application/json');
+  return bak;
 }
 
 async function deleteAssetByName(release: Release, name: string): Promise<void> {
@@ -120,11 +163,21 @@ export async function uploadAsset(
   return j.browser_download_url;
 }
 
-/** Écrit le manifest.json sur la release. */
+/** Écrit le manifest.json sur la release, en sauvegardant d'abord l'actuel (s'il est non vide). */
 export async function putManifest(release: Release, manifest: Manifest): Promise<void> {
-  const data = Buffer.from(JSON.stringify(manifest, null, 2));
   // Recharge la release pour avoir l'asset manifest.json à jour avant suppression
   const fresh = await getModsRelease();
+  // Sauvegarde de sécurité : on garde une copie du manifeste courant AVANT d'écraser,
+  // mais uniquement s'il est non vide (pour ne jamais écraser une bonne sauvegarde par du vide).
+  try {
+    const current = await getManifest(fresh);
+    if (!isEmptyManifest(current)) {
+      await uploadAsset(fresh, BACKUP_NAME, Buffer.from(JSON.stringify(current, null, 2)), 'application/json');
+    }
+  } catch {
+    /* manifeste courant illisible -> on ne touche pas à la sauvegarde existante, et on continue */
+  }
+  const data = Buffer.from(JSON.stringify(manifest, null, 2));
   await uploadAsset(fresh, 'manifest.json', data, 'application/json');
 }
 
