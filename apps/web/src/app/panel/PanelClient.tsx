@@ -106,6 +106,14 @@ export default function PanelClient({ account }: Props) {
   const [active, setActive] = useState('profil');
   const current = sections.find((s) => s.id === active) ?? sections[0];
 
+  // Mémorise la section ouverte → on y revient après un rafraîchissement de la page.
+  useEffect(() => {
+    try { const s = localStorage.getItem('xo_panel_section'); if (s) setActive(s); } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem('xo_panel_section', active); } catch { /* ignore */ }
+  }, [active]);
+
   // Thème clair / sombre (choix manuel mémorisé ; sinon suit l'OS).
   const [isDark, setIsDark] = useState(true);
   useEffect(() => {
@@ -128,25 +136,41 @@ export default function PanelClient({ account }: Props) {
 
   return (
     <div className="panel">
-      {/* Bouton vers le vrai site Emeria — visible pour tout grade sauf joueur */}
-      {account.site_grade !== 'joueur' && (
-        <a
-          href="https://emeria-site.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Aller sur le site EmeriaMC"
+      {/* Boutons fixes en haut à droite : Rafraîchir (tous) + Site (sauf joueur) */}
+      <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 60, display: 'flex', gap: 8 }}>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          title="Rafraîchir la page"
+          aria-label="Rafraîchir"
           style={{
-            position: 'fixed', top: 14, right: 16, zIndex: 60,
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '9px 16px', borderRadius: 10, textDecoration: 'none',
-            background: '#7c5cff', color: '#fff', fontWeight: 700, fontSize: 14,
-            boxShadow: '0 4px 14px rgba(124,92,255,.35)',
+            display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+            padding: '9px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,.16)',
+            background: 'rgba(255,255,255,.08)', color: 'var(--txt, #e7e7ea)', fontWeight: 700, fontSize: 14,
+            backdropFilter: 'blur(6px)',
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
-          Site
-        </a>
-      )}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>
+          Rafraîchir
+        </button>
+        {account.site_grade !== 'joueur' && (
+          <a
+            href="https://emeria-site.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Aller sur le site EmeriaMC"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '9px 16px', borderRadius: 10, textDecoration: 'none',
+              background: '#7c5cff', color: '#fff', fontWeight: 700, fontSize: 14,
+              boxShadow: '0 4px 14px rgba(124,92,255,.35)',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
+            Site
+          </a>
+        )}
+      </div>
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-brand">
