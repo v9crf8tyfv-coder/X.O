@@ -88,8 +88,11 @@ export async function GET(req: Request) {
                to_char(end_date,'YYYY-MM-DD') as end_date
         from absences
         where lower(discord_tag) = any(${absPseudos})
-          and coalesce(start_date,'0001-01-01') <= ${sunday}
-          and coalesce(end_date,'9999-12-31') >= ${monday}
+          -- une absence DOIT avoir de vraies dates : sinon (dates nulles) elle marquait
+          -- le staff « absent » de l'an 1 à l'an 9999, donc absent toutes les semaines.
+          and start_date is not null and end_date is not null
+          and start_date <= ${sunday}
+          and end_date >= ${monday}
       `.catch(() => [])
     : [];
 
