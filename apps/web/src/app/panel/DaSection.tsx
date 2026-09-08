@@ -23,13 +23,21 @@ const FONT = "'Sora', system-ui, sans-serif";
 async function exportNode(node: HTMLElement, name: string, opaque: string | null, pixelRatio = 2) {
   try { await (document as unknown as { fonts?: { ready?: Promise<unknown> } }).fonts?.ready; } catch { /* ok */ }
   const { toBlob } = await import('html-to-image');
-  const blob = await toBlob(node, {
+  const opts = {
     pixelRatio,
     cacheBust: false, // le buste est déjà embarqué en data URL
     backgroundColor: opaque ?? undefined, // null => transparent
     style: { margin: '0', transform: 'none' },
     filter: (n: HTMLElement) => !(n instanceof HTMLElement && n.dataset && n.dataset.noexport === '1'),
-  });
+  };
+  // Les images (buste) doivent être DÉCODÉES avant l'export : sinon html-to-image les rate au
+  // 1er passage (d'où le « il faut télécharger 2 fois »). On les décode + un rendu d'échauffement.
+  const imgs = Array.from(node.querySelectorAll('img')) as HTMLImageElement[];
+  if (imgs.length) {
+    await Promise.all(imgs.map((im) => (im.complete && im.naturalWidth ? Promise.resolve() : im.decode().catch(() => {}))));
+    try { await toBlob(node, opts); } catch { /* échauffement : on ignore */ }
+  }
+  const blob = await toBlob(node, opts);
   if (!blob) throw new Error('rendu vide');
   const href = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -219,6 +227,15 @@ export default function DaSection() {
             <Item key={g} name={`grade-${g.toLowerCase()}`} cellStyle={{}}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 16px', borderRadius: 999, background: CARD_DARK }}>
                 <span style={{ color: 'var(--acc)', fontWeight: 800 }}>+</span><Edit init={g} style={{ color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: 1 }} />
+              </div>
+            </Item>
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
+          {['Autonome', 'Mature', 'Passionné'].map((p) => (
+            <Item key={p} name={`profil-${p.toLowerCase()}`} cellStyle={{}}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 18px', borderRadius: 999, background: 'color-mix(in srgb, var(--acc) 14%, #fff)', color: '#3a2f52', fontWeight: 700, fontSize: 15 }}>
+                <span style={{ color: 'var(--acc)', fontWeight: 800 }}>+</span><Edit init={p} />
               </div>
             </Item>
           ))}
