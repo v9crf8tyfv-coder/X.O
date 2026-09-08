@@ -11,6 +11,7 @@ interface IgAction {
   action: string;
   target: string | null;
   details: string | null;
+  source: string | null;
 }
 
 async function ensureTable(): Promise<void> {
@@ -21,10 +22,12 @@ async function ensureTable(): Promise<void> {
       action text not null,
       target text,
       details text,
+      source text,
       created_at timestamptz not null default now(),
       processed boolean not null default false
     )
   `;
+  await db()`alter table ig_actions add column if not exists source text`;
 }
 
 /** Grade le plus élevé d'un pseudo MC (via sa fiche staff / compte) → catégorie + clé. */
@@ -56,7 +59,7 @@ async function gradeForPseudo(pseudo: string): Promise<{ category: SurveillanceC
 async function tick(client: Client): Promise<void> {
   if (!hasDatabase()) return;
   const rows = await db()<IgAction[]>`
-    select id::text as id, actor, action, target, details
+    select id::text as id, actor, action, target, details, source
     from ig_actions where processed = false order by id asc limit 25
   `;
   for (const r of rows) {
@@ -70,7 +73,7 @@ async function tick(client: Client): Promise<void> {
           actorGradeKey: key,
           actorAvatar: `https://mc-heads.net/avatar/${encodeURIComponent(r.actor)}/64`,
           target: r.target,
-          source: 'ig',
+          source: r.source === 'site' ? 'site' : 'ig',
           fields: r.details ? [{ name: '📋 Détails', value: r.details.slice(0, 1000) }] : undefined,
         });
       }
