@@ -3,6 +3,7 @@ import { getGrade } from '@xo/shared';
 import { requireLevel, RESP_LEVEL, canAssignGrade } from '@/lib/guard';
 import { setStaffGrades, getStaff, removeStaff, syncSiteAccess, queueAction } from '@/lib/staff';
 import { ensureFormationFor } from '@/lib/formations';
+import { igSurveil } from '@/lib/igSurveil';
 
 export const runtime = 'nodejs';
 
@@ -38,6 +39,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     actorGrade: g.account.site_grade,
     announce: isPromotion,
   });
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username,
+    isPromotion ? 'Carte staff — promotion' : 'Carte staff — modification des grades',
+    staff.pseudo, `Avant : ${staff.grades.join(', ') || '—'}\nAprès : ${grades.join(', ')}`);
   return NextResponse.json({ ok: true });
 }
 
@@ -58,5 +62,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     actor: g.account.username,
     actorGrade: g.account.site_grade,
   });
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username,
+    'Carte staff — retrait du staff', removed.pseudo, `Grades retirés : ${removed.grades.join(', ') || '—'}`);
   return NextResponse.json({ ok: true });
 }

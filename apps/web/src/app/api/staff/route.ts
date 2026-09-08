@@ -11,6 +11,7 @@ import {
   setStaffGrades,
 } from '@/lib/staff';
 import { ensureFormationFor } from '@/lib/formations';
+import { igSurveil } from '@/lib/igSurveil';
 
 export const runtime = 'nodejs';
 
@@ -70,6 +71,8 @@ export async function POST(req: Request) {
       actorGrade: g.account.site_grade,
       announce: false,
     });
+    await igSurveil(g.account.minecraft_pseudo ?? g.account.username,
+      'Carte staff — grades ajoutés', existing.pseudo, `Grades : ${merged.join(', ')}`);
     return NextResponse.json({ ...existing, grades: merged });
   }
 
@@ -92,6 +95,8 @@ export async function POST(req: Request) {
     actorGrade: g.account.site_grade,
     announce: true, // nouveau staff → félicitations
   });
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username,
+    'Carte staff — ajout', minecraftPseudo, `Grades : ${grades.join(', ')}`);
 
   return NextResponse.json(staff);
 }

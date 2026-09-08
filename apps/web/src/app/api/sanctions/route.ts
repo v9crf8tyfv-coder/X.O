@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db, hasDatabase } from '@xo/db';
 import { getGrade } from '@xo/shared';
 import { requireLevel, ADMIN_LEVEL, RESP_LEVEL } from '@/lib/guard';
+import { igSurveil } from '@/lib/igSurveil';
 
 export const runtime = 'nodejs';
 
@@ -81,6 +82,8 @@ export async function DELETE(req: Request) {
       insert into ig_delete_orders (pseudo, mode, ts)
       values (${row[0]!.target}, 'one', ${Number(row[0]!.ts)})
     `;
+    await igSurveil(g.account.minecraft_pseudo ?? g.account.username,
+      'Sanction supprimée', row[0]!.target, 'Suppression d\'une sanction de l\'historique (panel)');
     return NextResponse.json({ ok: true, deleted: 1 });
   }
 
@@ -91,5 +94,7 @@ export async function DELETE(req: Request) {
     returning id::text as id
   `.catch(() => [] as never[]);
   await db()`insert into ig_delete_orders (pseudo, mode) values (${pseudo}, 'all')`;
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username,
+    'Sanctions supprimées (tout l\'historique)', pseudo, `${del.length} sanction(s) effacée(s) de l'historique (panel)`);
   return NextResponse.json({ ok: true, deleted: del.length });
 }
