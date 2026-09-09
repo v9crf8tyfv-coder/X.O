@@ -98,6 +98,21 @@ function Lockup({ dark = false, s = 30, brand = false }: { dark?: boolean; s?: n
   return <div style={{ display: 'inline-flex', alignItems: 'center', gap: s * 0.4 }}><Mark s={s} brand={brand} /><span style={{ fontSize: s * 0.62, fontWeight: 800, letterSpacing: s * 0.12, color: dark ? '#fff' : INK }}>EMERIA</span></div>;
 }
 
+// Glyphes réseaux (une seule couleur, currentColor).
+const SOCIAL_PATHS: Record<string, string> = {
+  youtube: 'M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15.5v-7l6 3.5-6 3.5z',
+  twitch: 'M4 3 3 6v12h4v3h3l3-3h3l4-4V3H4zm14 8-2.5 2.5H12L9.5 16v-2.5H6V5h12v6zM14.5 7.5H13v4h1.5v-4zm-4 0H9v4h1.5v-4z',
+  tiktok: 'M15.8 3c.35 2.1 1.6 3.75 3.9 4v2.65c-1.35 0-2.7-.45-3.9-1.2v5.85a5.35 5.35 0 1 1-5.35-5.35c.3 0 .6 0 .9.08v2.72a2.75 2.75 0 1 0 1.95 2.63V3h2.5z',
+  instagram: 'M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm5 3a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm5.5-.9a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2z',
+};
+function SGlyph({ net, s = 22, color = '#fff' }: { net: string; s?: number; color?: string }) {
+  return (
+    <svg width={s} height={s} viewBox="0 0 24 24" style={{ color }} aria-hidden="true">
+      <path d={SOCIAL_PATHS[net]} fill="currentColor" fillRule="evenodd" clipRule="evenodd" />
+    </svg>
+  );
+}
+
 export default function DaSection() {
   const [accent, setAccent] = useState(ACC);
   const [pseudo, setPseudo] = useState('');
@@ -200,17 +215,17 @@ export default function DaSection() {
         <SecTitle n="01">LOGOTYPES</SecTitle>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
           <Item name="lockup-clair" cellStyle={lightCard} caption="lockup horizontal — usage principal"><div style={{ padding: '20px 8px' }}><Lockup s={30} /></div></Item>
-          <Item name="lockup-centre" opaque={CARD_DARK} cellStyle={{ ...card, background: CARD_DARK }} caption="lockup centré — affiches / intro">
+          <Item name="lockup-centre" cellStyle={{ ...card, background: CARD_DARK }} caption="lockup centré — affiches / intro">
             <div style={{ display: 'grid', placeItems: 'center', gap: 8, padding: '14px 30px' }}><Mark s={40} /><span style={{ fontSize: 20, fontWeight: 800, letterSpacing: 6, color: '#fff' }}>EMERIA</span><span style={{ width: 5, height: 5, transform: 'rotate(45deg)', background: 'var(--acc)' }} /></div>
           </Item>
-          <Item name="lockup-mono" opaque="#7c5cff" cellStyle={{ ...card, background: 'var(--acc)' }} caption="version monochrome — fond violet">
+          <Item name="lockup-mono" cellStyle={{ ...card, background: 'var(--acc)' }} caption="version monochrome — fond violet">
             <div style={{ padding: '20px 8px' }}><div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}><div style={{ width: 34, height: 34, borderRadius: 10, background: '#fff', display: 'grid', placeItems: 'center', color: 'var(--acc)', fontWeight: 800, fontSize: 18 }}>E</div><span style={{ fontSize: 19, fontWeight: 800, letterSpacing: 4, color: '#fff' }}>EMERIA</span></div></div>
           </Item>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginTop: 14 }}>
           <Item name="icone-source" cellStyle={lightCard} caption="logo icône — source"><div style={{ padding: 18 }}><Mark s={46} /></div></Item>
           <Item name="icone-pleine" cellStyle={lightCard} caption="version pleine"><div style={{ padding: 18 }}><Mark s={46} variant="full" /></div></Item>
-          <Item name="icone-contour" opaque={CARD_DARK} cellStyle={{ ...card, background: CARD_DARK }} caption="version contour"><div style={{ padding: 18 }}><Mark s={46} variant="outline" /></div></Item>
+          <Item name="icone-contour" cellStyle={{ ...card, background: CARD_DARK }} caption="version contour"><div style={{ padding: 18 }}><Mark s={46} variant="outline" /></div></Item>
           <Item name="icone-transparente" cellStyle={lightCard} caption="version transparente"><div style={{ padding: 18 }}><Mark s={46} variant="faint" /></div></Item>
         </div>
 
@@ -220,7 +235,7 @@ export default function DaSection() {
           <Item name="badge-sombre" cellStyle={{}}><div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, background: CARD_DARK }}><Mark s={22} /><span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Emeria</span></div></Item>
           <Item name="badge-tint" cellStyle={{}}><div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, background: 'color-mix(in srgb, var(--acc) 18%, #fff)', border: '1px solid var(--acc)' }}><Mark s={22} /><span style={{ color: 'var(--acc)', fontWeight: 700, fontSize: 15 }}>Emeria</span></div></Item>
           <Item name="badge-clair" cellStyle={{}}><div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, background: '#fff', border: '1px solid #e6e2ef' }}><Mark s={22} /><span style={{ color: INK, fontWeight: 700, fontSize: 15 }}>Emeria</span></div></Item>
-          <Item name="badge-plein" opaque="#7c5cff" cellStyle={{}}><div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, background: 'var(--acc)' }}><div style={{ width: 22, height: 22, borderRadius: 7, background: '#fff', display: 'grid', placeItems: 'center', color: 'var(--acc)', fontWeight: 800, fontSize: 12 }}>E</div><span style={{ color: '#fff', fontWeight: 800, fontSize: 15, letterSpacing: 1 }}>EMERIA</span></div></Item>
+          <Item name="badge-plein" cellStyle={{}}><div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 10, background: 'var(--acc)' }}><div style={{ width: 22, height: 22, borderRadius: 7, background: '#fff', display: 'grid', placeItems: 'center', color: 'var(--acc)', fontWeight: 800, fontSize: 12 }}>E</div><span style={{ color: '#fff', fontWeight: 800, fontSize: 15, letterSpacing: 1 }}>EMERIA</span></div></Item>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 12 }}>
           {['JOUEUR', 'MODÉRATEUR', 'ADMINISTRATEUR', 'FONDATEUR'].map((g) => (
@@ -281,10 +296,10 @@ export default function DaSection() {
           <Item name="fond-clair" full cellStyle={{}} caption="treillis facettes — fond clair">
             <div style={{ width: '100%', height: 110, borderRadius: 12, background: `repeating-linear-gradient(45deg, rgba(124,92,255,.06) 0 1px, transparent 1px 22px), repeating-linear-gradient(-45deg, rgba(124,92,255,.06) 0 1px, transparent 1px 22px), #fbfaff`, border: '1px solid #e6e2ef' }} />
           </Item>
-          <Item name="fond-sombre" full opaque={CARD_DARK} cellStyle={{}} caption="treillis facettes — fond sombre">
+          <Item name="fond-sombre" full cellStyle={{}} caption="treillis facettes — fond sombre">
             <div style={{ width: '100%', height: 110, borderRadius: 12, background: `repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 1px, transparent 1px 24px), ${CARD_DARK}` }} />
           </Item>
-          <Item name="fond-points" full opaque={CARD_DARK} cellStyle={{}} caption="trame de points — discrète">
+          <Item name="fond-points" full cellStyle={{}} caption="trame de points — discrète">
             <div style={{ width: '100%', height: 110, borderRadius: 12, background: `radial-gradient(rgba(124,92,255,.5) 1.4px, transparent 1.6px) 0 0 / 30px 30px, ${CARD_DARK}` }} />
           </Item>
         </div>
@@ -292,9 +307,9 @@ export default function DaSection() {
         {/* 05 BOUTONS, CARTOUCHES & TYPO */}
         <SecTitle n="05">BOUTONS, CARTOUCHES & TYPO</SecTitle>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-          <Item name="bouton-plein" opaque="#7c5cff" cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, background: 'var(--acc)', color: '#fff', fontWeight: 700, fontSize: 16 }}><Edit init="Postulez sur le forum" /></div></Item>
+          <Item name="bouton-plein" cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, background: 'var(--acc)', color: '#fff', fontWeight: 700, fontSize: 16 }}><Edit init="Postulez sur le forum" /></div></Item>
           <Item name="bouton-contour" cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, border: '2px solid var(--acc)', color: 'var(--acc)', fontWeight: 700, fontSize: 16 }}><Edit init="Rejoindre Emeria" /></div></Item>
-          <Item name="bouton-sombre" opaque={CARD_DARK} cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, background: CARD_DARK, color: '#fff', fontWeight: 700, fontSize: 16, display: 'inline-flex', gap: 8 }}><span style={{ color: 'var(--acc)' }}>+</span><Edit init="Voir le règlement" /></div></Item>
+          <Item name="bouton-sombre" cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, background: CARD_DARK, color: '#fff', fontWeight: 700, fontSize: 16, display: 'inline-flex', gap: 8 }}><span style={{ color: 'var(--acc)' }}>+</span><Edit init="Voir le règlement" /></div></Item>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
           <Item name="cartouche" full cellStyle={{}} caption="cartouche d'information">
@@ -312,7 +327,7 @@ export default function DaSection() {
               </div>
             </div>
           </Item>
-          <Item name="typo" full opaque={CARD_DARK} cellStyle={{}} caption="hiérarchie typographique">
+          <Item name="typo" full cellStyle={{}} caption="hiérarchie typographique">
             <div style={{ ...card, width: '100%', background: CARD_DARK, padding: 20 }}>
               <Edit init="Titre" style={{ display: 'block', fontSize: 34, fontWeight: 800, color: '#fff', lineHeight: 1 }} />
               <Edit init="SOUS-TITRE CAPS" style={{ display: 'block', fontSize: 15, fontWeight: 700, letterSpacing: 3, color: 'var(--acc)', marginTop: 10 }} />
@@ -358,6 +373,45 @@ export default function DaSection() {
                 <Edit init="Des visions de grandeur ? Donnez-leur forme sur Emeria." style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: 15, color: '#6b6478', margin: '16px 0' }} />
                 <span style={{ background: 'var(--acc)', color: '#fff', padding: '11px 26px', borderRadius: 12, fontSize: 16, fontWeight: 800 }}><Edit init="Postulez sur le forum" /></span>
               </div>
+            </div>
+          </Item>
+        </div>
+
+        {/* 07 PSEUDOS & BANDEAU (réseaux) */}
+        <SecTitle n="07">PSEUDOS & BANDEAU</SecTitle>
+        {/* pastilles rondes (blanc + glyphe violet) */}
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 14 }}>
+          {['youtube', 'twitch', 'tiktok', 'instagram'].map((net) => (
+            <Item key={net} name={`social-${net}`} cellStyle={{}}>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#fff', display: 'grid', placeItems: 'center' }}><SGlyph net={net} s={26} color="var(--acc)" /></div>
+            </Item>
+          ))}
+        </div>
+        {/* cartes réseau : tuile + libellé + pseudo éditable */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          {[['youtube', 'YOUTUBE', '@EmeriaNG'], ['twitch', 'TWITCH', 'twitch.tv/emeria'], ['tiktok', 'TIKTOK', '@emeria'], ['instagram', 'INSTAGRAM', '@emeria.ng']].map(([net, label, handle]) => (
+            <Item key={net} name={`reseau-${net}`} full cellStyle={{}}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, borderRadius: 14, background: CARD_DARK, border: '1px solid rgba(124,92,255,.25)' }}>
+                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--acc)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><SGlyph net={net} s={24} color="#fff" /></div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, color: 'var(--acc)' }}>{label}</div>
+                  <Edit init={handle} style={{ display: 'block', fontSize: 20, fontWeight: 700, color: '#fff', marginTop: 2 }} />
+                </div>
+              </div>
+            </Item>
+          ))}
+        </div>
+        {/* bandeau : logo + tous les réseaux en ligne */}
+        <div style={{ marginTop: 14 }}>
+          <Item name="bandeau-reseaux" full cellStyle={{}} caption="bandeau (bas de vidéo / affiche)">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', justifyContent: 'center', padding: '18px 22px', borderRadius: 14, background: CARD_DARK, border: '1px solid rgba(124,92,255,.25)' }}>
+              <Lockup s={30} dark />
+              <span style={{ width: 6, height: 6, transform: 'rotate(45deg)', background: 'var(--acc)' }} />
+              {[['youtube', '@EmeriaNG'], ['twitch', 'twitch.tv/emeria'], ['tiktok', '@emeria'], ['instagram', '@emeria.ng']].map(([net, handle]) => (
+                <span key={net} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: '#fff', fontSize: 15, fontWeight: 600 }}>
+                  <SGlyph net={net} s={20} color="var(--acc)" /><Edit init={handle} />
+                </span>
+              ))}
             </div>
           </Item>
         </div>
