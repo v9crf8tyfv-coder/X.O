@@ -25,7 +25,7 @@ export const PANEL_SECTIONS: PanelSectionDef[] = [
   { id: 'launcher', label: 'Launcher', icon: '🚀', defaultLevel: 90 },
   { id: 'support', label: 'Support', icon: '🎫', defaultLevel: 90 },
   { id: 'trafic', label: 'Trafic du site', icon: '📈', defaultLevel: 90 },
-  { id: 'automsg', label: 'Messages auto', icon: '💬', defaultLevel: 90 },
+  { id: 'automsg', label: 'Messages auto', icon: '💬', defaultLevel: 50 },
   { id: 'site', label: 'Gestion Site', icon: '🔐', defaultLevel: 90 },
   { id: 'fond', label: 'Arrière-plan site', icon: '🖼️', defaultLevel: 70 },
   { id: 'entree', label: "Statistiques d'entrée", icon: '📊', defaultLevel: 70 },
