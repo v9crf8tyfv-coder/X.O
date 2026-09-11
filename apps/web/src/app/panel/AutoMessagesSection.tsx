@@ -33,6 +33,7 @@ export default function AutoMessagesSection() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
+  const [prefixColor, setPrefixColor] = useState('#FFAA00'); // couleur du [EmeriaMC] en jeu
   const toggleDay = (d: number) => setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()));
 
   async function load() {
@@ -40,7 +41,9 @@ export default function AutoMessagesSection() {
     try {
       const r = await fetch('/api/auto-messages');
       if (!r.ok) throw new Error('Accès refusé');
-      setMsgs((await r.json()).messages ?? []);
+      const d = await r.json();
+      setMsgs(d.messages ?? []);
+      if (d.prefixColor) setPrefixColor(d.prefixColor);
       setError('');
     } catch (e) {
       setError((e as Error).message);
@@ -49,6 +52,15 @@ export default function AutoMessagesSection() {
     }
   }
   useEffect(() => { load(); }, []);
+
+  async function savePrefixColor(c: string) {
+    setPrefixColor(c);
+    try {
+      await fetch('/api/auto-messages', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixColor: c }),
+      });
+    } catch { /* ignore */ }
+  }
 
   function resetForm() {
     setEditingId(null); setTarget('game'); setChannelId(''); setContent(''); setImageUrl('');
@@ -111,6 +123,13 @@ export default function AutoMessagesSection() {
   return (
     <div className="launcher-sec">
       <h2 style={{ marginBottom: 6 }}>Messages automatiques</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '6px 0 14px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 13, fontWeight: 700 }}>Couleur du préfixe en jeu</span>
+        <input type="color" value={prefixColor} onChange={(e) => savePrefixColor(e.target.value)}
+          style={{ width: 40, height: 30, borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer' }} />
+        <span style={{ fontFamily: '"Courier New", monospace', fontWeight: 700, color: prefixColor }}>[EmeriaMC]</span>
+        <span style={{ fontSize: 12, color: 'var(--muted, #8a8a94)' }}>appliqué en jeu (le mod relit la config toutes les 60 s)</span>
+      </div>
       <p style={{ color: muted, marginBottom: 18 }}>
         Messages postés automatiquement, en boucle ou à heure fixe. Choisis <b>En jeu</b> (chat Minecraft,
         pour les rappels de vote) ou <b>Discord</b> (un salon). Idéal pour « N'oubliez pas de voter : /vote ».
@@ -176,7 +195,7 @@ export default function AutoMessagesSection() {
               </span>
             </div>
           )}
-          <ChatPreview text={content} inGame={target === 'game'} />
+          <ChatPreview text={content} inGame={target === 'game'} prefixColor={prefixColor} />
         </div>
       </div>
 
@@ -209,7 +228,7 @@ export default function AutoMessagesSection() {
                     <button className="lchr-x" onClick={() => del(m.id)}>Suppr.</button>
                   </span>
                 </div>
-                {preview === m.id && <ChatPreview text={m.content} inGame={!m.channel_id} />}
+                {preview === m.id && <ChatPreview text={m.content} inGame={!m.channel_id} prefixColor={prefixColor} />}
               </li>
             ))}
           </ul>
@@ -271,7 +290,7 @@ function renderDiscord(text: string): ReactNode[] {
   return out;
 }
 
-function ChatPreview({ text, inGame }: { text: string; inGame: boolean }) {
+function ChatPreview({ text, inGame, prefixColor = '#FFAA00' }: { text: string; inGame: boolean; prefixColor?: string }) {
   return (
     <div style={{
       background: 'rgba(0,0,0,0.80)', borderRadius: 6, padding: '12px 14px',
@@ -283,7 +302,7 @@ function ChatPreview({ text, inGame }: { text: string; inGame: boolean }) {
       </div>
       {inGame ? (
         <div>
-          <span style={{ color: '#FFAA00', fontWeight: 700 }}>[EmeriaMC] </span>
+          <span style={{ color: prefixColor, fontWeight: 700 }}>[EmeriaMC] </span>
           {text ? renderMc(text) : <span style={{ color: '#888' }}>(vide)</span>}
         </div>
       ) : (

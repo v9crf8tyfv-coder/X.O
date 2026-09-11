@@ -17,6 +17,17 @@ interface Row {
   last_sent_at: string | null;
 }
 
+const DEFAULT_PREFIX_COLOR = '#FFAA00'; // or (gold), couleur historique du [EmeriaMC]
+
+async function prefixColor(): Promise<string> {
+  try {
+    await db()`create table if not exists app_config (key text primary key, value text)`;
+    const r = await db()<{ value: string }[]>`select value from app_config where key = 'automsg_prefix_color' limit 1`;
+    const v = r[0]?.value;
+    return v && /^#[0-9a-fA-F]{6}$/.test(v) ? v : DEFAULT_PREFIX_COLOR;
+  } catch { return DEFAULT_PREFIX_COLOR; }
+}
+
 export async function GET(req: Request) {
   // Lecture PUBLIQUE pour le mod du serveur : messages "en jeu" (sans salon Discord).
   // Pas de données sensibles (ces messages sont diffusés à tous en jeu de toute façon).
@@ -27,7 +38,7 @@ export async function GET(req: Request) {
       from auto_messages
       where enabled = true and (channel_id is null or channel_id = '')
       order by id`;
-    const res = NextResponse.json({ messages: rows });
+    const res = NextResponse.json({ messages: rows, prefixColor: await prefixColor() });
     res.headers.set('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
     return res;
   }
@@ -37,7 +48,20 @@ export async function GET(req: Request) {
   const rows = await db()<Row[]>`
     select id, channel_id, content, image_url, mode, every_hours, at_hhmm, days, enabled, last_sent_at
     from auto_messages order by created_at desc`;
-  return NextResponse.json({ messages: rows });
+  return NextResponse.json({ messages: rows, prefixColor: await prefixColor() });
+}
+
+/** Régler la couleur du préfixe [EmeriaMC] (fonda). */
+export async function PUT(req: Request) {
+  const g = await requireLevel(FOUNDER_LEVEL);
+  if (g instanceof NextResponse) return g;
+  const b = await req.json().catch(() => ({}));
+  const c = String(b.prefixColor ?? '').trim();
+  if (!/^#[0-9a-fA-F]{6}$/.test(c)) return NextResponse.json({ error: 'Couleur invalide (format #RRGGBB).' }, { status: 400 });
+  await db()`create table if not exists app_config (key text primary key, value text)`;
+  await db()`insert into app_config (key, value) values ('automsg_prefix_color', ${c})
+             on conflict (key) do update set value = ${c}`;
+  return NextResponse.json({ ok: true, prefixColor: c });
 }
 
 export async function POST(req: Request) {

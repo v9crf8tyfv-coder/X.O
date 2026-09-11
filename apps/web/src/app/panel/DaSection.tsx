@@ -389,7 +389,7 @@ export default function DaSection() {
         </div>
         {/* cartes réseau : tuile + libellé + pseudo éditable */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          {[['youtube', 'YOUTUBE', '@EmeriaNG'], ['twitch', 'TWITCH', 'twitch.tv/emeria'], ['tiktok', 'TIKTOK', '@emeria'], ['instagram', 'INSTAGRAM', '@emeria.ng']].map(([net, label, handle]) => (
+          {[['youtube', 'YOUTUBE', '@EmeriaMC'], ['twitch', 'TWITCH', 'twitch.tv/emeria'], ['tiktok', 'TIKTOK', '@emeria'], ['instagram', 'INSTAGRAM', '@emeria.ng']].map(([net, label, handle]) => (
             <Item key={net} name={`reseau-${net}`} full cellStyle={{}}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 14, borderRadius: 14, background: CARD_DARK, border: '1px solid rgba(124,92,255,.25)' }}>
                 <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--acc)', display: 'grid', placeItems: 'center', flexShrink: 0 }}><SGlyph net={net} s={24} color="#fff" /></div>
@@ -407,7 +407,7 @@ export default function DaSection() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', justifyContent: 'center', padding: '18px 22px', borderRadius: 14, background: CARD_DARK, border: '1px solid rgba(124,92,255,.25)' }}>
               <Lockup s={30} dark />
               <span style={{ width: 6, height: 6, transform: 'rotate(45deg)', background: 'var(--acc)' }} />
-              {[['youtube', '@EmeriaNG'], ['twitch', 'twitch.tv/emeria'], ['tiktok', '@emeria'], ['instagram', '@emeria.ng']].map(([net, handle]) => (
+              {[['youtube', '@EmeriaMC'], ['twitch', 'twitch.tv/emeria'], ['tiktok', '@emeria'], ['instagram', '@emeria.ng']].map(([net, handle]) => (
                 <span key={net} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: '#fff', fontSize: 15, fontWeight: 600 }}>
                   <SGlyph net={net} s={20} color="var(--acc)" /><Edit init={handle} />
                 </span>
