@@ -163,6 +163,42 @@ export async function uploadAsset(
   return j.browser_download_url;
 }
 
+/**
+ * Récupère (ou crée) une release publique quelconque par tag — sert de "stockage de fichiers"
+ * gratuit (images du panel/forum, etc.). Les assets ont des URLs publiques permanentes.
+ */
+export async function getOrCreateRelease(tag: string, title: string): Promise<Release> {
+  const r = await gh(`/repos/${OWNER}/${REPO}/releases/tags/${tag}`);
+  if (r.status === 404) {
+    const created = await gh(`/repos/${OWNER}/${REPO}/releases`, {
+      method: 'POST',
+      body: JSON.stringify({ tag_name: tag, name: title, body: title, prerelease: true }),
+    });
+    if (!created.ok) throw new Error(`Création release ${tag}: ${created.status} ${await created.text()}`);
+    return (await created.json()) as Release;
+  }
+  if (!r.ok) throw new Error(`Release ${tag}: ${r.status} ${await r.text()}`);
+  return (await r.json()) as Release;
+}
+
+/**
+ * Envoie une image (ou autre média) sur la release publique "uploads" et renvoie son URL publique.
+ * Le nom est rendu unique (horodatage + aléatoire) pour éviter tout écrasement.
+ */
+export async function uploadPublicImage(
+  originalName: string,
+  data: Buffer,
+  contentType: string,
+): Promise<string> {
+  const release = await getOrCreateRelease('uploads', 'Fichiers uploadés (panel/forum)');
+  const safe = originalName.toLowerCase().replace(/[^a-z0-9.-]+/g, '-').replace(/^-+|-+$/g, '').slice(-60) || 'image';
+  const dot = safe.lastIndexOf('.');
+  const base = dot > 0 ? safe.slice(0, dot) : safe;
+  const ext = dot > 0 ? safe.slice(dot) : '';
+  const unique = `${base}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}${ext}`;
+  return uploadAsset(release, unique, data, contentType);
+}
+
 /** Écrit le manifest.json sur la release, en sauvegardant d'abord l'actuel (s'il est non vide). */
 export async function putManifest(release: Release, manifest: Manifest): Promise<void> {
   // Recharge la release pour avoir l'asset manifest.json à jour avant suppression

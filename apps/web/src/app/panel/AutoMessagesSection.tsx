@@ -34,7 +34,24 @@ export default function AutoMessagesSection() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
   const [prefixColor, setPrefixColor] = useState('#FFAA00'); // couleur du [EmeriaMC] en jeu
+  const [uploading, setUploading] = useState(false);
   const toggleDay = (d: number) => setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()));
+
+  async function uploadImage(file: File) {
+    setUploading(true); setError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await fetch('/api/upload', { method: 'POST', body: fd });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Upload échoué');
+      setImageUrl(d.url);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -154,8 +171,23 @@ export default function AutoMessagesSection() {
           )}
           <textarea className="btn-sec" placeholder="Message — Discord : **gras** __souligné__ · En jeu : &a couleur &l gras (voir aperçu)" rows={3}
             value={content} onChange={(e) => setContent(e.target.value)} style={{ padding: '10px 12px', resize: 'vertical' }} />
-          <input className="btn-sec" placeholder="Lien image (optionnel, https://… — s'affiche sur Discord)"
-            value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} style={{ padding: '10px 12px' }} />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input className="btn-sec" placeholder="Lien image (optionnel, https://… — s'affiche sur Discord)"
+              value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} style={{ padding: '10px 12px', flex: 1, minWidth: 220 }} />
+            <label className="btn-sec" style={{ padding: '10px 12px', cursor: uploading ? 'wait' : 'pointer', whiteSpace: 'nowrap' }}>
+              {uploading ? 'Envoi…' : 'Choisir un fichier'}
+              <input type="file" accept="image/*" hidden disabled={uploading}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); e.target.value = ''; }} />
+            </label>
+            {imageUrl && (
+              <button type="button" className="btn-sec" style={{ padding: '10px 12px' }}
+                onClick={() => setImageUrl('')}>Retirer</button>
+            )}
+          </div>
+          {imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageUrl} alt="aperçu" style={{ maxHeight: 120, borderRadius: 8, alignSelf: 'flex-start' }} />
+          )}
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <select className="btn-sec" value={mode} onChange={(e) => setMode(e.target.value as 'interval' | 'daily')} style={{ padding: '10px 12px' }}>
               <option value="interval">Toutes les X heures</option>
