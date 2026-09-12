@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@xo/db';
-import { requireLevel, FOUNDER_LEVEL } from '@/lib/guard';
+import { requireLevel, FOUNDER_LEVEL, ADMIN_LEVEL } from '@/lib/guard';
 
 export const runtime = 'nodejs';
 
@@ -53,7 +53,7 @@ export async function GET(req: Request) {
 
 /** Régler la couleur du préfixe [EmeriaMC] (fonda). */
 export async function PUT(req: Request) {
-  const g = await requireLevel(FOUNDER_LEVEL);
+  const g = await requireLevel(ADMIN_LEVEL); // même accès que la section messages auto
   if (g instanceof NextResponse) return g;
   const b = await req.json().catch(() => ({}));
   const c = String(b.prefixColor ?? '').trim();

@@ -73,10 +73,15 @@ export default function AutoMessagesSection() {
   async function savePrefixColor(c: string) {
     setPrefixColor(c);
     try {
-      await fetch('/api/auto-messages', {
+      const r = await fetch('/api/auto-messages', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixColor: c }),
       });
-    } catch { /* ignore */ }
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setError(d.error || `Échec enregistrement couleur (HTTP ${r.status})`); return; }
+      setError('');
+    } catch (e) {
+      setError('Couleur non enregistrée : ' + (e as Error).message);
+    }
   }
 
   function resetForm() {
