@@ -137,7 +137,9 @@ async function finalizeClose(client: Client, channel: TextChannel, closedByTag: 
 
   try {
     const transcript = await buildTranscript(channel);
-    const archive = await client.channels.fetch(CHANNELS.archivesTicket);
+    // Archive séparée : tickets STAFF -> archive staff (nouveau Discord) ; joueurs -> archive normale.
+    const archiveId = info?.space === 'staff' ? CHANNELS.archivesTicketStaff : CHANNELS.archivesTicketNormal;
+    const archive = await client.channels.fetch(archiveId);
     if (archive?.isTextBased()) {
       const embed = new EmbedBuilder()
         .setColor(BRAND_COLOR)

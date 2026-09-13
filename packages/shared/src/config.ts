@@ -5,20 +5,24 @@
 
 /** IDs des salons Discord (fournis) */
 export const CHANNELS = {
-  absences: '1535379206899376199',
-  archivesAbsence: '1535379371718610984',
+  // --- Salons STAFF : sur le NOUVEAU Discord staff (le bot doit y être invité) ---
+  absences: '1548684777941372948',
+  archivesAbsence: '1548691590321668137',
+  ticketStaff: '1548691307600412783',
+  archivesTicketStaff: '1548691693816119487', // transcripts des tickets STAFF
+  trainModo: '1548688291941978112', // salon "train modo" : panneau + faux messages à modérer
+  trainResultat: '1548688419121799238', // salon "résultats" : log des sanctions d'entraînement
+  // Surveillance : encore sur l'ancien serveur (pas d'ID fourni pour le nouveau).
   surveillanceRespo: '1535344008287756328',
   surveillanceAdmin: '1535344050729652364',
   surveillanceStaff: '1535344092534276096',
+  // --- Salons du serveur COMMUNAUTÉ (principal) ---
   accueil: '1535380217257005148',
-  ticketStaff: '1535383806452965376',
   ticketNormal: '1535383613263183883',
-  archivesTicket: '1535421887121985566',
+  archivesTicketNormal: '1535421887121985566', // transcripts des tickets JOUEURS
   taverne: '1535347207195328652', // annonces de rank (public)
   generalStaff: '1535333104733003896', // annonces de rank (staff)
   lancerJeu: '1535350366382719037', // embed "lancer le jeu"
-  trainModo: '1542969179399913603', // salon "train modo" : panneau + faux messages à modérer
-  trainResultat: '1542970098904727742', // salon "résultats" : log des sanctions d'entraînement
 } as const;
 
 /**
