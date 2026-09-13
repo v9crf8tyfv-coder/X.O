@@ -37,6 +37,7 @@ import Skins3DSection from './Skins3DSection';
 import DaSection from './DaSection';
 import AffichesSection from './AffichesSection';
 import LinkEmeriaSection from './LinkEmeriaSection';
+import CustomItemsSection from './CustomItemsSection';
 import FormationSection from './FormationSection';
 import AccessSection from './AccessSection';
 import { PANEL_SECTIONS } from '@/lib/panelSections';
@@ -246,6 +247,8 @@ export default function PanelClient({ account }: Props) {
           <AffichesSection />
         ) : current.id === 'linkemeria' ? (
           <LinkEmeriaSection />
+        ) : current.id === 'customitems' ? (
+          <CustomItemsSection />
         ) : current.id === 'formation' ? (
           <FormationSection />
         ) : (
