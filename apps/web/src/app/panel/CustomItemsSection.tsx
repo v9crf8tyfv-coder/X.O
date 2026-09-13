@@ -18,6 +18,28 @@ const MC_COLORS: Record<string, string> = {
 };
 const short = (id: unknown) => { const s = String(id ?? ''); return (s.split(':').pop() || s).replace(/_/g, ' '); };
 
+// Traduction FR -> EN pour chercher en français (les IDs Minecraft sont en anglais).
+const FR_EN: Record<string, string> = {
+  diamant: 'diamond', or: 'gold', dore: 'gold', doree: 'gold', fer: 'iron', bois: 'wood',
+  pierre: 'stone', epee: 'sword', pioche: 'pickaxe', hache: 'axe', pelle: 'shovel', houe: 'hoe',
+  arc: 'bow', arbalete: 'crossbow', fleche: 'arrow', casque: 'helmet', plastron: 'chestplate',
+  jambieres: 'leggings', bottes: 'boots', bouclier: 'shield', pomme: 'apple', pain: 'bread',
+  emeraude: 'emerald', charbon: 'coal', lingot: 'ingot', bloc: 'block', tete: 'head', oeuf: 'egg',
+  seau: 'bucket', cuir: 'leather', livre: 'book', four: 'furnace', coffre: 'chest', tonneau: 'barrel',
+  torche: 'torch', echelle: 'ladder', porte: 'door', lit: 'bed', laine: 'wool', verre: 'glass',
+  sable: 'sand', gravier: 'gravel', terre: 'dirt', herbe: 'grass', eau: 'water', lave: 'lava',
+  glace: 'ice', neige: 'snow', os: 'bone', perle: 'pearl', baton: 'stick', totem: 'totem',
+  elytres: 'elytra', netherite: 'netherite', obsidienne: 'obsidian', ame: 'soul', braise: 'ember',
+  // enchantements
+  efficacite: 'efficiency', solidite: 'unbreaking', raccommodage: 'mending', fortune: 'fortune',
+  tranchant: 'sharpness', protection: 'protection', soie: 'silk', pouvoir: 'power', infinite: 'infinity',
+  flamme: 'flame', butin: 'looting', chute: 'feather', respiration: 'respiration', aqua: 'aqua',
+};
+function tokens(q: string): string[] {
+  return q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/)
+    .filter(Boolean).map((w) => FR_EN[w] || w);
+}
+
 function renderMc(text: string): ReactNode[] {
   const out: ReactNode[] = [];
   let color = '#FFFFFF', bold = false, italic = false, buf = '', k = 0;
@@ -51,7 +73,10 @@ function Picker({ value, onChange, options, placeholder }: {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const opts = (Array.isArray(options) ? options : []).map((o) => String(o ?? '')).filter(Boolean);
-  const filtered = (q ? opts.filter((o) => o.toLowerCase().includes(q.toLowerCase())) : opts).slice(0, 180);
+  const toks = tokens(q);
+  const filtered = (toks.length
+    ? opts.filter((o) => { const s = o.toLowerCase(); return toks.every((t) => s.includes(t)); })
+    : opts).slice(0, 180);
   return (
     <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
       <button type="button" className="btn-sec" onClick={() => setOpen((o) => !o)}
