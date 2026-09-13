@@ -74,32 +74,48 @@ function Picker({ value, onChange, options, placeholder }: {
   const [q, setQ] = useState('');
   const opts = (Array.isArray(options) ? options : []).map((o) => String(o ?? '')).filter(Boolean);
   const toks = tokens(q);
-  const filtered = (toks.length
+  const matches = toks.length
     ? opts.filter((o) => { const s = o.toLowerCase(); return toks.every((t) => s.includes(t)); })
-    : opts).slice(0, 180);
+    : opts;
+  const filtered = matches.slice(0, 600);
+  const close = () => { setOpen(false); setQ(''); };
+
   return (
-    <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
-      <button type="button" className="btn-sec" onClick={() => setOpen((o) => !o)}
+    <div style={{ flex: 1, minWidth: 220 }}>
+      <button type="button" className="btn-sec" onClick={() => setOpen(true)}
         style={{ padding: '10px 12px', width: '100%', textAlign: 'left' }}>
         {value ? short(value) : <span style={{ opacity: 0.6 }}>{placeholder}</span>}
         <span style={{ float: 'right', opacity: 0.6 }}>▾</span>
       </button>
+
       {open && (
-        <div style={{ position: 'absolute', zIndex: 20, top: '100%', left: 0, right: 0, marginTop: 4,
-          background: '#15151b', border: '1px solid var(--line, #333)', borderRadius: 10, padding: 8, boxShadow: '0 8px 24px rgba(0,0,0,.5)' }}>
-          <input autoFocus className="btn-sec" placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)}
-            style={{ padding: '8px 10px', width: '100%', marginBottom: 8 }} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 4, maxHeight: 260, overflowY: 'auto' }}>
-            {filtered.map((o) => (
-              <button key={o} type="button" onClick={() => { onChange(o); setOpen(false); setQ(''); }}
-                title={o}
-                style={{ padding: '8px 6px', borderRadius: 6, border: '1px solid var(--line,#333)', cursor: 'pointer',
-                  background: o === value ? 'rgba(124,92,255,.25)' : '#1d1d24', color: '#eee', fontSize: 12,
-                  textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {short(o)}
-              </button>
-            ))}
-            {filtered.length === 0 && <span style={{ color: '#888', fontSize: 12, padding: 6 }}>Aucun résultat</span>}
+        <div onClick={close}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.65)', zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ width: 'min(1000px, 96vw)', maxHeight: '86vh', display: 'flex', flexDirection: 'column',
+              background: '#14141a', border: '2px solid #2c2c38', borderRadius: 14, padding: 16, boxShadow: '0 20px 60px rgba(0,0,0,.6)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <b style={{ fontSize: 16 }}>{placeholder}</b>
+              <button type="button" onClick={close} className="btn-sec" style={{ padding: '6px 12px' }}>✕ Fermer</button>
+            </div>
+            <input autoFocus className="btn-sec" placeholder="Rechercher (FR ou EN)…" value={q} onChange={(e) => setQ(e.target.value)}
+              style={{ padding: '10px 12px', width: '100%', marginBottom: 8, fontSize: 15 }} />
+            <div style={{ fontSize: 12, color: '#8a8a94', marginBottom: 8 }}>
+              {matches.length} résultat(s){matches.length > 600 ? ' — affiche les 600 premiers, affine la recherche' : ''}
+            </div>
+            <div style={{ overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(104px, 1fr))', gap: 6, paddingRight: 4 }}>
+              {filtered.map((o) => (
+                <button key={o} type="button" onClick={() => { onChange(o); close(); }} title={o}
+                  style={{ height: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+                    padding: 6, borderRadius: 8, cursor: 'pointer', lineHeight: 1.15,
+                    border: o === value ? '2px solid #7c5cff' : '1px solid #2c2c38',
+                    background: o === value ? 'rgba(124,92,255,.22)' : '#1c1c24', color: '#e8e8ee', fontSize: 12 }}>
+                  {short(o)}
+                </button>
+              ))}
+              {filtered.length === 0 && <span style={{ color: '#888', fontSize: 13, padding: 10 }}>Aucun résultat</span>}
+            </div>
           </div>
         </div>
       )}
