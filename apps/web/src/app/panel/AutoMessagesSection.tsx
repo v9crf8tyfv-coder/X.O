@@ -12,6 +12,7 @@ interface Msg {
   at_hhmm: string | null;
   days: string | null;
   enabled: boolean;
+  prefix_color?: string | null;
 }
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']; // index 0 = jour 1 (Lundi)
@@ -33,7 +34,8 @@ export default function AutoMessagesSection() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
-  const [prefixColor, setPrefixColor] = useState('#FFAA00'); // couleur du [EmeriaMC] en jeu
+  const [prefixColor, setPrefixColor] = useState('#FFAA00'); // couleur du [EmeriaMC] du message en cours d'édition
+  const [defaultColor, setDefaultColor] = useState('#FFAA00'); // couleur par défaut pour un NOUVEAU message
   const [uploading, setUploading] = useState(false);
   const toggleDay = (d: number) => setDays((cur) => (cur.includes(d) ? cur.filter((x) => x !== d) : [...cur, d].sort()));
 
@@ -60,7 +62,7 @@ export default function AutoMessagesSection() {
       if (!r.ok) throw new Error('Accès refusé');
       const d = await r.json();
       setMsgs(d.messages ?? []);
-      if (d.prefixColor) setPrefixColor(d.prefixColor);
+      if (d.prefixColor) { setDefaultColor(d.prefixColor); if (editingId === null) setPrefixColor(d.prefixColor); }
       setError('');
     } catch (e) {
       setError((e as Error).message);
@@ -70,23 +72,10 @@ export default function AutoMessagesSection() {
   }
   useEffect(() => { load(); }, []);
 
-  async function savePrefixColor(c: string) {
-    setPrefixColor(c);
-    try {
-      const r = await fetch('/api/auto-messages', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prefixColor: c }),
-      });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setError(d.error || `Échec enregistrement couleur (HTTP ${r.status})`); return; }
-      setError('');
-    } catch (e) {
-      setError('Couleur non enregistrée : ' + (e as Error).message);
-    }
-  }
-
   function resetForm() {
     setEditingId(null); setTarget('game'); setChannelId(''); setContent(''); setImageUrl('');
     setMode('interval'); setEveryHours('2'); setAtHHMM('19:00'); setDays([1, 2, 3, 4, 5, 6, 7]);
+    setPrefixColor(defaultColor);
   }
   function startEdit(m: Msg) {
     setEditingId(m.id);
@@ -98,13 +87,14 @@ export default function AutoMessagesSection() {
     setEveryHours(String(m.every_hours ?? 2));
     setAtHHMM(m.at_hhmm || '19:00');
     setDays(m.days ? m.days.split(',').map(Number) : [1, 2, 3, 4, 5, 6, 7]);
+    setPrefixColor(m.prefix_color || defaultColor);
     setError('');
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   async function save() {
     setSaving(true);
     setError('');
-    const payload = { target, channelId, content, imageUrl, mode, everyHours: Number(everyHours), atHHMM, days };
+    const payload = { target, channelId, content, imageUrl, mode, everyHours: Number(everyHours), atHHMM, days, prefixColor };
     const r = await fetch('/api/auto-messages', {
       method: editingId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -145,13 +135,6 @@ export default function AutoMessagesSection() {
   return (
     <div className="launcher-sec">
       <h2 style={{ marginBottom: 6 }}>Messages automatiques</h2>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '6px 0 14px', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 13, fontWeight: 700 }}>Couleur du préfixe en jeu</span>
-        <input type="color" value={prefixColor} onChange={(e) => savePrefixColor(e.target.value)}
-          style={{ width: 40, height: 30, borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer' }} />
-        <span style={{ fontFamily: '"Courier New", monospace', fontWeight: 700, color: prefixColor }}>[EmeriaMC]</span>
-        <span style={{ fontSize: 12, color: 'var(--muted, #8a8a94)' }}>appliqué en jeu (le mod relit la config toutes les 60 s)</span>
-      </div>
       <p style={{ color: muted, marginBottom: 18 }}>
         Messages postés automatiquement, en boucle ou à heure fixe. Choisis <b>En jeu</b> (chat Minecraft,
         pour les rappels de vote) ou <b>Discord</b> (un salon). Idéal pour « N'oubliez pas de voter : /vote ».
@@ -232,6 +215,15 @@ export default function AutoMessagesSection() {
               </span>
             </div>
           )}
+          {target === 'game' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Couleur du préfixe</span>
+              <input type="color" value={prefixColor} onChange={(e) => setPrefixColor(e.target.value)}
+                style={{ width: 40, height: 30, borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer' }} />
+              <span style={{ fontFamily: '"Courier New", monospace', fontWeight: 700, color: prefixColor }}>[EmeriaMC]</span>
+              <span style={{ fontSize: 12, color: muted }}>propre à CE message (appliqué en jeu, relu toutes les 60 s)</span>
+            </div>
+          )}
           <ChatPreview text={content} inGame={target === 'game'} prefixColor={prefixColor} />
         </div>
       </div>
@@ -265,7 +257,7 @@ export default function AutoMessagesSection() {
                     <button className="lchr-x" onClick={() => del(m.id)}>Suppr.</button>
                   </span>
                 </div>
-                {preview === m.id && <ChatPreview text={m.content} inGame={!m.channel_id} prefixColor={prefixColor} />}
+                {preview === m.id && <ChatPreview text={m.content} inGame={!m.channel_id} prefixColor={m.prefix_color || defaultColor} />}
               </li>
             ))}
           </ul>

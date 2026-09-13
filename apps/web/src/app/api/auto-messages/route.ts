@@ -15,9 +15,21 @@ interface Row {
   days: string | null;
   enabled: boolean;
   last_sent_at: string | null;
+  prefix_color: string | null;
 }
 
 const DEFAULT_PREFIX_COLOR = '#FFAA00'; // or (gold), couleur historique du [EmeriaMC]
+
+/** Couleur de préfixe valide (#RRGGBB) ou la couleur par défaut. */
+function cleanColor(v: unknown): string {
+  const c = String(v ?? '').trim();
+  return /^#[0-9a-fA-F]{6}$/.test(c) ? c : DEFAULT_PREFIX_COLOR;
+}
+
+/** Ajoute la colonne prefix_color si absente (couleur du [EmeriaMC] PAR message). */
+async function ensurePrefixColumn(): Promise<void> {
+  await db()`alter table auto_messages add column if not exists prefix_color text`.catch(() => {});
+}
 
 async function prefixColor(): Promise<string> {
   try {
@@ -33,9 +45,10 @@ export async function GET(req: Request) {
   // Lecture PUBLIQUE pour le mod du serveur : messages "en jeu" (sans salon Discord).
   // Pas de données sensibles (ces messages sont diffusés à tous en jeu de toute façon).
   const url = new URL(req.url);
+  await ensurePrefixColumn();
   if (url.searchParams.get('for') === 'game') {
     const rows = await db()<Row[]>`
-      select id, content, mode, every_hours, at_hhmm, days
+      select id, content, mode, every_hours, at_hhmm, days, prefix_color
       from auto_messages
       where enabled = true and (channel_id is null or channel_id = '')
       order by id`;
@@ -47,7 +60,7 @@ export async function GET(req: Request) {
   const g = await requireLevel(FOUNDER_LEVEL);
   if (g instanceof NextResponse) return g;
   const rows = await db()<Row[]>`
-    select id, channel_id, content, image_url, mode, every_hours, at_hhmm, days, enabled, last_sent_at
+    select id, channel_id, content, image_url, mode, every_hours, at_hhmm, days, enabled, last_sent_at, prefix_color
     from auto_messages order by created_at desc`;
   return NextResponse.json({ messages: rows, prefixColor: await prefixColor() });
 }
@@ -99,9 +112,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Le lien image doit commencer par http(s)://' }, { status: 400 });
   }
 
+  const color = cleanColor(b.prefixColor);
+  await ensurePrefixColumn();
   await db()`
-    insert into auto_messages (channel_id, content, image_url, mode, every_hours, at_hhmm, days)
-    values (${channelId}, ${content}, ${imageUrl}, ${mode}, ${everyHours}, ${atHHMM}, ${days})`;
+    insert into auto_messages (channel_id, content, image_url, mode, every_hours, at_hhmm, days, prefix_color)
+    values (${channelId}, ${content}, ${imageUrl}, ${mode}, ${everyHours}, ${atHHMM}, ${days}, ${color})`;
   return NextResponse.json({ ok: true });
 }
 
@@ -144,10 +159,13 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Le lien image doit commencer par http(s)://' }, { status: 400 });
   }
 
+  const color = cleanColor(b.prefixColor);
+  await ensurePrefixColumn();
   await db()`
     update auto_messages set
       channel_id = ${channelId}, content = ${content}, image_url = ${imageUrl},
-      mode = ${mode}, every_hours = ${everyHours}, at_hhmm = ${atHHMM}, days = ${days}
+      mode = ${mode}, every_hours = ${everyHours}, at_hhmm = ${atHHMM}, days = ${days},
+      prefix_color = ${color}
     where id = ${id}`;
   return NextResponse.json({ ok: true });
 }
