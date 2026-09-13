@@ -7,14 +7,14 @@ import {
   type TextChannel,
 } from 'discord.js';
 import { db, hasDatabase } from '@xo/db';
-import { GRADES, STAFF_GUILD_ID } from '@xo/shared';
+import { GRADES, STAFF_GUILD_ID, STAFF_TAG_ROLE_IDS } from '@xo/shared';
 
 /** Salon où sont postées les nouvelles candidatures du forum (Discord staff). */
 const CANDID_CHANNEL_ID = '1548704058720780421';
 /** Rôle mentionné à chaque nouvelle candidature (communauté). */
 const ADMIN_ROLE_ID = GRADES.admin.roleId;
-/** Rôle mentionné pour les candidatures SUR LE DISCORD STAFF (tag op candidatures). */
-const STAFF_CANDID_PING_ROLE_ID = '1548709825980932217';
+/** Rôle mentionné pour les candidatures SUR LE DISCORD STAFF : le Tag OP. */
+const STAFF_CANDID_PING_ROLE_ID = STAFF_TAG_ROLE_IDS.op; // 1548682958225809408
 const SITE = 'https://emeria-site.com';
 
 interface CandidatureEvent {
