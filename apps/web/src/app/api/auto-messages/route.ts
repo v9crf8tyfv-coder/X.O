@@ -21,10 +21,11 @@ const DEFAULT_PREFIX_COLOR = '#FFAA00'; // or (gold), couleur historique du [Eme
 
 async function prefixColor(): Promise<string> {
   try {
-    await db()`create table if not exists app_config (key text primary key, value text)`;
-    const r = await db()<{ value: string }[]>`select value from app_config where key = 'automsg_prefix_color' limit 1`;
-    const v = r[0]?.value;
-    return v && /^#[0-9a-fA-F]{6}$/.test(v) ? v : DEFAULT_PREFIX_COLOR;
+    // La table app_config est PARTAGÉE avec colonnes (k, v) — ne PAS utiliser key/value.
+    await db()`create table if not exists app_config (k text primary key, v text)`.catch(() => {});
+    const r = await db()<{ v: string }[]>`select v from app_config where k = 'automsg_prefix_color' limit 1`;
+    const val = r[0]?.v;
+    return val && /^#[0-9a-fA-F]{6}$/.test(val) ? val : DEFAULT_PREFIX_COLOR;
   } catch { return DEFAULT_PREFIX_COLOR; }
 }
 
@@ -58,9 +59,10 @@ export async function PUT(req: Request) {
   const b = await req.json().catch(() => ({}));
   const c = String(b.prefixColor ?? '').trim();
   if (!/^#[0-9a-fA-F]{6}$/.test(c)) return NextResponse.json({ error: 'Couleur invalide (format #RRGGBB).' }, { status: 400 });
-  await db()`create table if not exists app_config (key text primary key, value text)`;
-  await db()`insert into app_config (key, value) values ('automsg_prefix_color', ${c})
-             on conflict (key) do update set value = ${c}`;
+  // Table PARTAGÉE app_config (colonnes k, v) — cohérent avec site-bg / formations.
+  await db()`create table if not exists app_config (k text primary key, v text)`.catch(() => {});
+  await db()`insert into app_config (k, v) values ('automsg_prefix_color', ${c})
+             on conflict (k) do update set v = ${c}`;
   return NextResponse.json({ ok: true, prefixColor: c });
 }
 

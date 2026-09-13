@@ -30,6 +30,8 @@ const LP_GROUP: Record<string, string> = {
   dev: 'dev',
   buildeur: 'builder',
   modo: 'modo',
+  modo_test: 'modo', // Modérateur test -> groupe modo en jeu
+  modo_x: 'modo',    // Modérateur X -> groupe modo en jeu
   com: 'com/g',
   betatesteur: 'béta-test',
 };
