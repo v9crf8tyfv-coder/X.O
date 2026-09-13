@@ -1,20 +1,29 @@
 import { ActivityType, REST, Routes, type Client } from 'discord.js';
 import { ENV } from '../env.js';
 import { commands } from '../commands/index.js';
+import { STAFF_GUILD_ID } from '@xo/shared';
 import { refreshVoteChannel, catchUpMissedVotes } from '../lib/voteLog.js';
 
-/** Enregistre les slash commands sur la guilde (instantané) à chaque démarrage. */
+/**
+ * Enregistre les slash commands (instantané) sur CHAQUE serveur où le bot doit
+ * les avoir : le serveur communauté (DISCORD_GUILD_ID) + le serveur staff (STAFF_GUILD_ID).
+ * On synchronise guilde par guilde pour qu'un échec sur l'une n'empêche pas l'autre.
+ */
 async function registerCommands(): Promise<void> {
-  try {
-    const body = commands.map((c) => c.data.toJSON());
-    const rest = new REST({ version: '10' }).setToken(ENV.DISCORD_TOKEN);
-    await rest.put(
-      Routes.applicationGuildCommands(ENV.DISCORD_CLIENT_ID, ENV.DISCORD_GUILD_ID),
-      { body },
-    );
-    console.log(`✅ ${body.length} commandes synchronisées sur le serveur.`);
-  } catch (err) {
-    console.error('❌ Échec de la synchro des commandes:', err);
+  const body = commands.map((c) => c.data.toJSON());
+  const rest = new REST({ version: '10' }).setToken(ENV.DISCORD_TOKEN);
+  // dédoublonne au cas où les deux IDs seraient identiques
+  const guildIds = [...new Set([ENV.DISCORD_GUILD_ID, STAFF_GUILD_ID].filter(Boolean))];
+  for (const guildId of guildIds) {
+    try {
+      await rest.put(
+        Routes.applicationGuildCommands(ENV.DISCORD_CLIENT_ID, guildId),
+        { body },
+      );
+      console.log(`✅ ${body.length} commandes synchronisées sur ${guildId}.`);
+    } catch (err) {
+      console.error(`❌ Échec de la synchro des commandes sur ${guildId}:`, err);
+    }
   }
 }
 

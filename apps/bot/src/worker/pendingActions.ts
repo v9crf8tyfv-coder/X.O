@@ -6,6 +6,8 @@ import {
   GRADES,
   STAFF_ROLE_ID,
   RESP_PLUS_ROLE_ID,
+  STAFF_GUILD_ID,
+  STAFF_GUILD_ROLE_IDS,
   CHANNELS,
   getGrade,
 } from '@xo/shared';
@@ -65,7 +67,7 @@ async function tick(client: Client): Promise<void> {
 
     for (const a of actions) {
       try {
-        await processAction(guild, a);
+        await processAction(client, guild, a);
         await db()`update pending_actions set status='done', processed_at=now() where id=${a.id}`;
         await logStaffSurveillance(client, a);
         // Messages auto de félicitations/départ désactivés (demande du proprio)
@@ -93,7 +95,14 @@ async function findMember(guild: Guild, tag: string): Promise<GuildMember | null
   return res.find((m) => m.user.username.toLowerCase() === low) ?? null;
 }
 
-async function processAction(guild: Guild, a: PendingAction): Promise<void> {
+/** IDs de rôle possibles d'un grade, tous serveurs confondus (principal + staff). */
+function allRoleIdsForGrade(gradeKey: string): string[] {
+  return [getGrade(gradeKey).roleId, STAFF_GUILD_ROLE_IDS[gradeKey]].filter(
+    (r): r is string => !!r,
+  );
+}
+
+async function processAction(client: Client, guild: Guild, a: PendingAction): Promise<void> {
   const member = await findMember(guild, a.discord_tag);
   if (!member) throw new Error(`Membre Discord introuvable: ${a.discord_tag}`);
 
@@ -103,34 +112,59 @@ async function processAction(guild: Guild, a: PendingAction): Promise<void> {
     where lower(discord_tag) = lower(${a.discord_tag}) and active = true
   `.catch(() => {});
 
+  // Serveur COMMUNAUTÉ : rôles appliqués ici.
+  await reconcileGuildRoles(guild, member, a);
+
+  // Serveur STAFF : mêmes grades, avec les rôles PROPRES au serveur staff.
+  // On ne touche qu'aux rôles réellement présents sur chaque serveur -> aucun conflit,
+  // et si le membre n'est pas (encore) sur le Discord staff on ignore silencieusement.
+  if (STAFF_GUILD_ID && STAFF_GUILD_ID !== guild.id) {
+    const staffGuild = await client.guilds.fetch(STAFF_GUILD_ID).catch(() => null);
+    if (staffGuild) {
+      const staffMember = await findMember(staffGuild, a.discord_tag).catch(() => null);
+      if (staffMember) {
+        await reconcileGuildRoles(staffGuild, staffMember, a).catch((e) =>
+          console.error('[worker] rôles Discord staff échoués', e),
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Réconcilie les rôles d'UN serveur : le membre doit avoir EXACTEMENT les rôles voulus.
+ * Ne manipule que les rôles réellement présents sur `guild` (les IDs des autres serveurs
+ * sont filtrés par `exists`), donc la même logique marche pour le communautaire et le staff.
+ */
+async function reconcileGuildRoles(guild: Guild, member: GuildMember, a: PendingAction): Promise<void> {
   const joueur = GRADE_JOUEUR.roleId;
 
   if (a.type === 'staff.remove') {
     const toRemove = [
-      ...Object.values(ALL_GRADES).map((g) => g.roleId),
+      ...Object.values(ALL_GRADES).flatMap((g) => allRoleIdsForGrade(g.key)),
       STAFF_ROLE_ID,
       RESP_PLUS_ROLE_ID,
     ].filter((id): id is string => exists(guild, id) && member.roles.cache.has(id));
     if (toRemove.length) await member.roles.remove(toRemove, 'Retrait du staff (site)');
-    if (exists(guild, joueur)) await member.roles.add(joueur, 'Retour joueur');
+    if (exists(guild, joueur) && !member.roles.cache.has(joueur))
+      await member.roles.add(joueur, 'Retour joueur');
     return;
   }
 
-  // staff.apply — réconcilie : le membre doit avoir EXACTEMENT les rôles voulus
-  const gradeRoleIds = a.grades
-    .map((g) => getGrade(g).roleId)
-    .filter((id): id is string => exists(guild, id));
+  // staff.apply — rôles de grade voulus (principal + staff), filtrés à ce serveur
+  const desired = new Set<string>();
+  for (const g of a.grades) {
+    for (const id of allRoleIdsForGrade(g)) if (exists(guild, id)) desired.add(id);
+  }
   const highest = Math.max(0, ...a.grades.map((g) => getGrade(g).level));
   const transverse = highest >= GRADES.responsable.level ? RESP_PLUS_ROLE_ID : STAFF_ROLE_ID;
-
-  const desired = new Set<string>(gradeRoleIds);
   if (exists(guild, transverse)) desired.add(transverse);
 
   // Rôles gérés par la Gestion Staff (jamais fonda/co-fonda) → on réconcilie
   const managed = [
     ...Object.values(ALL_GRADES)
       .filter((g) => g.key !== 'fondateur' && g.key !== 'cofondateur')
-      .map((g) => g.roleId),
+      .flatMap((g) => allRoleIdsForGrade(g.key)),
     STAFF_ROLE_ID,
     RESP_PLUS_ROLE_ID,
     joueur,

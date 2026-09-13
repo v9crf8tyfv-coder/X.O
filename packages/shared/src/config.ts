@@ -12,10 +12,10 @@ export const CHANNELS = {
   archivesTicketStaff: '1548691693816119487', // transcripts des tickets STAFF
   trainModo: '1548688291941978112', // salon "train modo" : panneau + faux messages à modérer
   trainResultat: '1548688419121799238', // salon "résultats" : log des sanctions d'entraînement
-  // Surveillance : encore sur l'ancien serveur (pas d'ID fourni pour le nouveau).
-  surveillanceRespo: '1535344008287756328',
-  surveillanceAdmin: '1535344050729652364',
-  surveillanceStaff: '1535344092534276096',
+  // Surveillance : sur le NOUVEAU Discord staff.
+  surveillanceRespo: '1548689103149732013',
+  surveillanceAdmin: '1548688857099145216',
+  surveillanceStaff: '1548688673430708315',
   // --- Salons du serveur COMMUNAUTÉ (principal) ---
   accueil: '1535380217257005148',
   ticketNormal: '1535383613263183883',
@@ -40,13 +40,16 @@ export const TICKET_OMNIPRESENT_GRADES = ['fondateur', 'cofondateur', 'responsab
  */
 export const STAFF_GUILD_ROLE_IDS: Record<string, string> = {
   responsable: '1548681983050121477',
-  // admin: '', // <- à remplir (ID du rôle Admin du Discord staff)
+  admin: '1548694010388811836',
   modo_x: '1548682473150619648',
   modo: '1548682543161810995',
   modo_test: '1548682651983028355',
   betatesteur: '1548682710724116530',
   buildeur: '1548682782027550780',
 };
+
+/** ID du NOUVEAU serveur Discord staff (pour y déployer aussi les commandes slash). */
+export const STAFF_GUILD_ID = '1548681178771623948';
 
 /**
  * Catégories de tickets STAFF (salon ticketStaff).
