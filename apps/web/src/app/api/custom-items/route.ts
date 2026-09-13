@@ -64,7 +64,9 @@ export async function POST(req: Request) {
   // Marquage "traité" par le mod (pas d'auth : simple changement de statut).
   if (Array.isArray(b.done)) {
     const ids = b.done.map((n: unknown) => Number(n)).filter((n: number) => Number.isInteger(n) && n > 0);
-    if (ids.length) await db()`update custom_items set status = 'done' where id = any(${ids})`;
+    for (const id of ids) {
+      await db()`update custom_items set status = 'done' where id = ${id}`.catch(() => {});
+    }
     return NextResponse.json({ ok: true, done: ids.length });
   }
 
