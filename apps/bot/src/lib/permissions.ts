@@ -1,10 +1,15 @@
 import type { GuildMember } from 'discord.js';
-import { ALL_GRADES, GRADES, getGrade, type GradeDef } from '@xo/shared';
+import { ALL_GRADES, GRADES, STAFF_GUILD_ROLE_IDS, getGrade, type GradeDef } from '@xo/shared';
 
 /** Map inverse : roleId Discord -> clé de grade */
 const ROLE_TO_GRADE = new Map<string, string>();
 for (const g of Object.values(ALL_GRADES)) {
   if (g.roleId) ROLE_TO_GRADE.set(g.roleId, g.key);
+}
+// Rôles du NOUVEAU Discord staff : mêmes grades, IDs différents -> reconnus pareil,
+// pour que les grades du serveur staff donnent aussi accès aux commandes.
+for (const [key, roleId] of Object.entries(STAFF_GUILD_ROLE_IDS)) {
+  if (roleId) ROLE_TO_GRADE.set(roleId, key);
 }
 
 /** Grades (clés) que possède un membre, d'après ses rôles Discord */

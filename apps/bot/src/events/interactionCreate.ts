@@ -4,7 +4,7 @@ import {
   type GuildMember,
   type InteractionReplyOptions,
 } from 'discord.js';
-import { GRADES } from '@xo/shared';
+import { GRADES, STAFF_GUILD_ID } from '@xo/shared';
 import type { XOClient } from '../types.js';
 import { highestGrade } from '../lib/permissions.js';
 import { errorEmbed } from '../lib/embeds.js';
@@ -21,7 +21,13 @@ export async function handleInteraction(
       if (!command) return;
 
       // Contrôle d'accès par NIVEAU de grade (défaut : fondateur)
-      const min = command.minLevel ?? GRADES.fondateur.level;
+      let min = command.minLevel ?? GRADES.fondateur.level;
+      // Sur le Discord STAFF, les commandes réservées aux fonda/co-fonda sont
+      // ouvertes aux Responsables (et +). Les commandes déjà accessibles plus bas
+      // (modo, admin…) gardent leur propre seuil. Le serveur communautaire n'est pas touché.
+      if (interaction.guildId === STAFF_GUILD_ID) {
+        min = Math.min(min, GRADES.responsable.level);
+      }
       const member = interaction.member as GuildMember | null;
       const level = member ? highestGrade(member)?.level ?? 0 : 0;
       if (level < min) {
