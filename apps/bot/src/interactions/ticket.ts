@@ -76,9 +76,10 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
       const parentId = await resolveTicketParent(guild, category);
 
       const safeName = interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
-      const emoji = typeof category.emoji === 'string' ? category.emoji : '';
+      // Ticket STAFF -> un "S" (🇸) dans le nom ; ticket joueur -> emoji du type.
+      const prefix = space === 'staff' ? '🇸' : (typeof category.emoji === 'string' ? category.emoji : '');
       const ticketChannel = await guild.channels.create({
-        name: `${emoji}ticket-${safeName || interaction.user.id.slice(-4)}`,
+        name: `${prefix}ticket-${safeName || interaction.user.id.slice(-4)}`,
         type: ChannelType.GuildText,
         parent: parentId,
         permissionOverwrites: buildTicketOverwrites(guild, interaction.user.id, category),
