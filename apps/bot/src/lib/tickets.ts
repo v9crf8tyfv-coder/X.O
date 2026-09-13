@@ -15,6 +15,7 @@ import {
   TICKET_CATEGORIES_NORMAL,
   TICKET_OMNIPRESENT_GRADES,
   STAFF_GUILD_ROLE_IDS,
+  CHANNELS,
   BRAND_COLOR,
   getGrade,
   type TicketCategory,
@@ -116,12 +117,26 @@ export function isRespoOnly(category: TicketCategory): boolean {
 }
 
 /**
- * Range le ticket dans la bonne CATÉGORIE Discord (créée si absente) :
- *  - "Besoin Responsable" : tickets resp-only, visible seulement des Resp/Fonda/Co-fonda.
- *  - "Divers"             : tous les autres tickets.
- * Renvoie l'ID de la catégorie parente à utiliser.
+ * Range le ticket dans la bonne CATÉGORIE Discord parente.
+ *
+ * - Tickets STAFF : on ne CRÉE aucune catégorie. Le ticket reste sous la même
+ *   catégorie que le salon du panneau de tickets staff (s'il en a une).
+ * - Tickets JOUEURS : "Besoin Responsable" (resp-only) ou "Divers" (créées si absentes).
+ *
+ * Renvoie l'ID de la catégorie parente à utiliser (ou undefined = aucune).
  */
-export async function resolveTicketParent(guild: Guild, category: TicketCategory): Promise<string | undefined> {
+export async function resolveTicketParent(
+  guild: Guild,
+  space: TicketSpace,
+  category: TicketCategory,
+): Promise<string | undefined> {
+  if (space === 'staff') {
+    const panel =
+      guild.channels.cache.get(CHANNELS.ticketStaff) ??
+      (await guild.channels.fetch(CHANNELS.ticketStaff).catch(() => null));
+    return panel?.parentId ?? undefined;
+  }
+
   const respoOnly = isRespoOnly(category);
   const name = respoOnly ? 'Besoin Responsable' : 'Divers';
   let cat = guild.channels.cache.find(

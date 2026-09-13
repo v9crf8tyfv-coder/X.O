@@ -7,11 +7,11 @@ import {
   type TextChannel,
 } from 'discord.js';
 import { db, hasDatabase } from '@xo/db';
-import { GRADES } from '@xo/shared';
+import { GRADES, STAFF_GUILD_ID, STAFF_GUILD_ROLE_IDS } from '@xo/shared';
 
-/** Salon où sont postées les nouvelles candidatures du forum. */
-const CANDID_CHANNEL_ID = '1544737983805136907';
-/** Rôle mentionné à chaque nouvelle candidature. */
+/** Salon où sont postées les nouvelles candidatures du forum (Discord staff). */
+const CANDID_CHANNEL_ID = '1548704058720780421';
+/** Rôle mentionné à chaque nouvelle candidature (communauté). */
 const ADMIN_ROLE_ID = GRADES.admin.roleId;
 const SITE = 'https://emeria-site.com';
 
@@ -114,8 +114,11 @@ async function poll(client: Client): Promise<void> {
             .setURL(link),
         );
 
+        // Sur le Discord staff, on mentionne le rôle Admin DE CE serveur.
+        const adminRoleId =
+          text.guildId === STAFF_GUILD_ID ? STAFF_GUILD_ROLE_IDS.admin ?? ADMIN_ROLE_ID : ADMIN_ROLE_ID;
         const msg = await text.send({
-          content: `<@&${ADMIN_ROLE_ID}>`,
+          content: adminRoleId ? `<@&${adminRoleId}>` : '',
           embeds: [embed],
           components: [row],
         });

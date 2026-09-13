@@ -72,8 +72,8 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
         }
       }
 
-      // Rangé dans la bonne catégorie Discord : "Besoin Responsable" (resp-only) ou "Divers".
-      const parentId = await resolveTicketParent(guild, category);
+      // Rangé dans la bonne catégorie Discord (staff : pas de création ; joueurs : Divers/Besoin Resp.)
+      const parentId = await resolveTicketParent(guild, space, category);
 
       const safeName = interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
       // Ticket STAFF -> un "S" (🇸) dans le nom ; ticket joueur -> emoji du type.
