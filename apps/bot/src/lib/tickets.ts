@@ -5,8 +5,10 @@ import {
   ButtonBuilder,
   ButtonStyle,
   PermissionFlagsBits,
+  ChannelType,
   type OverwriteResolvable,
   type Guild,
+  type CategoryChannel,
 } from 'discord.js';
 import {
   TICKET_CATEGORIES_STAFF,
@@ -99,6 +101,54 @@ export function buildRecruitButtons(): ActionRowBuilder<ButtonBuilder> {
       .setEmoji('⛔')
       .setStyle(ButtonStyle.Danger),
   );
+}
+
+/** Un type de ticket est-il réservé aux responsables (et +) ? */
+export function isRespoOnly(category: TicketCategory): boolean {
+  return 'onlyOmnipresent' in category && !!category.onlyOmnipresent;
+}
+
+/**
+ * Range le ticket dans la bonne CATÉGORIE Discord (créée si absente) :
+ *  - "Besoin Responsable" : tickets resp-only, visible seulement des Resp/Fonda/Co-fonda.
+ *  - "Divers"             : tous les autres tickets.
+ * Renvoie l'ID de la catégorie parente à utiliser.
+ */
+export async function resolveTicketParent(guild: Guild, category: TicketCategory): Promise<string | undefined> {
+  const respoOnly = isRespoOnly(category);
+  const name = respoOnly ? 'Besoin Responsable' : 'Divers';
+  let cat = guild.channels.cache.find(
+    (c): c is CategoryChannel => c.type === ChannelType.GuildCategory && c.name.toLowerCase() === name.toLowerCase(),
+  );
+  try {
+    if (!cat) {
+      cat = await guild.channels.create({
+        name,
+        type: ChannelType.GuildCategory,
+        permissionOverwrites: respoOnly ? respoCategoryOverwrites(guild) : undefined,
+      });
+    }
+  } catch {
+    return undefined; // en cas d'échec on laisse le salon sans catégorie (ne bloque pas la création)
+  }
+  return cat?.id;
+}
+
+/** Permissions de la catégorie "Besoin Responsable" : personne, sauf Resp/Fonda/Co-fonda (+ bot). */
+function respoCategoryOverwrites(guild: Guild): OverwriteResolvable[] {
+  const allow =
+    PermissionFlagsBits.ViewChannel |
+    PermissionFlagsBits.SendMessages |
+    PermissionFlagsBits.ReadMessageHistory;
+  const ows: OverwriteResolvable[] = [
+    { id: guild.roles.everyone.id, deny: PermissionFlagsBits.ViewChannel },
+    { id: guild.client.user.id, allow: allow | PermissionFlagsBits.ManageChannels },
+  ];
+  for (const key of TICKET_OMNIPRESENT_GRADES) {
+    const roleId = getGrade(key).roleId;
+    if (roleId && guild.roles.cache.has(roleId)) ows.push({ id: roleId, allow });
+  }
+  return ows;
 }
 
 /**

@@ -21,6 +21,7 @@ import {
   buildCloseButton,
   buildRecruitButtons,
   buildCategorySelect,
+  resolveTicketParent,
   type TicketSpace,
 } from '../lib/tickets.js';
 import { logToDiscord, fmtError } from '../lib/logWebhook.js';
@@ -71,13 +72,13 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
         }
       }
 
-      // Salon rangé sous la même catégorie que le panneau
-      const panelChannel = interaction.channel as TextChannel | null;
-      const parentId = panelChannel?.parentId ?? undefined;
+      // Rangé dans la bonne catégorie Discord : "Besoin Responsable" (resp-only) ou "Divers".
+      const parentId = await resolveTicketParent(guild, category);
 
       const safeName = interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+      const emoji = typeof category.emoji === 'string' ? category.emoji : '';
       const ticketChannel = await guild.channels.create({
-        name: `ticket-${safeName || interaction.user.id.slice(-4)}`,
+        name: `${emoji}ticket-${safeName || interaction.user.id.slice(-4)}`,
         type: ChannelType.GuildText,
         parent: parentId,
         permissionOverwrites: buildTicketOverwrites(guild, interaction.user.id, category),
