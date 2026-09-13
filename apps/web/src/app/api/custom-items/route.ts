@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@xo/db';
-import { requireLevel, FOUNDER_LEVEL } from '@/lib/guard';
+import { requireLevel, RESP_LEVEL } from '@/lib/guard';
 
 export const runtime = 'nodejs';
 
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
     res.headers.set('Cache-Control', 'no-store');
     return res;
   }
-  const g = await requireLevel(FOUNDER_LEVEL);
+  const g = await requireLevel(RESP_LEVEL);
   if (g instanceof NextResponse) return g;
   const rows = await db()`
     select id, item, name, enchants, target, status, created_at
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   }
 
   // Création (fonda uniquement).
-  const guard = await requireLevel(FOUNDER_LEVEL);
+  const guard = await requireLevel(RESP_LEVEL);
   if (guard instanceof NextResponse) return guard;
 
   const item = String(b.item || '').trim().toLowerCase();
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
 
 // DELETE ?id= (fonda) : retire un give de la file.
 export async function DELETE(req: Request) {
-  const g = await requireLevel(FOUNDER_LEVEL);
+  const g = await requireLevel(RESP_LEVEL);
   if (g instanceof NextResponse) return g;
   const id = Number(new URL(req.url).searchParams.get('id'));
   if (!id) return NextResponse.json({ error: 'id manquant' }, { status: 400 });

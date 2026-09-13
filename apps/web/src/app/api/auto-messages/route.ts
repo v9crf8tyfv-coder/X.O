@@ -57,7 +57,7 @@ export async function GET(req: Request) {
     return res;
   }
 
-  const g = await requireLevel(FOUNDER_LEVEL);
+  const g = await requireLevel(ADMIN_LEVEL);
   if (g instanceof NextResponse) return g;
   const rows = await db()<Row[]>`
     select id, channel_id, content, image_url, mode, every_hours, at_hhmm, days, enabled, last_sent_at, prefix_color
@@ -80,7 +80,7 @@ export async function PUT(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const g = await requireLevel(FOUNDER_LEVEL);
+  const g = await requireLevel(ADMIN_LEVEL);
   if (g instanceof NextResponse) return g;
 
   const b = await req.json().catch(() => ({}));
@@ -121,7 +121,7 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const g = await requireLevel(FOUNDER_LEVEL);
+  const g = await requireLevel(ADMIN_LEVEL);
   if (g instanceof NextResponse) return g;
   const b = await req.json().catch(() => ({}));
   const id = Number(b.id);
@@ -171,7 +171,7 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const g = await requireLevel(FOUNDER_LEVEL);
+  const g = await requireLevel(ADMIN_LEVEL);
   if (g instanceof NextResponse) return g;
   const id = Number(new URL(req.url).searchParams.get('id'));
   if (!id) return NextResponse.json({ error: 'id manquant' }, { status: 400 });

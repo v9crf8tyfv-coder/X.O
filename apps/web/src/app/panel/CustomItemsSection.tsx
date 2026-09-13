@@ -16,7 +16,7 @@ const MC_COLORS: Record<string, string> = {
   '5': '#AA00AA', '6': '#FFAA00', '7': '#AAAAAA', '8': '#555555', '9': '#5555FF',
   a: '#55FF55', b: '#55FFFF', c: '#FF5555', d: '#FF55FF', e: '#FFFF55', f: '#FFFFFF',
 };
-const short = (id: string) => (id.split(':').pop() || id).replace(/_/g, ' ');
+const short = (id: unknown) => { const s = String(id ?? ''); return (s.split(':').pop() || s).replace(/_/g, ' '); };
 
 function renderMc(text: string): ReactNode[] {
   const out: ReactNode[] = [];
@@ -50,7 +50,8 @@ function Picker({ value, onChange, options, placeholder }: {
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
-  const filtered = (q ? options.filter((o) => o.toLowerCase().includes(q.toLowerCase())) : options).slice(0, 180);
+  const opts = (Array.isArray(options) ? options : []).map((o) => String(o ?? '')).filter(Boolean);
+  const filtered = (q ? opts.filter((o) => o.toLowerCase().includes(q.toLowerCase())) : opts).slice(0, 180);
   return (
     <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
       <button type="button" className="btn-sec" onClick={() => setOpen((o) => !o)}
