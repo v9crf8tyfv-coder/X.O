@@ -36,17 +36,25 @@ export const playerlist: SlashCommand = {
       return;
     }
 
-    // Grades depuis la table playerlist_entries (esthétique, pseudo -> grade)
+    // Grades depuis la table playerlist_entries (esthétique, pseudo -> grade).
+    // On borne l'accès base à 4 s : si la base traîne/est injoignable, on affiche
+    // quand même la liste (sans les grades) au lieu de rester bloqué sur "réfléchit…".
     let entries: { pseudo: string; grade: string }[] = [];
     if (hasDatabase()) {
-      await db()`
-        create table if not exists playerlist_entries (
-          id serial primary key, pseudo text not null, grade text not null
-        )
-      `;
-      entries = await db()<{ pseudo: string; grade: string }[]>`
-        select pseudo, grade from playerlist_entries
-      `;
+      try {
+        const withTimeout = <T>(p: Promise<T>, ms: number) =>
+          Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('db timeout')), ms))]);
+        await withTimeout(db()`
+          create table if not exists playerlist_entries (
+            id serial primary key, pseudo text not null, grade text not null
+          )
+        ` as unknown as Promise<unknown>, 4000);
+        entries = await withTimeout(db()<{ pseudo: string; grade: string }[]>`
+          select pseudo, grade from playerlist_entries
+        ` as unknown as Promise<{ pseudo: string; grade: string }[]>, 4000);
+      } catch (e) {
+        console.error('[playerlist] base injoignable/lente, grades ignorés:', e instanceof Error ? e.message : e);
+      }
     }
     const gradeOf = (name: string): string | null =>
       entries.find((e) => e.pseudo?.toLowerCase() === name.toLowerCase())?.grade ?? null;
