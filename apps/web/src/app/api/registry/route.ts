@@ -38,12 +38,22 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true, items: items.length, enchants: enchants.length });
 }
 
+// Tableau quel que soit le stockage (tableau jsonb, ou chaîne JSON double-encodée).
+function asArray(v: unknown): string[] {
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string');
+  if (typeof v === 'string') {
+    try { const p = JSON.parse(v); return Array.isArray(p) ? p.filter((x): x is string => typeof x === 'string') : []; }
+    catch { return []; }
+  }
+  return [];
+}
+
 // Lu par l'UI du panel pour l'auto-complétion.
 export async function GET() {
   await ensure();
-  const rows = await db()<{ k: string; v: string[] }[]>`select k, v from registry_cache where k in ('items','enchants')`;
-  const items = rows.find((r) => r.k === 'items')?.v ?? [];
-  const enchants = rows.find((r) => r.k === 'enchants')?.v ?? [];
+  const rows = await db()<{ k: string; v: unknown }[]>`select k, v from registry_cache where k in ('items','enchants')`;
+  const items = asArray(rows.find((r) => r.k === 'items')?.v);
+  const enchants = asArray(rows.find((r) => r.k === 'enchants')?.v);
   const res = NextResponse.json({ items, enchants });
   res.headers.set('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
   return res;
