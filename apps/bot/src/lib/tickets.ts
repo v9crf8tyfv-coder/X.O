@@ -14,10 +14,17 @@ import {
   TICKET_CATEGORIES_STAFF,
   TICKET_CATEGORIES_NORMAL,
   TICKET_OMNIPRESENT_GRADES,
+  STAFF_GUILD_ROLE_IDS,
   BRAND_COLOR,
   getGrade,
   type TicketCategory,
 } from '@xo/shared';
+
+/** IDs de rôle d'un grade sur le serveur courant : principal + staff (on garde ceux qui existent). */
+function roleIdsFor(guild: Guild, key: string): string[] {
+  const ids = [getGrade(key).roleId, STAFF_GUILD_ROLE_IDS[key]].filter((r): r is string => !!r);
+  return ids.filter((id) => guild.roles.cache.has(id));
+}
 
 export type TicketSpace = 'staff' | 'normal';
 
@@ -145,8 +152,7 @@ function respoCategoryOverwrites(guild: Guild): OverwriteResolvable[] {
     { id: guild.client.user.id, allow: allow | PermissionFlagsBits.ManageChannels },
   ];
   for (const key of TICKET_OMNIPRESENT_GRADES) {
-    const roleId = getGrade(key).roleId;
-    if (roleId && guild.roles.cache.has(roleId)) ows.push({ id: roleId, allow });
+    for (const roleId of roleIdsFor(guild, key)) ows.push({ id: roleId, allow });
   }
   return ows;
 }
@@ -182,8 +188,7 @@ export function buildTicketOverwrites(
   ]);
 
   for (const key of gradeKeys) {
-    const roleId = getGrade(key).roleId;
-    if (roleId && guild.roles.cache.has(roleId)) {
+    for (const roleId of roleIdsFor(guild, key)) {
       overwrites.push({ id: roleId, allow });
     }
   }

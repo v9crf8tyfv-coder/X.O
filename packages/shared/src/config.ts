@@ -33,6 +33,22 @@ export const CHANNELS = {
 export const TICKET_OMNIPRESENT_GRADES = ['fondateur', 'cofondateur', 'responsable'] as const;
 
 /**
+ * Rôles du NOUVEAU Discord staff (grade -> roleId sur le serveur staff).
+ * Utilisés EN PLUS des rôles du serveur principal (getGrade().roleId) : le bot n'applique
+ * que les rôles réellement présents sur le serveur où il agit -> aucun conflit entre les 2.
+ * (Admin : à compléter quand l'ID sera fourni.)
+ */
+export const STAFF_GUILD_ROLE_IDS: Record<string, string> = {
+  responsable: '1548681983050121477',
+  // admin: '', // <- à remplir (ID du rôle Admin du Discord staff)
+  modo_x: '1548682473150619648',
+  modo: '1548682543161810995',
+  modo_test: '1548682651983028355',
+  betatesteur: '1548682710724116530',
+  buildeur: '1548682782027550780',
+};
+
+/**
  * Catégories de tickets STAFF (salon ticketStaff).
  * `allowedGrades` = grades autorisés à voir/répondre (EN PLUS des omniprésents).
  */
