@@ -17,6 +17,9 @@ async function ensure(): Promise<void> {
     status text not null default 'pending',
     created_at timestamptz not null default now()
   )`.catch(() => {});
+  await db()`alter table custom_items add column if not exists head text`.catch(() => {});
+  await db()`alter table custom_items add column if not exists glint boolean default false`.catch(() => {});
+  await db()`alter table custom_items add column if not exists rarity text`.catch(() => {});
 }
 
 const idRe = /^[a-z0-9_.-]+:[a-z0-9_./-]+$/;
@@ -33,8 +36,8 @@ export async function GET(req: Request) {
   await ensure();
   const url = new URL(req.url);
   if (url.searchParams.get('for') === 'game') {
-    const rows = await db()<{ id: number; item: string; name: string | null; lore: unknown; enchants: unknown; target: string }[]>`
-      select id, item, name, lore, enchants, target from custom_items where status = 'pending' order by id limit 50`;
+    const rows = await db()<{ id: number; item: string; name: string | null; lore: unknown; enchants: unknown; target: string; head: string | null; glint: boolean | null; rarity: string | null }[]>`
+      select id, item, name, lore, enchants, target, head, glint, rarity from custom_items where status = 'pending' order by id limit 50`;
     const gives = rows.map((r) => ({
       id: r.id,
       item: r.item,
@@ -42,6 +45,9 @@ export async function GET(req: Request) {
       lore: asArr<string>(r.lore),
       enchants: asArr<{ id: string; lvl: number }>(r.enchants),
       target: r.target,
+      head: r.head ?? '',
+      glint: !!r.glint,
+      rarity: r.rarity ?? '',
     }));
     const res = NextResponse.json({ gives });
     res.headers.set('Cache-Control', 'no-store');
@@ -90,9 +96,14 @@ export async function POST(req: Request) {
         .slice(0, 20)
     : [];
 
+  const head = String(b.head || '').trim().replace(/[^A-Za-z0-9_]/g, '').slice(0, 16) || null;
+  const glint = !!b.glint;
+  const rarities = ['common', 'uncommon', 'rare', 'epic'];
+  const rarity = rarities.includes(String(b.rarity)) ? String(b.rarity) : null;
+
   await db()`
-    insert into custom_items (item, name, lore, enchants, target)
-    values (${item}, ${name}, ${JSON.stringify(lore)}::jsonb, ${JSON.stringify(enchants)}::jsonb, ${target})`;
+    insert into custom_items (item, name, lore, enchants, target, head, glint, rarity)
+    values (${item}, ${name}, ${JSON.stringify(lore)}::jsonb, ${JSON.stringify(enchants)}::jsonb, ${target}, ${head}, ${glint}, ${rarity})`;
   return NextResponse.json({ ok: true });
 }
 

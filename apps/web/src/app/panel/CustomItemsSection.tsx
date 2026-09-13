@@ -40,6 +40,23 @@ function tokens(q: string): string[] {
     .filter(Boolean).map((w) => FR_EN[w] || w);
 }
 
+// --- D\u00e9grad\u00e9 : recolore chaque lettre entre deux couleurs (via &#RRGGBB) ---
+function stripCodes(s: string): string {
+  return s.replace(/&#[0-9a-fA-F]{6}/g, '').replace(/&[0-9a-fk-orA-FK-OR]/g, '');
+}
+function hexToRgb(h: string): number[] { const x = h.replace('#', ''); return [0, 2, 4].map((i) => parseInt(x.slice(i, i + 2), 16)); }
+function rgbToHex(r: number[]): string { return r.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('').toUpperCase(); }
+function gradient(text: string, c1: string, c2: string): string {
+  const chars = [...stripCodes(text)]; const a = hexToRgb(c1), b = hexToRgb(c2);
+  const n = chars.filter((c) => c !== ' ').length; let idx = 0; let out = '';
+  for (const ch of chars) {
+    if (ch === ' ') { out += ch; continue; }
+    const t = n <= 1 ? 0 : idx / (n - 1); idx++;
+    out += '&#' + rgbToHex(a.map((v, i) => v + (b[i] - v) * t)) + ch;
+  }
+  return out;
+}
+
 function renderMc(text: string): ReactNode[] {
   const out: ReactNode[] = [];
   let color = '#FFFFFF', bold = false, italic = false, buf = '', k = 0;
@@ -135,7 +152,17 @@ export default function CustomItemsSection() {
   const [lore, setLore] = useState('&7Née des entrailles du monde.');
   const [target, setTarget] = useState('');
   const [enchants, setEnchants] = useState<{ id: string; lvl: number }[]>([{ id: 'minecraft:efficiency', lvl: 10 }]);
+  const [head, setHead] = useState('');
+  const [glint, setGlint] = useState(false);
+  const [rarity, setRarity] = useState('');
+  const [g1, setG1] = useState('#FFD24B');
+  const [g2, setG2] = useState('#FF3B6B');
   const focusRef = useRef<'name' | 'lore'>('name');
+
+  function applyGradient() {
+    if (focusRef.current === 'lore') setLore((s) => gradient(s, g1, g2));
+    else setName((s) => gradient(s, g1, g2));
+  }
 
   async function loadRegistry() {
     try { const d = await (await fetch('/api/registry')).json(); setItems(d.items ?? []); setEnchList(d.enchants ?? []); } catch { /* saisie libre */ }
@@ -156,7 +183,7 @@ export default function CustomItemsSection() {
     const loreLines = lore.split('\n').map((s) => s.trim()).filter(Boolean);
     const r = await fetch('/api/custom-items', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ item, name, lore: loreLines, enchants: enchants.filter((e) => e.id.trim()), target }),
+      body: JSON.stringify({ item, name, lore: loreLines, enchants: enchants.filter((e) => e.id.trim()), target, head, glint, rarity }),
     });
     setSaving(false);
     if (r.ok) { await loadGives(); setError(''); } else setError((await r.json().catch(() => ({}))).error || 'Échec.');
@@ -228,6 +255,37 @@ export default function CustomItemsSection() {
                 {c === 'l' ? 'G' : c === 'o' ? 'I' : c === 'n' ? 'S' : c === 'm' ? 'B' : 'R'}
               </button>
             ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ color: muted, fontSize: 12 }}>Dégradé (sur le champ cliqué) :</span>
+            <input type="color" value={g1} onChange={(e) => setG1(e.target.value)}
+              style={{ width: 34, height: 30, borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer' }} />
+            <span style={{ color: muted }}>→</span>
+            <input type="color" value={g2} onChange={(e) => setG2(e.target.value)}
+              style={{ width: 34, height: 30, borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer' }} />
+            <button type="button" className="btn-sec" style={{ padding: '6px 12px' }} onClick={applyGradient}>Appliquer le dégradé</button>
+          </div>
+
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Tête de joueur (skin)</span>
+              <input className="btn-sec" value={head} onChange={(e) => setHead(e.target.value)}
+                placeholder="pseudo (pour une tête)" style={{ padding: '8px 10px' }} />
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Rareté</span>
+              <select className="btn-sec" value={rarity} onChange={(e) => setRarity(e.target.value)} style={{ padding: '8px 10px' }}>
+                <option value="">Aucune</option>
+                <option value="uncommon">Peu commun (jaune)</option>
+                <option value="rare">Rare (aqua)</option>
+                <option value="epic">Épique (violet)</option>
+              </select>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, height: 38 }}>
+              <input type="checkbox" checked={glint} onChange={(e) => setGlint(e.target.checked)} />
+              <span style={{ fontSize: 13 }}>Collector (brillant)</span>
+            </label>
           </div>
 
           <div style={{ background: '#141018', borderRadius: 10, padding: '12px 14px', fontFamily: '"Courier New",monospace' }}>
