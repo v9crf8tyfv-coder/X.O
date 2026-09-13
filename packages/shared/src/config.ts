@@ -34,33 +34,19 @@ export const TICKET_OMNIPRESENT_GRADES = ['fondateur', 'cofondateur', 'responsab
  */
 export const TICKET_CATEGORIES_STAFF = [
   {
-    id: 'bug_report_staff',
-    label: 'Bug Report',
-    description: 'Signaler un bug (modo, admin)',
-    emoji: '🐛',
+    id: 'divers_staff',
+    label: 'Divers',
+    description: 'Ticket général (bug, question, erreur…)',
+    emoji: '📩',
     allowedGrades: ['modo', 'admin'],
   },
   {
-    id: 'besoin_parler_admins',
-    label: 'Besoin de Parler (Admins)',
-    description: 'Discussion admin/responsable',
-    emoji: '💬',
-    allowedGrades: ['admin', 'responsable'],
-  },
-  {
-    id: 'besoin_parler_respo',
-    label: 'Besoin de Parler (Respo)',
+    id: 'besoin_responsable_staff',
+    label: 'Besoin Responsable',
     description: 'Réservé aux responsables',
     emoji: '🗣️',
-    allowedGrades: [], // only responsables (via omniprésents)
+    allowedGrades: [], // uniquement responsables (via omniprésents)
     onlyOmnipresent: true,
-  },
-  {
-    id: 'erreur_sanctions',
-    label: 'Erreur de Sanctions',
-    description: 'Signaler une erreur de sanction (admin, respo)',
-    emoji: '⚠️',
-    allowedGrades: ['admin', 'responsable'],
   },
 ] as const;
 
