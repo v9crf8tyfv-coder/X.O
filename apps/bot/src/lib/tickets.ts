@@ -195,11 +195,12 @@ export function buildTicketOverwrites(
     { id: openerId, allow },
   ];
 
+  // Tickets "Divers" (tout ce qui n'est pas Besoin Responsable) : les ADMINS voient
+  // toujours, en plus des grades autorisés de la catégorie. Les tickets resp-only
+  // (Besoin Responsable) restent réservés aux Resp/Fonda/Co-fonda.
   const gradeKeys = new Set<string>([
     ...TICKET_OMNIPRESENT_GRADES,
-    ...(('onlyOmnipresent' in category && category.onlyOmnipresent)
-      ? []
-      : category.allowedGrades),
+    ...(isRespoOnly(category) ? [] : [...category.allowedGrades, 'admin']),
   ]);
 
   for (const key of gradeKeys) {
