@@ -7,12 +7,14 @@ import {
   type TextChannel,
 } from 'discord.js';
 import { db, hasDatabase } from '@xo/db';
-import { GRADES, STAFF_GUILD_ID, STAFF_GUILD_ROLE_IDS } from '@xo/shared';
+import { GRADES, STAFF_GUILD_ID } from '@xo/shared';
 
 /** Salon où sont postées les nouvelles candidatures du forum (Discord staff). */
 const CANDID_CHANNEL_ID = '1548704058720780421';
 /** Rôle mentionné à chaque nouvelle candidature (communauté). */
 const ADMIN_ROLE_ID = GRADES.admin.roleId;
+/** Rôle mentionné pour les candidatures SUR LE DISCORD STAFF (tag op candidatures). */
+const STAFF_CANDID_PING_ROLE_ID = '1548709825980932217';
 const SITE = 'https://emeria-site.com';
 
 interface CandidatureEvent {
@@ -114,11 +116,11 @@ async function poll(client: Client): Promise<void> {
             .setURL(link),
         );
 
-        // Sur le Discord staff, on mentionne le rôle Admin DE CE serveur.
-        const adminRoleId =
-          text.guildId === STAFF_GUILD_ID ? STAFF_GUILD_ROLE_IDS.admin ?? ADMIN_ROLE_ID : ADMIN_ROLE_ID;
+        // Sur le Discord staff : ping le rôle dédié aux candidatures. Ailleurs : rôle Admin.
+        const pingRoleId =
+          text.guildId === STAFF_GUILD_ID ? STAFF_CANDID_PING_ROLE_ID : ADMIN_ROLE_ID;
         const msg = await text.send({
-          content: adminRoleId ? `<@&${adminRoleId}>` : '',
+          content: pingRoleId ? `<@&${pingRoleId}>` : '',
           embeds: [embed],
           components: [row],
         });

@@ -52,6 +52,20 @@ export const STAFF_GUILD_ROLE_IDS: Record<string, string> = {
 export const STAFF_GUILD_ID = '1548681178771623948';
 
 /**
+ * Rôles "TAG" du Discord staff, donnés EN PLUS du rôle de grade, selon le grade :
+ *  - modo  : si le membre a Modo / Modo Test / Modo X
+ *  - op    : si le membre est Admin
+ *  - staff : pour tous les autres grades staff
+ * (Super modo : à ajouter plus tard.) Réconciliés : le tag suit le grade et part
+ * automatiquement quand le membre n'a plus de grade de la catégorie.
+ */
+export const STAFF_TAG_ROLE_IDS = {
+  modo: '1548682937560600737',
+  op: '1548682958225809408',
+  staff: '1548682889757986846',
+} as const;
+
+/**
  * Catégories de tickets STAFF (salon ticketStaff).
  * `allowedGrades` = grades autorisés à voir/répondre (EN PLUS des omniprésents).
  */

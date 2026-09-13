@@ -8,6 +8,7 @@ import {
   RESP_PLUS_ROLE_ID,
   STAFF_GUILD_ID,
   STAFF_GUILD_ROLE_IDS,
+  STAFF_TAG_ROLE_IDS,
   CHANNELS,
   getGrade,
 } from '@xo/shared';
@@ -102,6 +103,19 @@ function allRoleIdsForGrade(gradeKey: string): string[] {
   );
 }
 
+/**
+ * Rôle-TAG du Discord staff correspondant aux grades du membre :
+ *  Admin -> op ; Modo/Modo Test/Modo X -> modo ; tout autre grade staff -> staff.
+ * Renvoie null si le membre n'a aucun grade.
+ */
+function desiredTagRole(grades: string[]): string | null {
+  if (grades.includes('admin')) return STAFF_TAG_ROLE_IDS.op;
+  if (grades.some((g) => g === 'modo' || g === 'modo_test' || g === 'modo_x'))
+    return STAFF_TAG_ROLE_IDS.modo;
+  if (grades.length > 0) return STAFF_TAG_ROLE_IDS.staff;
+  return null;
+}
+
 async function processAction(client: Client, guild: Guild, a: PendingAction): Promise<void> {
   const member = await findMember(guild, a.discord_tag);
   if (!member) throw new Error(`Membre Discord introuvable: ${a.discord_tag}`);
@@ -138,12 +152,15 @@ async function processAction(client: Client, guild: Guild, a: PendingAction): Pr
  */
 async function reconcileGuildRoles(guild: Guild, member: GuildMember, a: PendingAction): Promise<void> {
   const joueur = GRADE_JOUEUR.roleId;
+  const isStaffGuild = guild.id === STAFF_GUILD_ID;
+  const tagRoleIds = Object.values(STAFF_TAG_ROLE_IDS) as string[];
 
   if (a.type === 'staff.remove') {
     const toRemove = [
       ...Object.values(ALL_GRADES).flatMap((g) => allRoleIdsForGrade(g.key)),
       STAFF_ROLE_ID,
       RESP_PLUS_ROLE_ID,
+      ...(isStaffGuild ? tagRoleIds : []), // Discord staff : on retire aussi les tags
     ].filter((id): id is string => exists(guild, id) && member.roles.cache.has(id));
     if (toRemove.length) await member.roles.remove(toRemove, 'Retrait du staff (site)');
     if (exists(guild, joueur) && !member.roles.cache.has(joueur))
@@ -160,6 +177,12 @@ async function reconcileGuildRoles(guild: Guild, member: GuildMember, a: Pending
   const transverse = highest >= GRADES.responsable.level ? RESP_PLUS_ROLE_ID : STAFF_ROLE_ID;
   if (exists(guild, transverse)) desired.add(transverse);
 
+  // Discord STAFF : tag modo / op / staff selon le grade (en plus du rôle de grade).
+  if (isStaffGuild) {
+    const tag = desiredTagRole(a.grades);
+    if (tag && exists(guild, tag)) desired.add(tag);
+  }
+
   // Rôles gérés par la Gestion Staff (jamais fonda/co-fonda) → on réconcilie
   const managed = [
     ...Object.values(ALL_GRADES)
@@ -168,6 +191,7 @@ async function reconcileGuildRoles(guild: Guild, member: GuildMember, a: Pending
     STAFF_ROLE_ID,
     RESP_PLUS_ROLE_ID,
     joueur,
+    ...(isStaffGuild ? tagRoleIds : []), // les 3 tags sont réconciliés (seul le bon reste)
   ].filter((id): id is string => exists(guild, id));
 
   const toAdd = [...desired].filter((id) => !member.roles.cache.has(id));
