@@ -256,7 +256,7 @@ export default function CustomItemsSection() {
                   <span>{g.name ? renderMc(g.name) : short(g.item)}</span><br />
                   <span style={{ color: muted, fontSize: 12.5 }}>
                     {g.item} · pour <b>{g.target}</b> · {g.status === 'pending' ? 'en attente' : 'donné'}
-                    {g.enchants?.length ? ' · ' + g.enchants.map((e) => `${short(e.id)} ${e.lvl}`).join(', ') : ''}
+                    {Array.isArray(g.enchants) && g.enchants.length ? ' · ' + g.enchants.map((e) => `${short(e.id)} ${e.lvl}`).join(', ') : ''}
                   </span>
                 </span>
                 <button className="lchr-x" onClick={() => del(g.id)}>Suppr.</button>

@@ -21,6 +21,13 @@ async function ensure(): Promise<void> {
 
 const idRe = /^[a-z0-9_.-]+:[a-z0-9_./-]+$/;
 
+// Renvoie un tableau, que la valeur soit déjà un tableau jsonb ou une chaîne JSON.
+function asArr<T = unknown>(v: unknown): T[] {
+  if (Array.isArray(v)) return v as T[];
+  if (typeof v === 'string') { try { const p = JSON.parse(v); return Array.isArray(p) ? p : []; } catch { return []; } }
+  return [];
+}
+
 // GET ?for=game (mod, public) : items en attente. GET (fonda) : liste récente.
 export async function GET(req: Request) {
   await ensure();
@@ -32,8 +39,8 @@ export async function GET(req: Request) {
       id: r.id,
       item: r.item,
       name: r.name ?? '',
-      lore: Array.isArray(r.lore) ? r.lore : [],
-      enchants: Array.isArray(r.enchants) ? r.enchants : [],
+      lore: asArr<string>(r.lore),
+      enchants: asArr<{ id: string; lvl: number }>(r.enchants),
       target: r.target,
     }));
     const res = NextResponse.json({ gives });
@@ -42,10 +49,11 @@ export async function GET(req: Request) {
   }
   const g = await requireLevel(RESP_LEVEL);
   if (g instanceof NextResponse) return g;
-  const rows = await db()`
+  const rows = await db()<{ id: number; item: string; name: string | null; enchants: unknown; target: string; status: string }[]>`
     select id, item, name, enchants, target, status, created_at
     from custom_items order by created_at desc limit 50`;
-  return NextResponse.json({ items: rows });
+  const items = rows.map((r) => ({ ...r, enchants: asArr<{ id: string; lvl: number }>(r.enchants) }));
+  return NextResponse.json({ items });
 }
 
 // POST : soit le mod marque des items traités ({done:[ids]}), soit un fonda crée un give.
