@@ -25,6 +25,7 @@ import { startVoteBoardWorker } from './worker/voteBoardWorker.js';
 import { startAutoMessages } from './worker/autoMessages.js';
 import { startCandidatureWatcher } from './worker/candidatureWatcher.js';
 import { startAbsenceWatcher } from './worker/absenceWatcher.js';
+import { startResetSchedule } from './worker/resetSchedule.js';
 import { logToDiscord, fmtError } from './lib/logWebhook.js';
 import { acquireLock, startHeartbeat, releaseLock } from './lib/singleton.js';
 import { initSpoilers, cacheInvites, onInviteCreate, onMemberJoin, onMemberLeave } from './lib/spoilers.js';
@@ -88,6 +89,7 @@ client.once('clientReady', () => {
   startAutoMessages(client); // messages automatiques configurés dans le panel
   startCandidatureWatcher(client); // candidatures du forum → embed Discord + bouton "Traité"
   startAbsenceWatcher(client); // réveille les absences le jour venu (à venir → en cours) + effectif
+  startResetSchedule(client); // annonce reset auto : jeudi 08h30 (Annonce)
   // Parrainage / spoilers : init des tables + cache des invitations du serveur.
   void initSpoilers().then(async () => {
     const guild = await client.guilds.fetch(ENV.DISCORD_GUILD_ID).catch(() => null);

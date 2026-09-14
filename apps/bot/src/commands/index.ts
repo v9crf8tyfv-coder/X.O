@@ -24,6 +24,7 @@ import { ticketAdd, ticketRemove } from './setup/ticket-members.js';
 import { setupTrain } from './setup/setup-train.js';
 import { setupVote } from './setup/setup-vote.js';
 import { setupSpoilers } from './setup/setup-spoilers.js';
+import { resetEnd } from './setup/reset-end.js';
 
 export const commands: SlashCommand[] = [
   ban,
@@ -54,4 +55,5 @@ export const commands: SlashCommand[] = [
   setupTrain,
   setupVote,
   setupSpoilers,
+  resetEnd,
 ];
