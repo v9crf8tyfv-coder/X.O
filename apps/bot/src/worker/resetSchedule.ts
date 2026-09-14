@@ -16,14 +16,15 @@ function parisNow(): { wd: string; h: number; m: number; date: string } {
 
 /** Annonce automatique de reset : chaque JEUDI à 08h30 (Europe/Paris) dans le salon Annonce. */
 export function startResetSchedule(client: Client): void {
-  console.log('[reset] annonce hebdo programmée : jeudi 08h30 (Europe/Paris)');
+  console.log('[reset] annonce hebdo programmée : jeudi 08h00 (Europe/Paris)');
   setInterval(() => {
     const { wd, h, m, date } = parisNow();
-    if (wd === 'Thursday' && h === 8 && m === 30 && lastPosted !== date) {
+    if (wd === 'Thursday' && h === 8 && m === 0 && lastPosted !== date) {
       lastPosted = date;
       postReset(
         client,
         resetEmbed('Reset Semestriel, Nether et Mine !', "Le monde **Mine** et le **Nether** viennent d'être reset !"),
+      'monde',
       ).catch((e) => console.error('[reset]', e));
     }
   }, 30_000);

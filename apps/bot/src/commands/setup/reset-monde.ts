@@ -20,6 +20,7 @@ export const resetMonde: SlashCommand = {
     await postReset(
       interaction.client,
       resetEmbed('Reset Semestriel, Nether et Mine !', "Le monde **Mine** et le **Nether** viennent d'être reset !"),
+    'monde',
     );
     await interaction.reply({
       embeds: [successEmbed('Annonce postée', 'Le reset Mine + Nether a été annoncé dans le salon Annonce.')],

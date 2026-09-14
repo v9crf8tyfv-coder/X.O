@@ -23,13 +23,14 @@ export async function postStatus(client: Client, isOpen: boolean): Promise<void>
   }
 
   const pings = PING_ROLES.map((r) => `<@&${r}>`).join(' ');
-  const content = isOpen
-    ? `# ✅  *__Serveur OPEN__*\n-# ➡️ *${pings}*`
-    : `# 🆑  *__Serveur Close__*\n-# ➡️ *${pings}*`;
+  const now = Math.floor(Date.now() / 1000);
+  const head = isOpen ? '# ✅  *__Serveur OPEN__*' : '# 🆑  *__Serveur Close__*';
+  const content = `${head}\n-# ➡️ *${pings}*\n-# <t:${now}:F>`;
   const img = resolve(__dirname, `../../assets/status-${isOpen ? 'open' : 'close'}.png`);
   const files = existsSync(img) ? [new AttachmentBuilder(img, { name: 'statut.png' })] : [];
 
   const msg = await ch.send({ content, files, allowedMentions: { roles: PING_ROLES } });
+  await msg.pin().catch(() => {}); // le statut reste épinglé en haut
   await msg.react('💜').catch(() => {});
   await msg.react(isOpen ? '✅' : '🆑').catch(() => {});
 
