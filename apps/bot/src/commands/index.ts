@@ -25,6 +25,7 @@ import { setupTrain } from './setup/setup-train.js';
 import { setupVote } from './setup/setup-vote.js';
 import { setupSpoilers } from './setup/setup-spoilers.js';
 import { resetEnd } from './setup/reset-end.js';
+import { resetMonde } from './setup/reset-monde.js';
 
 export const commands: SlashCommand[] = [
   ban,
@@ -56,4 +57,5 @@ export const commands: SlashCommand[] = [
   setupVote,
   setupSpoilers,
   resetEnd,
+  resetMonde,
 ];
