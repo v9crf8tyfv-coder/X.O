@@ -6,7 +6,12 @@ export const runtime = 'nodejs';
 
 interface Enchant { id: string; lvl: number }
 
+// Migration exécutée UNE SEULE FOIS par instance (jamais dans les chemins chauds :
+// le mod sonde for=game toutes les 12s -> un ALTER à chaque appel bloquait la table).
+let migrated = false;
 async function ensure(): Promise<void> {
+  if (migrated) return;
+  migrated = true;
   await db()`create table if not exists custom_items (
     id serial primary key,
     item text not null,
