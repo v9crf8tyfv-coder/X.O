@@ -1,4 +1,4 @@
-import { AttachmentBuilder, type Client, type TextChannel } from 'discord.js';
+import { AttachmentBuilder, MessageType, type Client, type TextChannel } from 'discord.js';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -33,6 +33,18 @@ export async function postStatus(client: Client, isOpen: boolean): Promise<void>
   await msg.pin().catch(() => {}); // le statut reste épinglé en haut
   await msg.react('💜').catch(() => {});
   await msg.react(isOpen ? '✅' : '🆑').catch(() => {});
+
+  // Nettoyage : désépingle les anciens statuts + supprime les notices "X.O a épinglé un message".
+  try {
+    const pinned = await ch.messages.fetchPinned();
+    for (const pm of pinned.values()) if (pm.id !== msg.id) await pm.unpin().catch(() => {});
+  } catch { /* ignore */ }
+  try {
+    const recent = await ch.messages.fetch({ limit: 30 });
+    for (const rm of recent.values()) {
+      if (rm.type === MessageType.ChannelPinnedMessage) await rm.delete().catch(() => {});
+    }
+  } catch { /* ignore */ }
 
   if (hasDatabase()) {
     await db()`
