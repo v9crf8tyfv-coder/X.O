@@ -14,6 +14,7 @@ import { successEmbed } from '../../lib/embeds.js';
 
 const STATUT_ROLE = '1540339127784968293';
 const RESET_MONDE_ROLE = '1549077052089442365';
+const RESEAUX_ROLE = '1549452397758124072';
 
 /** Poste un menu de rôles à cliquer (bouton = on prend/retire le rôle). */
 export const setupRoles: SlashCommand = {
@@ -30,7 +31,8 @@ export const setupRoles: SlashCommand = {
       .setDescription(
         'Clique sur un bouton pour **prendre** ou **retirer** un rôle.\n\n' +
           '🛠️ **Statut** — être notifié quand le serveur ouvre/ferme\n' +
-          '🌍 **Reset Monde** — être notifié quand la Mine / le Nether / l’End sont reset',
+          '🌍 **Reset Monde** — être notifié quand la Mine / le Nether / l’End sont reset\n' +
+          '📢 **Réseaux** — être notifié des posts sur les réseaux sociaux',
       );
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -43,6 +45,11 @@ export const setupRoles: SlashCommand = {
         .setCustomId(`rolebtn:${RESET_MONDE_ROLE}`)
         .setLabel('Reset Monde')
         .setEmoji('🌍')
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId(`rolebtn:${RESEAUX_ROLE}`)
+        .setLabel('Réseaux')
+        .setEmoji('📢')
         .setStyle(ButtonStyle.Secondary),
     );
 
