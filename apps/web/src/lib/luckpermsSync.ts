@@ -95,22 +95,22 @@ async function fetchUuid(pseudo: string): Promise<string | null> {
   }
 }
 
-/** Groupe LuckPerms du grade le plus haut d'un staff (null si aucun mappé). */
-function topLpGroup(grades: string[]): string | null {
-  let best: string | null = null;
+/** TOUS les groupes LuckPerms d'un staff (un par grade mappé) + le groupe principal (le + haut). */
+function lpGroups(grades: string[]): { groups: string[]; primary: string } {
+  const set = new Set<string>();
+  let primary: string | null = null;
   let bestLevel = -1;
   for (const g of grades) {
     const lp = LP_GROUP[g];
-    if (lp && getGrade(g).level > bestLevel) {
-      best = lp;
-      bestLevel = getGrade(g).level;
-    }
+    if (!lp) continue;
+    set.add(lp);
+    if (getGrade(g).level > bestLevel) { primary = lp; bestLevel = getGrade(g).level; }
   }
-  return best;
+  return { groups: [...set], primary: primary ?? 'default' };
 }
 
-/** Donne UN seul groupe au joueur dans LuckPerms (comme `lp user X parent set G`). */
-async function setGroup(pseudo: string, group: string): Promise<void> {
+/** Donne TOUS les groupes au joueur dans LuckPerms (comme plusieurs `lp user X parent add G`). */
+async function setGroups(pseudo: string, groups: string[], primary: string): Promise<void> {
   const p = getPool();
   if (!p) return;
   // UUID depuis la base d'abord (fiable), Mojang en secours (évite le rate-limit).
@@ -123,28 +123,32 @@ async function setGroup(pseudo: string, group: string): Promise<void> {
     await conn.query(
       `INSERT INTO \`${players}\` (uuid, username, primary_group) VALUES (?, ?, ?)
        ON DUPLICATE KEY UPDATE username=VALUES(username), primary_group=VALUES(primary_group)`,
-      [uuid, pseudo, group],
+      [uuid, pseudo, primary],
     );
+    // On repart propre : on retire tous les group.* puis on remet CHAQUE groupe voulu.
     await conn.query(`DELETE FROM \`${perms}\` WHERE uuid=? AND permission LIKE 'group.%'`, [uuid]);
-    await conn.query(
-      `INSERT INTO \`${perms}\` (uuid, permission, value, server, world, expiry, contexts)
-       VALUES (?, ?, 1, 'global', 'global', 0, '{}')`,
-      [uuid, `group.${group}`],
-    );
+    for (const group of groups) {
+      await conn.query(
+        `INSERT INTO \`${perms}\` (uuid, permission, value, server, world, expiry, contexts)
+         VALUES (?, ?, 1, 'global', 'global', 0, '{}')`,
+        [uuid, `group.${group}`],
+      );
+    }
   } finally {
     conn.release();
   }
 }
 
-/** staff.apply -> applique le groupe du grade le plus haut (ou 'default' si aucun mappé). */
+/** staff.apply -> applique TOUS les groupes des grades (1 par grade). 'default' si aucun mappé. */
 export async function syncGradeToGame(pseudo: string, grades: string[]): Promise<void> {
   if (!getPool()) return;
-  const group = topLpGroup(grades) ?? 'default';
-  await setGroup(pseudo, group);
+  const { groups, primary } = lpGroups(grades);
+  if (groups.length === 0) { await setGroups(pseudo, ['default'], 'default'); return; }
+  await setGroups(pseudo, groups, primary);
 }
 
 /** staff.remove -> repasse le joueur en groupe 'default'. */
 export async function resetGradeInGame(pseudo: string): Promise<void> {
   if (!getPool()) return;
-  await setGroup(pseudo, 'default');
+  await setGroups(pseudo, ['default'], 'default');
 }
