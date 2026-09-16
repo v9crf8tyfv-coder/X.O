@@ -21,6 +21,9 @@ const TYPE: Record<string, { label: string; color: string }> = {
 export default function CmdBlocksSection() {
   const [blocks, setBlocks] = useState<Blk[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [backup, setBackup] = useState<{ count: number; savedAt: string | null }>({ count: 0, savedAt: null });
+  const [restoring, setRestoring] = useState(false);
+  const [action, setAction] = useState<'save' | 'restore' | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -28,8 +31,23 @@ export default function CmdBlocksSection() {
       if (!r.ok) { setBlocks([]); return; }
       const d = await r.json();
       setBlocks(Array.isArray(d.blocks) ? d.blocks : []);
+      if (d.backup) setBackup(d.backup);
+      setRestoring(!!d.restoring);
     } catch { setBlocks([]); }
   }, []);
+
+  async function doAction(kind: 'save' | 'restore') {
+    if (kind === 'restore' && !confirm('Restaurer la sauvegarde ? Tous les command blocks sauvegardés seront reposés en jeu (avec leurs commandes et réglages).')) return;
+    if (kind === 'save' && !confirm('Sauvegarder l’état actuel de tous les command blocks détectés ? (écrase la sauvegarde précédente)')) return;
+    setAction(kind);
+    try {
+      await fetch('/api/cmdblocks', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(kind === 'save' ? { save: true } : { restore: true }),
+      });
+      await load();
+    } finally { setAction(null); }
+  }
 
   useEffect(() => {
     load();
@@ -57,6 +75,21 @@ export default function CmdBlocksSection() {
         Chaque command block <b>chargé</b> (donc actif) apparaît ici. En cas de commande à répétition
         qui fait lag le serveur, clique <b>Broke</b> pour le casser directement en jeu.
       </p>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '0 0 14px' }}>
+        <button className="btn-accent" onClick={() => doAction('save')} disabled={action !== null}>
+          {action === 'save' ? 'Sauvegarde…' : '💾 Sauvegarder'}
+        </button>
+        <button className="btn-sec" style={{ padding: '10px 16px' }} onClick={() => doAction('restore')} disabled={action !== null || backup.count === 0}>
+          {action === 'restore' ? 'Restauration…' : '♻️ Restaurer la sauvegarde'}
+        </button>
+        <span className="lchr-hint" style={{ margin: 0 }}>
+          {backup.count > 0
+            ? `Sauvegarde : ${backup.count} bloc(s)${backup.savedAt ? ' · ' + new Date(backup.savedAt).toLocaleString('fr-FR') : ''}`
+            : 'Aucune sauvegarde'}
+          {restoring ? ' · restauration en cours…' : ''}
+        </span>
+      </div>
 
       <div className="lchr-card">
         <h3>
