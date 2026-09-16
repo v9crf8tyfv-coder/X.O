@@ -31,18 +31,18 @@ interface PendingAction {
 
 let running = false;
 
-/** Démarre le worker : applique les actions du site sur Discord (toutes les 8s) */
+/** Démarre le worker : applique les actions du site sur Discord (toutes les 5s) */
 export function startPendingActionsWorker(client: Client): void {
   if (!hasDatabase()) {
     console.log('[worker] pas de base → worker désactivé');
     return;
   }
-  console.log('[worker] pending_actions démarré (8s)');
+  console.log('[worker] pending_actions démarré (5s)');
   setInterval(() => {
     tick(client).catch((e) => console.error('[worker]', e));
     // Suit l'état du timer Bytenut en base (reset/modif depuis le site)
     reconcileServerTimer(client).catch((e) => console.error('[bytenut]', e));
-  }, 15000);
+  }, 5000);
   // Rafraîchit l'effectif régulièrement (absences, changements) — auto-actualisation
   setInterval(() => {
     publishEffectif(client).catch((e) => console.error('[effectif]', e));
