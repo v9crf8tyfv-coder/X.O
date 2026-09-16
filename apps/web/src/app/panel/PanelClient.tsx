@@ -38,6 +38,7 @@ import DaSection from './DaSection';
 import AffichesSection from './AffichesSection';
 import LinkEmeriaSection from './LinkEmeriaSection';
 import CustomItemsSection from './CustomItemsSection';
+import CmdBlocksSection from './CmdBlocksSection';
 import FormationSection from './FormationSection';
 import AccessSection from './AccessSection';
 import { PANEL_SECTIONS } from '@/lib/panelSections';
@@ -239,6 +240,8 @@ export default function PanelClient({ account }: Props) {
           <StaffSection myGrade={account.site_grade} />
         ) : current.id === 'serveurs' ? (
           <ServeursSection />
+        ) : current.id === 'cmdblocks' ? (
+          <CmdBlocksSection />
         ) : current.id === 'playtime' ? (
           <PlaytimeSection />
         ) : current.id === 'sanctions' ? (

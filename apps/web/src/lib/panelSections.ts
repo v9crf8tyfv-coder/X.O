@@ -17,6 +17,7 @@ export const PANEL_SECTIONS: PanelSectionDef[] = [
   { id: 'liens', label: 'Liens utiles', icon: '🔗', defaultLevel: 50 },
   { id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', defaultLevel: 50, soon: true },
   { id: 'serveurs', label: 'Gestion Serveurs', icon: '🖥️', defaultLevel: 90 },
+  { id: 'cmdblocks', label: 'Command blocks', icon: '🧱', defaultLevel: 90 },
   { id: 'playtime', label: 'Temps de jeu', icon: '⏱️', defaultLevel: 50 },
   { id: 'reseaux', label: 'Gestion Réseaux', icon: '', defaultLevel: 70, soon: true },
   { id: 'sanctions', label: 'Gestion Sanction(s)', icon: '', defaultLevel: 50 },
