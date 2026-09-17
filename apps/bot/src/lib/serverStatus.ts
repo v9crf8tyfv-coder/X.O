@@ -11,7 +11,10 @@ const PING_ROLES = ['1540339127784968293'];
 const MSG_KEY = 'status_message';
 // Images à déposer : apps/bot/assets/status-open.png (vert) et status-close.png (rouge)
 
-/** Poste le message de statut (supprime le précédent) + ping les joueurs. */
+/** Logo EmeriaMC (comme les annonces de reset). */
+const EMERIA = '<:EmeriaMC:1541095551511298139>';
+
+/** Poste le message de statut (embed) + ping, et le garde AU-DESSUS des resets. */
 export async function postStatus(client: Client, isOpen: boolean): Promise<void> {
   const channel = await client.channels.fetch(STATUS_CHANNEL_ID).catch(() => null);
   if (!channel?.isTextBased()) return;
@@ -27,11 +30,14 @@ export async function postStatus(client: Client, isOpen: boolean): Promise<void>
   const hasImg = existsSync(img);
   const files = hasImg ? [new AttachmentBuilder(img, { name: 'statut.png' })] : [];
 
-  // Statut sous forme d'EMBED (même image en grand qu'avant, via setImage).
+  // Embed aux couleurs de l'image (rouge maintenance / vert ouvert) + logo + flèche + citation.
+  const desc = isOpen
+    ? `-# ➡️ ${pings}\n\nL'équipe d'EmeriaMC vous souhaite un **bon jeu** ! 🎮\n\n> ${EMERIA}  **L'équipe d'EmeriaMC.**`
+    : `-# ➡️ ${pings}\n\n**Maintenance en cours** — les **hauts staff** sont sur le coup. Merci de votre patience. 🔧\n\n> ${EMERIA}  **L'équipe d'EmeriaMC.**`;
   const embed = new EmbedBuilder()
-    .setColor(isOpen ? 0x57f287 : 0xed4245)
+    .setColor(isOpen ? 0x2e7d32 : 0x8d1b11)
     .setTitle(isOpen ? '✅  Serveur OPEN' : '🆑  Serveur Close')
-    .setDescription(`➡️ ${pings}`)
+    .setDescription(desc)
     .setTimestamp();
   if (hasImg) embed.setImage('attachment://statut.png');
 
@@ -63,5 +69,32 @@ export async function postStatus(client: Client, isOpen: boolean): Promise<void>
       insert into bot_state (key, value) values (${MSG_KEY}, ${msg.id})
       on conflict (key) do update set value = excluded.value
     `;
+  }
+
+  // Le statut doit rester AU-DESSUS des resets -> on repousse les resets sous lui (sans re-ping).
+  await bumpResetsBelow(ch);
+}
+
+/** Re-poste les annonces de reset SOUS le statut (chronologie), sans les re-pinger. */
+async function bumpResetsBelow(ch: TextChannel): Promise<void> {
+  if (!hasDatabase()) return;
+  for (const key of ['reset_monde', 'reset_end']) {
+    try {
+      const rows = await db()<{ value: string }[]>`select value from bot_state where key = ${key}`;
+      const rid = rows[0]?.value;
+      if (!rid) continue;
+      const rm = await ch.messages.fetch(rid).catch(() => null);
+      if (!rm) continue;
+      const files = [...rm.attachments.values()].map((a) => new AttachmentBuilder(a.url, { name: a.name }));
+      const embeds = rm.embeds.map((e) => EmbedBuilder.from(e));
+      const resent = await ch.send({
+        content: rm.content || undefined,
+        embeds,
+        files,
+        allowedMentions: { parse: [] }, // pas de re-ping
+      });
+      await rm.delete().catch(() => {});
+      await db()`update bot_state set value = ${resent.id} where key = ${key}`;
+    } catch { /* ignore */ }
   }
 }
