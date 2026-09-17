@@ -33,7 +33,7 @@ export async function postStatus(client: Client, isOpen: boolean): Promise<void>
   // Embed aux couleurs de l'image (rouge maintenance / vert ouvert) + logo + flèche + citation.
   const desc = isOpen
     ? `-# ➡️ ${pings}\n\nL'équipe d'EmeriaMC vous souhaite un **bon jeu** ! 🎮\n\n> ${EMERIA}  **L'équipe d'EmeriaMC.**`
-    : `-# ➡️ ${pings}\n\n**Maintenance en cours** — les **hauts staff** sont sur le coup. Merci de votre patience. 🔧\n\n> ${EMERIA}  **L'équipe d'EmeriaMC.**`;
+    : `-# ➡️ ${pings}\n\n**Maintenance en cours** — les **Hauts Staff** sont sur le coup. Merci de votre patience. 🔧\n\n> ${EMERIA}  **L'équipe d'EmeriaMC.**`;
   const embed = new EmbedBuilder()
     .setColor(isOpen ? 0x2e7d32 : 0x8d1b11)
     .setTitle(isOpen ? '✅  Serveur OPEN' : '🆑  Serveur Close')
