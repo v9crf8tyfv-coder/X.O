@@ -177,6 +177,9 @@ html, body {
 .nav-item.active { background: var(--accent); color: #fff; }
 .nav-icon { font-size: 1.1rem; }
 
+/* Menu déroulant de sections (mobile uniquement — caché en desktop) */
+.mobile-nav { display: none; }
+
 .logout {
   margin-top: auto; padding: 10px; border-radius: 10px;
   border: 1px solid var(--border); background: transparent; color: var(--muted);
@@ -352,19 +355,33 @@ html, body {
   .hero p { font-size: 1rem; }
 
   .panel { flex-direction: column; }
-  /* Menu du haut : scroll horizontal fluide, onglets plus gros, actif bien visible */
+
+  /* Actions (Rafraîchir / Site) : plus flottantes par-dessus la nav -> ligne propre en haut. */
+  .top-actions {
+    position: static !important; top: auto !important; right: auto !important;
+    width: 100%; justify-content: flex-end; gap: 8px;
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    background: var(--surface, rgba(255,255,255,.02));
+  }
+
+  /* Barre du haut = marque + MENU DÉROULANT des sections (fini le scroll horizontal). */
   .sidebar {
-    width: 100%; flex-direction: row; align-items: center;
-    overflow-x: auto; -webkit-overflow-scrolling: touch;
-    padding: 8px 10px; gap: 8px;
+    width: 100%; flex-direction: row; align-items: center; flex-wrap: wrap;
+    padding: 8px 12px; gap: 10px;
     border-right: none; border-bottom: 1px solid var(--border);
   }
-  .sidebar::-webkit-scrollbar { display: none; }
-  .sidebar-brand { padding: 0 8px 0 4px; font-size: 1.1rem; }
-  .sidebar-nav { flex-direction: row; flex: initial; gap: 8px; }
-  .nav-item { white-space: nowrap; padding: 11px 16px; font-size: 14px; border-radius: 12px; }
-  .nav-item.active { box-shadow: 0 0 0 2px rgba(124,92,255,.55); }
-  .logout { margin-top: 0; margin-left: auto; white-space: nowrap; padding: 10px 14px; }
+  .sidebar-brand { padding: 0; font-size: 1.1rem; }
+  .sidebar-nav { display: none; }         /* on cache la liste d'onglets qui scrollait */
+  .mobile-nav {
+    display: block; flex: 1; min-width: 0;
+    padding: 12px 14px; border-radius: 12px; font-size: 16px; font-weight: 600;
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); min-height: 46px;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237c5cff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;
+  }
+  .logout { margin-top: 0; white-space: nowrap; padding: 11px 14px; }
 
   .panel-main { padding: 18px 14px; overflow-x: hidden; }
   .section-title { font-size: 1.3rem; }

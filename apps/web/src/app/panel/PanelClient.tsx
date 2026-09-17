@@ -140,7 +140,7 @@ export default function PanelClient({ account }: Props) {
   return (
     <div className="panel">
       {/* Boutons fixes en haut à droite : Rafraîchir (tous) + Site (sauf joueur) */}
-      <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 60, display: 'flex', gap: 8 }}>
+      <div className="top-actions" style={{ position: 'fixed', top: 14, right: 16, zIndex: 60, display: 'flex', gap: 8 }}>
         <button
           type="button"
           onClick={() => window.location.reload()}
@@ -199,6 +199,18 @@ export default function PanelClient({ account }: Props) {
             </button>
           ))}
         </nav>
+        <select
+          className="mobile-nav"
+          value={active}
+          onChange={(e) => setActive(e.target.value)}
+          aria-label="Choisir une section"
+        >
+          {sections.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.label}
+            </option>
+          ))}
+        </select>
         <button
           className="logout"
           onClick={async () => {
