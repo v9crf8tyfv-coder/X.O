@@ -1,4 +1,4 @@
-import { AttachmentBuilder, MessageType, type Client, type TextChannel } from 'discord.js';
+import { AttachmentBuilder, EmbedBuilder, MessageType, type Client, type TextChannel } from 'discord.js';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -23,13 +23,25 @@ export async function postStatus(client: Client, isOpen: boolean): Promise<void>
   }
 
   const pings = PING_ROLES.map((r) => `<@&${r}>`).join(' ');
-  const now = Math.floor(Date.now() / 1000);
-  const head = isOpen ? '# ✅  *__Serveur OPEN__*' : '# 🆑  *__Serveur Close__*';
-  const content = `${head}\n-# ➡️ *${pings}*\n-# <t:${now}:F>`;
   const img = resolve(__dirname, `../../assets/status-${isOpen ? 'open' : 'close'}.png`);
-  const files = existsSync(img) ? [new AttachmentBuilder(img, { name: 'statut.png' })] : [];
+  const hasImg = existsSync(img);
+  const files = hasImg ? [new AttachmentBuilder(img, { name: 'statut.png' })] : [];
 
-  const msg = await ch.send({ content, files, allowedMentions: { roles: PING_ROLES } });
+  // Statut sous forme d'EMBED (même image en grand qu'avant, via setImage).
+  const embed = new EmbedBuilder()
+    .setColor(isOpen ? 0x57f287 : 0xed4245)
+    .setTitle(isOpen ? '✅  Serveur OPEN' : '🆑  Serveur Close')
+    .setDescription(`➡️ ${pings}`)
+    .setTimestamp();
+  if (hasImg) embed.setImage('attachment://statut.png');
+
+  // Le ping va dans le contenu (les embeds ne notifient pas), le reste dans l'embed.
+  const msg = await ch.send({
+    content: pings,
+    embeds: [embed],
+    files,
+    allowedMentions: { roles: PING_ROLES },
+  });
   await msg.pin().catch(() => {}); // le statut reste épinglé en haut
   await msg.react('💜').catch(() => {});
   await msg.react(isOpen ? '✅' : '🆑').catch(() => {});
