@@ -348,21 +348,56 @@ html, body {
   .topbar { padding: 14px 16px; }
   .dropdown { width: min(300px, calc(100vw - 32px)); right: 0; }
   .hero { padding: 16px; gap: 22px; }
+  .hero h1 { font-size: 1.6rem; }
+  .hero p { font-size: 1rem; }
 
   .panel { flex-direction: column; }
+  /* Menu du haut : scroll horizontal fluide, onglets plus gros, actif bien visible */
   .sidebar {
     width: 100%; flex-direction: row; align-items: center;
-    overflow-x: auto; padding: 10px 12px; gap: 6px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    padding: 8px 10px; gap: 8px;
     border-right: none; border-bottom: 1px solid var(--border);
   }
-  .sidebar-brand { padding: 0 8px 0 4px; font-size: 1.2rem; }
-  .sidebar-nav { flex-direction: row; flex: initial; gap: 6px; }
-  .nav-item { white-space: nowrap; padding: 9px 12px; }
-  .logout { margin-top: 0; margin-left: auto; white-space: nowrap; }
-  .panel-main { padding: 20px 16px; }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-brand { padding: 0 8px 0 4px; font-size: 1.1rem; }
+  .sidebar-nav { flex-direction: row; flex: initial; gap: 8px; }
+  .nav-item { white-space: nowrap; padding: 11px 16px; font-size: 14px; border-radius: 12px; }
+  .nav-item.active { box-shadow: 0 0 0 2px rgba(124,92,255,.55); }
+  .logout { margin-top: 0; margin-left: auto; white-space: nowrap; padding: 10px 14px; }
+
+  .panel-main { padding: 18px 14px; overflow-x: hidden; }
+  .section-title { font-size: 1.3rem; }
+  .section-sub { font-size: 1rem; }
+
+  /* Cartes / listes plus lisibles et pleine largeur */
+  .launcher-sec { max-width: 100%; }
+  .lchr-card { padding: 16px 14px; border-radius: 14px; }
+  .lchr-card h3 { font-size: 16px; }
+  .lchr-hint { font-size: 14px; }
+  .lchr-list li, .lchr-staged li { padding: 12px 14px; flex-wrap: wrap; }
+
+  /* Cibles tactiles confortables + police >=16px (évite le zoom auto iOS sur les champs) */
+  .btn-accent, .btn-sec, .btn-launch, .btn-submit, .lchr-x { min-height: 44px; font-size: 15px; }
+  input, select, textarea { font-size: 16px; min-height: 44px; }
+
+  /* Grands tableaux (temps de jeu, effectif) : scroll horizontal au lieu de déborder */
+  .panel-main table {
+    display: block; overflow-x: auto; max-width: 100%;
+    white-space: nowrap; -webkit-overflow-scrolling: touch;
+  }
 
   .profile-card { flex-direction: column; text-align: center; padding: 22px; }
   .profile-info { align-items: center; }
+}
+
+@media (max-width: 480px) {
+  .panel-main { padding: 14px 12px; }
+  .hero h1 { font-size: 1.35rem; }
+  .nav-item { padding: 10px 13px; }
+  /* Formulaires empilés : chaque champ/bouton pleine largeur */
+  .lchr-add { flex-direction: column; align-items: stretch; }
+  .lchr-add > * { width: 100%; }
 }
 
 /* Thème sombre : suit l'OS SAUF si un choix manuel "clair" est posé. */
