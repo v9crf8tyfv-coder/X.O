@@ -88,6 +88,9 @@ export async function GET(req: Request) {
                to_char(end_date,'YYYY-MM-DD') as end_date
         from absences
         where lower(discord_tag) = any(${absPseudos})
+          -- SEULEMENT les absences ACTIVES : une absence finie/supprimée (status != active)
+          -- ne doit plus marquer le staff « absent » (sinon orange en boucle pour toujours).
+          and status = 'active'
           -- une absence DOIT avoir de vraies dates : sinon (dates nulles) elle marquait
           -- le staff « absent » de l'an 1 à l'an 9999, donc absent toutes les semaines.
           and start_date is not null and end_date is not null
