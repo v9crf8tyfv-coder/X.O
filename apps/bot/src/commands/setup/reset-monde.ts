@@ -19,7 +19,7 @@ export const resetMonde: SlashCommand = {
   async execute(interaction) {
     await postReset(
       interaction.client,
-      resetEmbed('Reset Semestriel, Nether et Mine !', "Le monde **Mine** et le **Nether** viennent d'être reset !"),
+      resetEmbed('Reset Hebdomadaire, Nether et Mine !', "Le monde **Mine** et le **Nether** viennent d'être reset !"),
     'monde',
     );
     await interaction.reply({

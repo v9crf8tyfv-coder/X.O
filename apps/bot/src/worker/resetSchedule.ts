@@ -23,7 +23,7 @@ export function startResetSchedule(client: Client): void {
       lastPosted = date;
       postReset(
         client,
-        resetEmbed('Reset Semestriel, Nether et Mine !', "Le monde **Mine** et le **Nether** viennent d'être reset !"),
+        resetEmbed('Reset Hebdomadaire, Nether et Mine !', "Le monde **Mine** et le **Nether** viennent d'être reset !"),
       'monde',
       ).catch((e) => console.error('[reset]', e));
     }

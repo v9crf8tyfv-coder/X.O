@@ -19,6 +19,7 @@ const NETHER_ICON = 'iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAEKUlEQVR4nO2
 export function resetEmbed(title: string, body: string): EmbedBuilder {
   return new EmbedBuilder()
     .setColor(VIOLET)
+    .setAuthor({ name: 'EmeriaMC', iconURL: 'https://cdn.discordapp.com/emojis/1541095551511298139.png' }) // logo
     .setThumbnail('attachment://icon.png') // icône du type dans le coin (carré, haut-droite)
     .setDescription(
       `# ${title}\n` +

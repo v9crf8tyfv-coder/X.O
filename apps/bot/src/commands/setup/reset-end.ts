@@ -17,7 +17,7 @@ export const resetEnd: SlashCommand = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction) {
-    await postReset(interaction.client, resetEmbed('Reset End !', "L'**End** vient d'être reset à **l'instant** !"), 'end');
+    await postReset(interaction.client, resetEmbed('Reset Mensuel — End !', "L'**End** vient d'être reset à **l'instant** !"), 'end');
     await interaction.reply({
       embeds: [successEmbed('Annonce postée', "Le reset de l'End a été annoncé dans le salon Annonce.")],
       flags: MessageFlags.Ephemeral,
