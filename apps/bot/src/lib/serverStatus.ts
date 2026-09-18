@@ -85,8 +85,16 @@ async function bumpResetsBelow(ch: TextChannel): Promise<void> {
       if (!rid) continue;
       const rm = await ch.messages.fetch(rid).catch(() => null);
       if (!rm) continue;
-      const files = [...rm.attachments.values()].map((a) => new AttachmentBuilder(a.url, { name: a.name }));
-      const embeds = rm.embeds.map((e) => EmbedBuilder.from(e));
+      const atts = [...rm.attachments.values()];
+      const files = atts.map((a) => new AttachmentBuilder(a.url, { name: a.name }));
+      const embeds = rm.embeds.map((e) => {
+        const b = EmbedBuilder.from(e);
+        // Re-pointe vignette/image vers la pièce jointe RÉ-uploadée (sinon elle pointe vers
+        // l'ancienne, supprimée -> icône disparue, ex. le logo Nether/Mine).
+        if (e.thumbnail && atts[0]) b.setThumbnail('attachment://' + atts[0].name);
+        if (e.image && atts[0]) b.setImage('attachment://' + atts[0].name);
+        return b;
+      });
       const resent = await ch.send({
         content: rm.content || undefined,
         embeds,
