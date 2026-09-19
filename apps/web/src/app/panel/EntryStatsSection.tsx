@@ -28,7 +28,7 @@ export default function EntryStatsSection() {
   }
   useEffect(load, []);
 
-  const max = Math.max(1, ...stats.map((s) => s.count));
+  // (la barre représente la part sur 100 % — voir `pct` plus bas)
 
   return (
     <div style={{ maxWidth: 820 }}>
@@ -63,18 +63,18 @@ export default function EntryStatsSection() {
         <div style={{ border: '1px solid var(--line)', borderRadius: 14, overflow: 'hidden', background: 'var(--panel)' }}>
           {stats.map((s, i) => {
             const pct = total ? Math.round((s.count / total) * 100) : 0;
-            const w = Math.round((s.count / max) * 100);
             return (
               <div key={s.value} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center', padding: '12px 16px', borderTop: i === 0 ? 'none' : '1px solid var(--line)' }}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
-                    <span style={{ fontWeight: 700 }}>{s.label}</span>
-                    <span style={{ color: 'var(--muted)', fontSize: 13, whiteSpace: 'nowrap' }}>
-                      <strong style={{ color: 'var(--txt)' }}>{s.count}</strong> · {pct}%
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 6, alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700 }}>{s.emoji ? `${s.emoji} ` : ''}{s.label}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
+                      <span style={{ color: 'var(--muted)', fontSize: 13 }}>{s.count}</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: BAR, background: 'rgba(124,92,255,.14)', borderRadius: 999, padding: '2px 9px', minWidth: 44, textAlign: 'center' }}>{pct}%</span>
                     </span>
                   </div>
                   <div style={{ height: 8, borderRadius: 6, background: 'rgba(124,92,255,.12)', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${w}%`, background: BAR, borderRadius: 6, transition: 'width .3s' }} />
+                    <div style={{ height: '100%', width: `${pct}%`, background: BAR, borderRadius: 6, transition: 'width .3s' }} />
                   </div>
                 </div>
               </div>
