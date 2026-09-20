@@ -157,6 +157,7 @@ export default function CustomItemsSection() {
   const [rarity, setRarity] = useState('');
   const [g1, setG1] = useState('#FFD24B');
   const [g2, setG2] = useState('#FF3B6B');
+  const [headTag, setHeadTag] = useState('');
   const focusRef = useRef<'name' | 'lore'>('name');
 
   function applyGradient() {
@@ -192,6 +193,14 @@ export default function CustomItemsSection() {
 
   const muted = 'var(--muted, #8a8a94)';
   const codeBtns = ['l', 'o', 'n', 'm', 'r'];
+  // Grades -> badge EmeriaMC (mêmes ids que le mod). Insère [*banner id="..."].
+  const GRADES_LIST: { key: string; label: string }[] = [
+    { key: 'fondateur', label: 'Fondateur' }, { key: 'cofondateur', label: 'Co-fondateur' },
+    { key: 'responsable', label: 'Responsable' }, { key: 'admin', label: 'Admin' },
+    { key: 'dev', label: 'Dev' }, { key: 'buildeur', label: 'Buildeur' }, { key: 'com', label: 'Com' },
+    { key: 'modo', label: 'Modérateur' }, { key: 'modo_test', label: 'Modo test' }, { key: 'modo_x', label: 'Modo X' },
+    { key: 'supermodo', label: 'Super modo' }, { key: 'betatesteur', label: 'Bêta-testeur' }, { key: 'joueur', label: 'Joueur' },
+  ];
 
   return (
     <div className="launcher-sec">
@@ -255,6 +264,22 @@ export default function CustomItemsSection() {
                 {c === 'l' ? 'G' : c === 'o' ? 'I' : c === 'n' ? 'S' : c === 'm' ? 'B' : 'R'}
               </button>
             ))}
+          </div>
+
+          {/* Insertion rapide : badge de grade + tête de joueur (dans le champ cliqué) */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ color: muted, fontSize: 12 }}>Badge de grade :</span>
+            <select className="btn-sec" defaultValue="" title="Insère le badge du grade"
+              onChange={(e) => { if (e.target.value) { insertCode(`[*banner id="${e.target.value}"]`); e.currentTarget.value = ''; } }}
+              style={{ padding: '6px 10px' }}>
+              <option value="">+ Badge…</option>
+              {GRADES_LIST.map((g) => <option key={g.key} value={g.key}>{g.label}</option>)}
+            </select>
+            <span style={{ color: muted, fontSize: 12, marginLeft: 6 }}>Tête :</span>
+            <input className="btn-sec" value={headTag} onChange={(e) => setHeadTag(e.target.value)}
+              placeholder="pseudo" style={{ padding: '6px 10px', width: 130 }} />
+            <button type="button" className="btn-sec" style={{ padding: '6px 12px' }}
+              onClick={() => { const p = headTag.trim(); if (p) insertCode(`[*playerhead name="${p}"]`); }}>+ Tête</button>
           </div>
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
