@@ -42,9 +42,23 @@ const CANDIDATE = [
 
 const Bubble = GradeBadge;
 
-export default function StaffSection({ myGrade }: { myGrade: string }) {
+export default function StaffSection({
+  myGrade,
+  mySiteUsername,
+  myMcPseudo,
+}: {
+  myGrade: string;
+  mySiteUsername?: string | null;
+  myMcPseudo?: string | null;
+}) {
   const myLevel = getGrade(myGrade).level;
   const canRank = myLevel >= getGrade('responsable').level; // resp+ = ajouter/rank/derank
+  // Voir SA PROPRE carte : réservé fondateur / cofondateur / responsable (resp+).
+  // Un admin, un dev, etc. ne voient jamais leur propre fiche.
+  const canSeeOwnCard = myLevel >= getGrade('responsable').level;
+  const isMyCard = (s: Staff) =>
+    (!!mySiteUsername && (s.site_username ?? '').toLowerCase() === mySiteUsername.toLowerCase()) ||
+    (!!myMcPseudo && (s.pseudo ?? '').toLowerCase() === myMcPseudo.toLowerCase());
   const assignable = CANDIDATE.filter((k) => getGrade(k).level < myLevel);
 
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -182,7 +196,9 @@ export default function StaffSection({ myGrade }: { myGrade: string }) {
     load();
   }
 
-  const selectedStaff = staff.find((s) => s.id === selected) ?? null;
+  // On empêche aussi d'ouvrir sa propre fiche en vue détail si on n'y a pas droit.
+  const selectedStaff =
+    staff.find((s) => s.id === selected && (canSeeOwnCard || !isMyCard(s))) ?? null;
 
   // ---------- Vue détail (fiche d'un staff) ----------
   if (selectedStaff) {
@@ -357,6 +373,7 @@ export default function StaffSection({ myGrade }: { myGrade: string }) {
       ) : (
         <div className="list-rows">
           {[...staff]
+            .filter((s) => canSeeOwnCard || !isMyCard(s))
             .sort(
               (a, b) =>
                 Math.max(0, ...b.grades.map((g) => getGrade(g).level)) -

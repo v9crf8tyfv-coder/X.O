@@ -249,7 +249,11 @@ export default function PanelClient({ account }: Props) {
         ) : current.id === 'acces' ? (
           <AccessSection initial={access} />
         ) : current.id === 'staff' ? (
-          <StaffSection myGrade={account.site_grade} />
+          <StaffSection
+            myGrade={account.site_grade}
+            mySiteUsername={account.username}
+            myMcPseudo={account.minecraft_pseudo}
+          />
         ) : current.id === 'serveurs' ? (
           <ServeursSection />
         ) : current.id === 'cmdblocks' ? (
