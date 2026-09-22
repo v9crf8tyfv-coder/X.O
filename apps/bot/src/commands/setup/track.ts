@@ -80,10 +80,10 @@ export const track: SlashCommand = {
 
     await ensureTrackTable().catch(() => {});
     await db()`
-      insert into tracked_players (pseudo, channel_id, guild_id, enabled)
-      values (${pseudo}, ${interaction.channelId}, ${interaction.guildId}, ${enabled})
+      insert into tracked_players (pseudo, channel_id, guild_id, enabled, added_by)
+      values (${pseudo}, ${interaction.channelId}, ${interaction.guildId}, ${enabled}, ${interaction.user.id})
       on conflict (pseudo, channel_id)
-        do update set enabled = ${enabled}, guild_id = ${interaction.guildId}
+        do update set enabled = ${enabled}, guild_id = ${interaction.guildId}, added_by = ${interaction.user.id}
     `;
 
     await interaction.reply({

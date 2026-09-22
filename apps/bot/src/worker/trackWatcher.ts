@@ -14,26 +14,31 @@ export async function ensureTrackTable(): Promise<void> {
       channel_id text not null,
       guild_id text,
       enabled boolean not null default true,
+      added_by text,
       primary key (pseudo, channel_id)
     )
   `;
+  // Colonne ajoutée après coup (tables existantes) : on la crée si absente.
+  await db()`alter table tracked_players add column if not exists added_by text`.catch(() => {});
 }
 
 // État précédent : pseudo(minuscule) -> nom affiché. Amorcé au 1er tick (aucun post au démarrage).
 let prev: Map<string, string> | null = null;
 
-async function onlineList(): Promise<string[]> {
+/** Liste des joueurs en ligne, ou null si la requête a ÉCHOUÉ (à distinguer de "serveur vide"). */
+async function onlineList(): Promise<string[] | null> {
   try {
     const r = await queryFull(HOST, PORT, { timeout: 5000 });
     return r.players?.list ?? [];
   } catch {
-    return [];
+    return null; // échec réseau -> on ne touche PAS à l'état (évite fausses déco / déco manquées)
   }
 }
 
 async function tick(client: Client): Promise<void> {
   if (!hasDatabase()) return;
   const online = await onlineList();
+  if (online === null) return; // query échouée -> on garde l'état précédent tel quel
   const now = new Map<string, string>();
   for (const p of online) now.set(p.toLowerCase(), p);
 
@@ -51,28 +56,38 @@ async function tick(client: Client): Promise<void> {
 
   if (connected.length === 0 && disconnected.length === 0) return;
 
-  // Joueurs suivis (activés) -> map pseudo(minuscule) -> salons
-  const rows = await db()<{ pseudo: string; channel_id: string }[]>`
-    select pseudo, channel_id from tracked_players where enabled = true
-  `.catch(() => [] as { pseudo: string; channel_id: string }[]);
+  // Joueurs suivis (activés) -> map pseudo(minuscule) -> [{salon, qui a activé}]
+  const rows = await db()<{ pseudo: string; channel_id: string; added_by: string | null }[]>`
+    select pseudo, channel_id, added_by from tracked_players where enabled = true
+  `.catch(() => [] as { pseudo: string; channel_id: string; added_by: string | null }[]);
   if (rows.length === 0) return;
 
-  const channelsFor = new Map<string, string[]>();
+  const targetsFor = new Map<string, { channel_id: string; added_by: string | null }[]>();
   for (const r of rows) {
     const k = r.pseudo.toLowerCase();
-    (channelsFor.get(k) ?? channelsFor.set(k, []).get(k)!).push(r.channel_id);
+    (targetsFor.get(k) ?? targetsFor.set(k, []).get(k)!).push({
+      channel_id: r.channel_id,
+      added_by: r.added_by,
+    });
   }
 
   const post = async (name: string, up: boolean) => {
-    const chans = channelsFor.get(name.toLowerCase());
-    if (!chans) return;
+    const targets = targetsFor.get(name.toLowerCase());
+    if (!targets) return;
     const embed = new EmbedBuilder()
       .setColor(up ? 0x3ba55d : 0xe0574d)
       .setDescription(`${up ? '🟢' : '🔴'} **${name}** s'est ${up ? 'connecté' : 'déconnecté'}.`)
       .setTimestamp();
-    for (const id of chans) {
-      const ch = await client.channels.fetch(id).catch(() => null);
-      if (ch?.isTextBased()) await (ch as TextChannel).send({ embeds: [embed] }).catch(() => {});
+    for (const t of targets) {
+      const ch = await client.channels.fetch(t.channel_id).catch(() => null);
+      if (ch?.isTextBased()) {
+        await (ch as TextChannel)
+          .send({
+            content: t.added_by ? `<@${t.added_by}>` : undefined,
+            embeds: [embed],
+          })
+          .catch(() => {});
+      }
     }
   };
 
