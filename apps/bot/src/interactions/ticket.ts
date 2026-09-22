@@ -121,8 +121,8 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
   },
 };
 
-/** Archive (récap + transcription) puis supprime le salon. Partagé par Fermer et Refuser. */
-async function finalizeClose(client: Client, channel: TextChannel, closedByTag: string): Promise<void> {
+/** Archive (récap + transcription) puis supprime le salon. Partagé par Fermer, Refuser et /removeticket. */
+export async function finalizeClose(client: Client, channel: TextChannel, closedByTag: string): Promise<void> {
   let info: { category_id: string; space: string; opener_tag: string } | null = null;
   if (hasDatabase()) {
     const rows = await db()<{ category_id: string; space: string; opener_tag: string }[]>`

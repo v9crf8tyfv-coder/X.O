@@ -15,6 +15,7 @@ import { resumeServerTimer } from './lib/serverTimer.js';
 import { startServerStatusWatcher } from './worker/serverStatusWatcher.js';
 import { startPlaytimeTracker } from './worker/playtimeTracker.js';
 import { startNewPlayerWatcher } from './worker/newPlayerWatcher.js';
+import { startTrackWatcher } from './worker/trackWatcher.js';
 import { startIgActionsWatcher } from './worker/igActionsWatcher.js';
 // Redémarrage auto désactivé : il faisait process.exit(0) à 00h/12h et l'hébergeur
 // ne relançait pas toujours le process → bot mort. Un bot discord.js n'a pas besoin
@@ -82,6 +83,7 @@ client.once('clientReady', () => {
   startServerStatusWatcher(client);
   startPlaytimeTracker();
   startNewPlayerWatcher(client);
+  startTrackWatcher(client); // co/déco des joueurs suivis via /track
   startIgActionsWatcher(client);
   // startAutoRestart(); // désactivé : provoquait la mort du bot à 00h/12h (voir import ci-dessus)
   startWatchdog(client); // détecte une gateway zombie (bot en ligne mais muet) → relance

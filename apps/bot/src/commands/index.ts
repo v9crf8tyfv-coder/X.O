@@ -27,6 +27,9 @@ import { setupSpoilers } from './setup/setup-spoilers.js';
 import { resetEnd } from './setup/reset-end.js';
 import { resetMonde } from './setup/reset-monde.js';
 import { luckDidi, unluckDidi } from './setup/luck-didi.js';
+import { track } from './setup/track.js';
+import { createTicket } from './setup/createticket.js';
+import { removeTicket } from './setup/removeticket.js';
 
 export const commands: SlashCommand[] = [
   ban,
@@ -61,4 +64,7 @@ export const commands: SlashCommand[] = [
   resetMonde,
   luckDidi,
   unluckDidi,
+  track,
+  createTicket,
+  removeTicket,
 ];
