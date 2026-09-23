@@ -40,7 +40,7 @@ export const TICKET_OMNIPRESENT_GRADES = ['fondateur', 'cofondateur', 'responsab
  */
 export const STAFF_GUILD_ROLE_IDS: Record<string, string> = {
   responsable: '1548681983050121477',
-  admin: '1548694010388811836',
+  admin: '1548682096090808495',
   modo_x: '1548682473150619648',
   modo: '1548682543161810995',
   modo_test: '1548682651983028355',
