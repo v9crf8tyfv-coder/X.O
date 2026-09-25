@@ -106,8 +106,8 @@ export async function publishEffectif(client: Client): Promise<void> {
       );
 
       const parts = [...presentLines, ...absentLines];
-      const body = parts.length ? parts.join('\n') : '> *—*';
-      return `${header}\n${body}`;
+      if (parts.length === 0) return null; // catégorie vide -> on la CACHE complètement
+      return `${header}\n${parts.join('\n')}`;
     }),
   );
 
@@ -138,7 +138,7 @@ export async function publishEffectif(client: Client): Promise<void> {
     '> [Top Serveurs](https://top-serveurs.net/minecraft/vote/emeriamc/success)\n\n' +
     '__**Hiérarchie du staff**__\n\n' +
     fondateurBlock + '\n\n' +
-    sections.join('\n\n');
+    sections.filter((s): s is string => !!s).join('\n\n');
 
   const embed = new EmbedBuilder()
     .setColor(0x4c1d95) // violet foncé

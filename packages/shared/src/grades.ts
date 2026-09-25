@@ -67,6 +67,14 @@ export const GRADES = {
     level: 50,
     surveillance: 'admin', // surveillés par les respo
   },
+  supermodo: {
+    key: 'supermodo',
+    label: 'Super-Modérateur',
+    color: '3b82f6', // bleu
+    roleId: '1552746453687079043', // rôle Discord communauté
+    level: 45, // au-dessus des modérateurs, épaule les admins dans la gestion
+    surveillance: 'staff', // surveillés par les admin
+  },
   dev: {
     key: 'dev',
     label: 'Dev',
