@@ -327,7 +327,7 @@ function ProfileCard({ account }: Props) {
       <div className="profile-info">
         <div className="profile-name">
           {account.username}
-          {['fondateur', 'cofondateur', 'responsable', 'dev'].includes(account.site_grade) && (
+          {['fondateur', 'cofondateur', 'responsable', 'dev', 'admin', 'supermodo'].includes(account.site_grade) && (
             <GradeLogo grade={account.site_grade} />
           )}
         </div>
