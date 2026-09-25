@@ -1,5 +1,6 @@
 import { db } from '@xo/db';
 import { RP_GRADES } from '@xo/shared';
+import { syncRpToGame } from './luckpermsSync';
 
 export interface RpRecord {
   id: string;
@@ -135,7 +136,14 @@ export async function queueRpAction(params: {
   pseudo: string;
   grades: string[];
 }): Promise<void> {
-  if (!params.discordTag) return; // pas de compte Discord lié -> rien à synchroniser
+  // 1) EN JEU (LuckPerms) : applique/retire les groupes RP tout de suite. N'échoue jamais l'action.
+  try {
+    await syncRpToGame(params.pseudo, params.type === 'rp.remove' ? [] : params.grades);
+  } catch (e) {
+    console.error('[RP IG sync]', params.pseudo, e instanceof Error ? e.message : e);
+  }
+  // 2) DISCORD (via le bot) : uniquement si un compte Discord est lié.
+  if (!params.discordTag) return;
   await db()`
     insert into pending_actions (type, discord_tag, minecraft_pseudo, grades, actor, actor_grade, announce)
     values (${params.type}, ${params.discordTag}, ${params.pseudo}, ${params.grades}, 'rp', 'rp', false)

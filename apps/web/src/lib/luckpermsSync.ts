@@ -152,3 +152,44 @@ export async function resetGradeInGame(pseudo: string): Promise<void> {
   if (!getPool()) return;
   await setGroups(pseudo, ['default'], 'default');
 }
+
+/**
+ * Grades RP en jeu : applique/retire UNIQUEMENT les groupes LuckPerms RP (necromancien, mage…)
+ * sans toucher aux groupes staff du joueur. Les noms de groupes LP = les clés des grades RP.
+ */
+export async function syncRpToGame(pseudo: string, rpGrades: string[]): Promise<void> {
+  const p = getPool();
+  if (!p) return;
+  const { RP_GRADES } = await import('@xo/shared');
+  const rpGroups = Object.keys(RP_GRADES);
+  const wanted = new Set(rpGrades.filter((g) => rpGroups.includes(g)));
+  const uuid = (await uuidFromDb(pseudo)) ?? (await fetchUuid(pseudo));
+  if (!uuid) throw new Error(`UUID introuvable pour "${pseudo}"`);
+  const perms = `${PREFIX}user_permissions`;
+  const players = `${PREFIX}players`;
+  const conn = await p.getConnection();
+  try {
+    // Le joueur doit exister dans players (sans changer son primary_group staff).
+    await conn.query(
+      `INSERT IGNORE INTO \`${players}\` (uuid, username, primary_group) VALUES (?, ?, 'default')`,
+      [uuid, pseudo],
+    );
+    // Retire UNIQUEMENT les groupes RP non voulus (les groupes staff ne sont pas touchés).
+    for (const g of rpGroups) {
+      if (!wanted.has(g)) {
+        await conn.query(`DELETE FROM \`${perms}\` WHERE uuid=? AND permission=?`, [uuid, `group.${g}`]);
+      }
+    }
+    // Ajoute les groupes RP voulus (sans doublon).
+    for (const g of wanted) {
+      await conn.query(
+        `INSERT INTO \`${perms}\` (uuid, permission, value, server, world, expiry, contexts)
+         SELECT ?, ?, 1, 'global', 'global', 0, '{}' FROM DUAL
+         WHERE NOT EXISTS (SELECT 1 FROM \`${perms}\` WHERE uuid=? AND permission=?)`,
+        [uuid, `group.${g}`, uuid, `group.${g}`],
+      );
+    }
+  } finally {
+    conn.release();
+  }
+}
