@@ -166,3 +166,26 @@ export const ENTRY_SOURCES: { value: string; label: string; emoji: string }[] = 
   { value: 'reseau', label: 'Un autre réseau', emoji: '🔗' },
   { value: 'autre', label: 'Autre', emoji: '✨' },
 ];
+
+/* =========================================================================
+ * RP (Jeu de Rôle) — système SÉPARÉ des grades staff.
+ * ========================================================================= */
+
+/** Grades RP (grade en jeu + rôle Discord). Gérés dans la section RP des cartes staff. */
+export const RP_GRADES: Record<string, { key: string; label: string; color: string; roleId: string }> = {
+  necromancien: { key: 'necromancien', label: 'Nécromancien', color: '6b21a8', roleId: '1552728951686832158' },
+  mage: { key: 'mage', label: 'Mage', color: '3b82f6', roleId: '1552728910314348595' },
+};
+
+/** Rôle Discord "RP" générique (donné à tout membre ayant un grade RP). */
+export const RP_ROLE_ID = '1549513477670838353';
+
+/**
+ * Grade INTERNE de gestion RP posé sur une carte Staff (OPResp.RP).
+ * Ne s'affiche nulle part (ni effectif, ni tab, ni équipe) : il donne juste
+ * l'accès à la gestion RP (voir la catégorie RP, poser des warn/blame RP…).
+ * Assignable UNIQUEMENT par admin et au-dessus.
+ */
+export const OPRESP_RP_KEY = 'opresp_rp';
+export const OPRESP_RP_LABEL = 'OPResp. RP';
+export const OPRESP_RP_COLOR = '9b59ff';
