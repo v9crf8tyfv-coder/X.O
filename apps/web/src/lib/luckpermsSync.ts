@@ -27,6 +27,7 @@ const LP_GROUP: Record<string, string> = {
   resp_infra: 'respo',
   resp_systeme: 'respo',
   admin: 'admin',
+  supermodo: 'supermodo', // groupe LuckPerms à créer dans le lp editor
   dev: 'dev',
   buildeur: 'builder',
   modo: 'modo',
