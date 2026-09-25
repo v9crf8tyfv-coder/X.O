@@ -110,15 +110,22 @@ function lpGroups(grades: string[]): { groups: string[]; primary: string } {
   return { groups: [...set], primary: primary ?? 'default' };
 }
 
-/** Donne TOUS les groupes au joueur dans LuckPerms (comme plusieurs `lp user X parent add G`). */
+/** Tous les groupes GÉRÉS par le panel (staff). On ne touche QU'À ceux-là : les autres
+ *  groupes du joueur (RP necromancien/mage, groupes ajoutés à la main…) sont laissés intacts. */
+const STAFF_MANAGED_GROUPS = [...new Set(Object.values(LP_GROUP))];
+
+/**
+ * Réconcilie les groupes STAFF du joueur : ajoute ceux voulus, RETIRE ceux gérés non voulus.
+ * N'EFFACE PAS les autres groupes (RP, manuels) — c'est un ajout/retrait ciblé, pas un remplacement.
+ */
 async function setGroups(pseudo: string, groups: string[], primary: string): Promise<void> {
   const p = getPool();
   if (!p) return;
-  // UUID depuis la base d'abord (fiable), Mojang en secours (évite le rate-limit).
   const uuid = (await uuidFromDb(pseudo)) ?? (await fetchUuid(pseudo));
   if (!uuid) throw new Error(`UUID introuvable pour "${pseudo}" (compte premium ?)`);
   const players = `${PREFIX}players`;
   const perms = `${PREFIX}user_permissions`;
+  const wanted = new Set(groups.filter((g) => g && g !== 'default'));
   const conn = await p.getConnection();
   try {
     await conn.query(
@@ -126,13 +133,19 @@ async function setGroups(pseudo: string, groups: string[], primary: string): Pro
        ON DUPLICATE KEY UPDATE username=VALUES(username), primary_group=VALUES(primary_group)`,
       [uuid, pseudo, primary],
     );
-    // On repart propre : on retire tous les group.* puis on remet CHAQUE groupe voulu.
-    await conn.query(`DELETE FROM \`${perms}\` WHERE uuid=? AND permission LIKE 'group.%'`, [uuid]);
-    for (const group of groups) {
+    // Retire les groupes STAFF gérés qui ne sont plus voulus (ex: on enlève SuperModo -> group.supermodo supprimé).
+    for (const g of STAFF_MANAGED_GROUPS) {
+      if (!wanted.has(g)) {
+        await conn.query(`DELETE FROM \`${perms}\` WHERE uuid=? AND permission=?`, [uuid, `group.${g}`]);
+      }
+    }
+    // Ajoute les groupes voulus (sans doublon).
+    for (const g of wanted) {
       await conn.query(
         `INSERT INTO \`${perms}\` (uuid, permission, value, server, world, expiry, contexts)
-         VALUES (?, ?, 1, 'global', 'global', 0, '{}')`,
-        [uuid, `group.${group}`],
+         SELECT ?, ?, 1, 'global', 'global', 0, '{}' FROM DUAL
+         WHERE NOT EXISTS (SELECT 1 FROM \`${perms}\` WHERE uuid=? AND permission=?)`,
+        [uuid, `group.${g}`, uuid, `group.${g}`],
       );
     }
   } finally {
