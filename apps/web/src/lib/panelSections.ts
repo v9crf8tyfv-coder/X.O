@@ -16,6 +16,7 @@ export const PANEL_SECTIONS: PanelSectionDef[] = [
   { id: 'profil', label: 'Profil', icon: '', defaultLevel: 0 },
   { id: 'liens', label: 'Liens utiles', icon: '🔗', defaultLevel: 50 },
   { id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', defaultLevel: 50, soon: true },
+  { id: 'rp', label: 'Gestion RP', icon: '🎭', defaultLevel: 70, extraGrade: 'opresp_rp' },
   { id: 'serveurs', label: 'Gestion Serveurs', icon: '🖥️', defaultLevel: 90 },
   { id: 'cmdblocks', label: 'Command blocks', icon: '🧱', defaultLevel: 90 },
   { id: 'playtime', label: 'Temps de jeu', icon: '⏱️', defaultLevel: 50 },

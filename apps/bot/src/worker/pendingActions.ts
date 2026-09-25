@@ -11,6 +11,8 @@ import {
   STAFF_TAG_ROLE_IDS,
   CHANNELS,
   getGrade,
+  RP_GRADES,
+  RP_ROLE_ID,
 } from '@xo/shared';
 import { ENV } from '../env.js';
 import { publishEffectif } from '../lib/effectifPublish.js';
@@ -120,6 +122,12 @@ async function processAction(client: Client, guild: Guild, a: PendingAction): Pr
   const member = await findMember(guild, a.discord_tag);
   if (!member) throw new Error(`Membre Discord introuvable: ${a.discord_tag}`);
 
+  // Actions RP : on ne touche QU'AUX rôles RP (Nécromancien/Mage + rôle RP générique).
+  if (a.type === 'rp.apply' || a.type === 'rp.remove') {
+    await reconcileRpRoles(guild, member, a.type === 'rp.apply' ? a.grades : []);
+    return;
+  }
+
   // Mémorise le discord_id du staff (sert à lier les absences → effectif)
   await db()`
     update staff set discord_id = ${member.id}
@@ -150,6 +158,24 @@ async function processAction(client: Client, guild: Guild, a: PendingAction): Pr
  * Ne manipule que les rôles réellement présents sur `guild` (les IDs des autres serveurs
  * sont filtrés par `exists`), donc la même logique marche pour le communautaire et le staff.
  */
+/** Applique/retire UNIQUEMENT les rôles RP (Nécromancien/Mage + rôle RP générique). */
+async function reconcileRpRoles(guild: Guild, member: GuildMember, grades: string[]): Promise<void> {
+  const wanted = new Set<string>();
+  for (const g of grades) {
+    const r = RP_GRADES[g]?.roleId ?? null;
+    if (exists(guild, r)) wanted.add(r);
+  }
+  if (grades.length > 0 && exists(guild, RP_ROLE_ID)) wanted.add(RP_ROLE_ID); // rôle RP générique
+  const allRp = [...Object.values(RP_GRADES).map((g) => g.roleId), RP_ROLE_ID].filter(
+    (id): id is string => exists(guild, id),
+  );
+  for (const id of allRp) {
+    const has = member.roles.cache.has(id);
+    if (wanted.has(id) && !has) await member.roles.add(id).catch(() => {});
+    else if (!wanted.has(id) && has) await member.roles.remove(id).catch(() => {});
+  }
+}
+
 async function reconcileGuildRoles(guild: Guild, member: GuildMember, a: PendingAction): Promise<void> {
   const joueur = GRADE_JOUEUR.roleId;
   const isStaffGuild = guild.id === STAFF_GUILD_ID;

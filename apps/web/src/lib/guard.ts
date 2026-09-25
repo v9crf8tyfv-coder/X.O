@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getGrade, GRADES, ALL_GRADES } from '@xo/shared';
+import { getGrade, GRADES, ALL_GRADES, OPRESP_RP_KEY } from '@xo/shared';
 import { getCurrentAccount } from './auth';
 import { isSiteBlocked } from './siteLock';
 import type { Account } from './accounts';
@@ -7,6 +7,21 @@ import type { Account } from './accounts';
 export const ADMIN_LEVEL = GRADES.admin.level;
 export const RESP_LEVEL = GRADES.responsable.level;
 export const FOUNDER_LEVEL = GRADES.cofondateur.level;
+
+/** Peut accéder à la gestion RP : responsable et + OU porteur du grade OPResp.RP. */
+export function canManageRp(account: Account): boolean {
+  const level = getGrade(account.site_grade).level;
+  return level >= RESP_LEVEL || (account.site_grades ?? []).includes(OPRESP_RP_KEY);
+}
+
+/** Garde API pour la section RP (resp+ ou OPResp.RP). */
+export async function requireRp(): Promise<{ account: Account } | NextResponse> {
+  if (await isSiteBlocked()) return NextResponse.json({ error: 'Site verrouillé.' }, { status: 503 });
+  const account = await getCurrentAccount();
+  if (!account) return NextResponse.json({ error: 'Non connecté.' }, { status: 401 });
+  if (!canManageRp(account)) return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 });
+  return { account };
+}
 
 /**
  * Un manager (de niveau `managerLevel`) peut-il attribuer/retirer le grade `g`

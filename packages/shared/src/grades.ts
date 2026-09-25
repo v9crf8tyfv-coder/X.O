@@ -75,6 +75,16 @@ export const GRADES = {
     level: 45, // au-dessus des modérateurs, épaule les admins dans la gestion
     surveillance: 'staff', // surveillés par les admin
   },
+  // Grade INTERNE : donne juste la gestion RP. Ne s'affiche PAS en effectif/tab/équipe.
+  // Assignable par admin et + (level 49 < admin 50).
+  opresp_rp: {
+    key: 'opresp_rp',
+    label: 'OPResp. RP',
+    color: '9b59ff',
+    roleId: null, // aucun rôle Discord communauté (interne à la carte staff)
+    level: 49,
+    surveillance: 'staff',
+  },
   dev: {
     key: 'dev',
     label: 'Dev',

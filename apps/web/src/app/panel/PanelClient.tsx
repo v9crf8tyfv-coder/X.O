@@ -27,6 +27,7 @@ import SupportStaffSection from './SupportStaffSection';
 import VisitsSection from './VisitsSection';
 import AutoMessagesSection from './AutoMessagesSection';
 import StaffSection from './StaffSection';
+import RpSection from './RpSection';
 import ServeursSection from './ServeursSection';
 import LiensSection from './LiensSection';
 import PlaytimeSection from './PlaytimeSection';
@@ -254,6 +255,8 @@ export default function PanelClient({ account }: Props) {
             mySiteUsername={account.username}
             myMcPseudo={account.minecraft_pseudo}
           />
+        ) : current.id === 'rp' ? (
+          <RpSection />
         ) : current.id === 'serveurs' ? (
           <ServeursSection />
         ) : current.id === 'cmdblocks' ? (

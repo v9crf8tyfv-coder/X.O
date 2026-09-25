@@ -32,6 +32,7 @@ const CANDIDATE = [
   'resp_systeme',
   'admin',
   'supermodo',
+  'opresp_rp',
   'dev',
   'buildeur',
   'com',
