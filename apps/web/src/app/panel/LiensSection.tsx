@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { getGrade, isFounderTier } from '@xo/shared';
+import { getGrade, isFounderTier, GRADES } from '@xo/shared';
 import { GradeBadge } from './GradeBadge';
 
 interface Link {
@@ -26,7 +26,13 @@ const GRADE_CHOICES = [
 ];
 
 export default function LiensSection({ myGrade }: { myGrade: string }) {
-  const founder = isFounderTier(myGrade);
+  const founder = isFounderTier(myGrade); // suppression réservée aux fondateurs
+  const myLevel = getGrade(myGrade).level;
+  const canAdd = myLevel >= GRADES.admin.level; // ajout : admin et au-dessus
+  // Un admin ne propose que des grades cibles <= le sien (cohérent avec l'API).
+  const gradeChoices = GRADE_CHOICES.filter(
+    (k) => k === 'joueur' || getGrade(k).level <= myLevel,
+  );
   const [links, setLinks] = useState<Link[]>([]);
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
@@ -77,7 +83,7 @@ export default function LiensSection({ myGrade }: { myGrade: string }) {
           <h2>Liens utiles</h2>
           <p className="site-sub">Les liens destinés à ton grade et en dessous.</p>
         </div>
-        {founder && (
+        {canAdd && (
           <button className="btn-submit add-staff" onClick={() => setAdding((a) => !a)}>
             + Ajouter
           </button>
@@ -85,14 +91,14 @@ export default function LiensSection({ myGrade }: { myGrade: string }) {
       </div>
       {error && <div className="form-error">{error}</div>}
 
-      {adding && founder && (
+      {adding && canAdd && (
         <div className="add-form">
           <div className="add-grid">
             <input placeholder="Titre du lien" value={title} onChange={(e) => setTitle(e.target.value)} />
             <input placeholder="https://…" value={url} onChange={(e) => setUrl(e.target.value)} />
             <select value={grade} onChange={(e) => setGrade(e.target.value)}>
               <option value="">— Destiné à —</option>
-              {GRADE_CHOICES.map((k) => (
+              {gradeChoices.map((k) => (
                 <option key={k} value={k}>
                   {k === 'joueur' ? 'Joueur' : getGrade(k).label}
                 </option>

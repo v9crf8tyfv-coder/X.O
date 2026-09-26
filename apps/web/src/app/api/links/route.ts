@@ -14,16 +14,21 @@ export async function GET() {
   return NextResponse.json(links.filter((l) => getGrade(l.grade).level <= myLevel));
 }
 
-/** Ajouter un lien — fondateurs uniquement */
+/** Ajouter un lien — admin et au-dessus (la suppression, elle, reste aux fondateurs). */
 export async function POST(req: Request) {
-  const g = await requireLevel(FOUNDER_LEVEL);
+  const g = await requireLevel(ADMIN_LEVEL);
   if (g instanceof NextResponse) return g;
+  const myLevel = getGrade(g.account.site_grade).level;
   const { title, url, grade } = await req.json().catch(() => ({}));
   if (!title || !url || !grade) {
     return NextResponse.json({ error: 'Titre, lien et grade requis.' }, { status: 400 });
   }
   if (grade !== 'joueur' && !ALL_GRADES[grade]) {
     return NextResponse.json({ error: 'Grade invalide.' }, { status: 400 });
+  }
+  // On ne peut destiner un lien qu'à un grade <= son propre niveau (sinon lien invisible pour soi).
+  if (getGrade(grade).level > myLevel) {
+    return NextResponse.json({ error: 'Tu ne peux pas cibler un grade au-dessus du tien.' }, { status: 403 });
   }
   await addLink(String(title), String(url), String(grade), g.account.username);
   return NextResponse.json({ ok: true });
