@@ -46,5 +46,20 @@ export const dmdfinish: SlashCommand = {
     );
 
     await interaction.reply({ embeds: [embed], components: [row] });
+
+    // Log de l'usage (pour le Suivis Staff : nombre de /dmdfinish par mois et par staff).
+    await db()`
+      create table if not exists dmdfinish_log (
+        id bigserial primary key,
+        discord_id text not null,
+        pseudo text,
+        channel_id text,
+        used_at timestamptz not null default now()
+      )
+    `.catch(() => {});
+    await db()`
+      insert into dmdfinish_log (discord_id, pseudo, channel_id)
+      values (${interaction.user.id}, ${pseudo}, ${interaction.channelId})
+    `.catch(() => {});
   },
 };
