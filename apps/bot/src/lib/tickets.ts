@@ -55,9 +55,8 @@ export function buildCategorySelect(space: TicketSpace): ActionRowBuilder<String
 
 /** Embed du panneau de tickets (posté par /setup-ticket) */
 export function buildTicketPanelEmbed(space: TicketSpace): EmbedBuilder {
-  return new EmbedBuilder()
+  const embed = new EmbedBuilder()
     .setColor(BRAND_COLOR)
-    .setTitle(space === 'staff' ? '🎫 Tickets Staff' : '🎫 Ouvrir un ticket')
     .setDescription(
       space === 'staff'
         ? 'Sélectionne une **catégorie** dans le menu ci-dessous pour ouvrir un ticket.\n' +
@@ -66,6 +65,8 @@ export function buildTicketPanelEmbed(space: TicketSpace): EmbedBuilder {
             '👉 Les problèmes de **Launcher** ou ceux qui nécessitent l’intervention d’un **Responsable** se trouvent sur le site.',
     )
     .setFooter({ text: 'X.O • Tickets' });
+  if (space === 'staff') embed.setTitle('🎫 Tickets Staff');
+  return embed;
 }
 
 /** Embed persistant en haut du ticket (pseudo + type + bouton fermer) */
