@@ -92,43 +92,28 @@ export const TICKET_CATEGORIES_STAFF = [
  */
 export const TICKET_CATEGORIES_NORMAL = [
   {
+    // Accès : Modo t, Modo, Modo X, SM, Admin (+ omniprésents : Resp, Co-fonda, Fonda)
     id: 'question_gameplay',
     label: 'Question Gameplay',
-    description: 'Une question sur le jeu (modo)',
+    description: 'Une question sur le jeu',
     emoji: '🎮',
-    allowedGrades: ['modo'],
+    allowedGrades: ['modo_test', 'modo', 'modo_x', 'supermodo', 'admin'],
   },
   {
-    id: 'besoin_responsable',
-    label: 'Besoin Responsable',
-    description: 'Parler à un responsable',
-    emoji: '📞',
-    allowedGrades: [],
-    onlyOmnipresent: true, // only responsables
-  },
-  // Tickets de candidature retirés : les candidatures passent désormais par le
-  // forum du site (emeria-site.com/forum → embed Discord + bouton "Traité").
-  {
+    // Accès : SM, Admin, Dev (+ omniprésents : Resp, Co-fonda, Fonda)
     id: 'bug_report_normal',
     label: 'Bug Report',
-    description: 'Signaler un bug (modo, admin)',
+    description: 'Signaler un bug',
     emoji: '🐛',
-    allowedGrades: ['modo', 'admin'],
+    allowedGrades: ['supermodo', 'admin', 'dev'],
   },
   {
-    id: 'report_staff',
-    label: "Report d'un Staff",
-    description: 'Erreur ou abus de staff (responsable)',
-    emoji: '🚨',
-    allowedGrades: [],
-    onlyOmnipresent: true, // only responsables
-  },
-  {
-    id: 'probleme_launcher',
-    label: 'Problème launcher',
-    description: 'Souci avec le launcher EmeriaMC',
-    emoji: '🖥️',
-    allowedGrades: ['dev', 'admin'], // + omniprésents (fonda, cofonda, resp)
+    // Accès : SM, Admin (+ omniprésents : Resp, Co-fonda, Fonda)
+    id: 'autres',
+    label: 'Autres',
+    description: 'Toute autre demande',
+    emoji: '📩',
+    allowedGrades: ['supermodo', 'admin'],
   },
 ] as const;
 

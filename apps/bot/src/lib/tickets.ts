@@ -62,12 +62,8 @@ export function buildTicketPanelEmbed(space: TicketSpace): EmbedBuilder {
       space === 'staff'
         ? 'Sélectionne une **catégorie** dans le menu ci-dessous pour ouvrir un ticket.\n' +
             'Un salon privé sera créé rien que pour toi.'
-        : 'Une question, un problème ou une demande particulière ?\n' +
-            'Notre système de tickets vous permet de contacter directement l’équipe EmeriaMC dans un espace privé et dédié.\n\n' +
-            'Avant d’ouvrir un ticket, merci de sélectionner la catégorie correspondant le mieux à votre demande. Cela permettra à notre équipe d’identifier rapidement votre besoin et de vous apporter une réponse adaptée.\n\n' +
-            'Chaque ticket est strictement privé : seuls vous et les membres de l’équipe autorisés pourront y accéder.\n\n' +
-            '**Les tickets Support sont aussi disponibles pour des problèmes uniquement résolvables par des responsables ou fondateurs**\n' +
-            '-# —> https://emeria-site.com/\n\n' +
+        : '📞 N’hésite pas à faire un ticket en cas de **problèmes**.\n' +
+            '👉 Les problèmes de **Launcher** ou ceux qui nécessitent l’intervention d’un **Responsable** se trouvent sur le site.\n\n' +
             '> <:EmeriaMC:1541095551511298139>  **L’équipe d\'EmeriaMC.**',
     )
     .setFooter({ text: 'X.O • Tickets' });
@@ -137,24 +133,15 @@ export async function resolveTicketParent(
     return panel?.parentId ?? undefined;
   }
 
-  const respoOnly = isRespoOnly(category);
-  const name = respoOnly ? 'Besoin Responsable' : 'Divers';
-  let cat = guild.channels.cache.find(
-    (c): c is CategoryChannel => c.type === ChannelType.GuildCategory && c.name.toLowerCase() === name.toLowerCase(),
-  );
-  try {
-    if (!cat) {
-      cat = await guild.channels.create({
-        name,
-        type: ChannelType.GuildCategory,
-        permissionOverwrites: respoOnly ? respoCategoryOverwrites(guild) : undefined,
-      });
-    }
-  } catch {
-    return undefined; // en cas d'échec on laisse le salon sans catégorie (ne bloque pas la création)
-  }
-  return cat?.id;
+  // Normal : TOUS les tickets sous la catégorie "Support" (ID fixe, Discord communautaire).
+  const cat =
+    guild.channels.cache.get(SUPPORT_CATEGORY_ID) ??
+    (await guild.channels.fetch(SUPPORT_CATEGORY_ID).catch(() => null));
+  return cat?.id ?? undefined;
 }
+
+/** Catégorie Discord "Support" (communauté) où sont créés les tickets normaux. */
+const SUPPORT_CATEGORY_ID = '1553885968686129153';
 
 /** Permissions de la catégorie "Besoin Responsable" : personne, sauf Resp/Fonda/Co-fonda (+ bot). */
 function respoCategoryOverwrites(guild: Guild): OverwriteResolvable[] {
