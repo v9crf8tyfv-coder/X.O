@@ -8,7 +8,7 @@ import { onReady } from './events/ready.js';
 import { onGuildMemberAdd } from './events/guildMemberAdd.js';
 import { onGuildMemberUpdate } from './events/guildMemberUpdate.js';
 import { onMessageCreate } from './events/messageCreate.js';
-import { onBugReport } from './lib/bugWatch.js';
+import { onBugReport, scanBugChannels } from './lib/bugWatch.js';
 import { onVoiceStateUpdate } from './events/voiceStateUpdate.js';
 import { onAuditLog } from './events/auditLog.js';
 import { startPendingActionsWorker } from './worker/pendingActions.js';
@@ -88,6 +88,7 @@ client.once('clientReady', () => {
   startNewPlayerWatcher(client);
   startTrackWatcher(client); // co/déco des joueurs suivis via /track
   startIgActionsWatcher(client);
+  void scanBugChannels(client); // rattrape les bug reports existants non traités (orange + DM)
   // startAutoRestart(); // désactivé : provoquait la mort du bot à 00h/12h (voir import ci-dessus)
   startWatchdog(client); // détecte une gateway zombie (bot en ligne mais muet) → relance
   startVoteBoardWorker(client); // rafraîchit l'embed du classement des votes (/setup-vote)
