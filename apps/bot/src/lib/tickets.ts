@@ -73,7 +73,7 @@ export function buildTicketPanelEmbed(space: TicketSpace): EmbedBuilder {
 export function buildTicketHeaderEmbed(openerTag: string, category: TicketCategory): EmbedBuilder {
   return new EmbedBuilder()
     .setColor(BRAND_COLOR)
-    .setTitle(`🎫 Ticket — ${category.label}`)
+    .setTitle(`🎫 Ticket - ${category.label}`)
     .setDescription(
       `👤 **Ouvert par :** ${openerTag}\n` +
         `📌 **Type :** ${category.label}\n\n` +
