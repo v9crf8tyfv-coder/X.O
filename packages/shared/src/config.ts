@@ -109,6 +109,22 @@ export const TICKET_CATEGORIES_NORMAL = [
   },
   {
     // Accès : SM, Admin (+ omniprésents : Resp, Co-fonda, Fonda)
+    id: 'question_sanction',
+    label: 'Question Sanction',
+    description: 'Une question sur une sanction',
+    emoji: '⚖️',
+    allowedGrades: ['supermodo', 'admin'],
+  },
+  {
+    // Accès : Admin (+ omniprésents : Resp, Co-fonda, Fonda)
+    id: 'remboursement',
+    label: 'Remboursement',
+    description: 'Demande de remboursement',
+    emoji: '💰',
+    allowedGrades: ['admin'],
+  },
+  {
+    // Accès : SM, Admin (+ omniprésents : Resp, Co-fonda, Fonda)
     id: 'autres',
     label: 'Autres',
     description: 'Toute autre demande',
