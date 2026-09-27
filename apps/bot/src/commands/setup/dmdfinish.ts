@@ -6,7 +6,7 @@ import {
   ButtonStyle,
   type GuildMember,
 } from 'discord.js';
-import { GRADES, BRAND_COLOR, STAFF_GRADE_EMOJI, gradeLogoKey } from '@xo/shared';
+import { GRADES, BRAND_COLOR, STAFF_GRADE_EMOJI, FOUNDER_IG_PSEUDO, gradeLogoKey } from '@xo/shared';
 import { db } from '@xo/db';
 import { highestGrade } from '../../lib/permissions.js';
 import { findCategory, type TicketSpace } from '../../lib/tickets.js';
@@ -48,6 +48,8 @@ export const dmdfinish: SlashCommand = {
       limit 1
     `.catch(() => [] as { pseudo: string }[]);
     let pseudo = staff[0]?.pseudo ?? '';
+    // Fondateurs sans carte staff (ex : ilian0800 -> Xtazzking, orionyx84 -> Orionyx84).
+    if (!pseudo) pseudo = FOUNDER_IG_PSEUDO[username.toLowerCase()] ?? '';
     if (!pseudo) {
       const acc = await db()<{ pseudo: string }[]>`
         select minecraft_pseudo as pseudo from accounts

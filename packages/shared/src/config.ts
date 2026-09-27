@@ -199,6 +199,15 @@ export const OPRESP_RP_COLOR = '9b59ff';
  * rien ne s'affiche (pas de plantage). Ex : /dmdfinish -> "Cordialement, Pseudo <logo>".
  * Noms tels qu'uploadés sur le Discord EmeriaMC.
  */
+/**
+ * Repli pseudo IN-GAME pour les fondateurs SANS carte staff (username Discord -> pseudo IG).
+ * Utilisé uniquement quand aucune carte staff n'existe (ex : /dmdfinish). Clé en minuscule.
+ */
+export const FOUNDER_IG_PSEUDO: Record<string, string> = {
+  orionyx84: 'Orionyx84',
+  ilian0800: 'Xtazzking',
+};
+
 export const STAFF_GRADE_EMOJI: Record<string, string> = {
   fondateur: 'LogoFondateur',
   cofondateur: 'LogoCF',
