@@ -19,7 +19,7 @@ export const CHANNELS = {
   // --- Salons du serveur COMMUNAUTÉ (principal) ---
   accueil: '1535380217257005148',
   ticketNormal: '1535383613263183883',
-  archivesTicketNormal: '1535421887121985566', // transcripts des tickets JOUEURS
+  archivesTicketNormal: '1553898063435927552', // transcripts des tickets JOUEURS -> salon staff (nouveau Discord)
   taverne: '1535347207195328652', // annonces de rank (public)
   generalStaff: '1535333104733003896', // annonces de rank (staff)
   lancerJeu: '1535350366382719037', // embed "lancer le jeu"

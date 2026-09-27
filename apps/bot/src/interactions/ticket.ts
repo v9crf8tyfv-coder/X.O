@@ -76,12 +76,16 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
       const parentId = await resolveTicketParent(guild, space, category);
 
       const safeName = interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
-      // Ticket STAFF -> un "S" (🇸) dans le nom ; ticket joueur -> emoji du type.
-      const prefix = space === 'staff' ? '🇸' : (typeof category.emoji === 'string' ? category.emoji : '');
+      // Ticket STAFF -> un "S" (🇸) dans le nom ; ticket joueur -> AUCUN emoji.
+      const prefix = space === 'staff' ? '🇸' : '';
+      // Position : en bas de la catégorie (après les salons existants). NB : Discord affiche
+      // TOUJOURS les salons texte au-dessus des vocaux, donc "en bas" = bas de la section texte.
+      const inCat = parentId ? guild.channels.cache.filter((c) => c.parentId === parentId).size : 0;
       const ticketChannel = await guild.channels.create({
         name: `${prefix}ticket-${safeName || interaction.user.id.slice(-4)}`,
         type: ChannelType.GuildText,
         parent: parentId,
+        position: inCat + 10,
         permissionOverwrites: buildTicketOverwrites(guild, interaction.user.id, category),
       });
 

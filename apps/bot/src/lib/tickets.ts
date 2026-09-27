@@ -63,8 +63,7 @@ export function buildTicketPanelEmbed(space: TicketSpace): EmbedBuilder {
         ? 'Sélectionne une **catégorie** dans le menu ci-dessous pour ouvrir un ticket.\n' +
             'Un salon privé sera créé rien que pour toi.'
         : '📞 N’hésite pas à faire un ticket en cas de **problèmes**.\n' +
-            '👉 Les problèmes de **Launcher** ou ceux qui nécessitent l’intervention d’un **Responsable** se trouvent sur le site.\n\n' +
-            '> <:EmeriaMC:1541095551511298139>  **L’équipe d\'EmeriaMC.**',
+            '👉 Les problèmes de **Launcher** ou ceux qui nécessitent l’intervention d’un **Responsable** se trouvent sur le site.',
     )
     .setFooter({ text: 'X.O • Tickets' });
 }
