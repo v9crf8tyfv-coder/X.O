@@ -65,7 +65,7 @@ export function buildTicketPanelEmbed(space: TicketSpace): EmbedBuilder {
             '👉 Les problèmes de **Launcher** ou ceux qui nécessitent l’intervention d’un **Responsable** se trouvent sur le site.',
     )
     .setFooter({ text: 'X.O • Tickets' });
-  if (space === 'staff') embed.setTitle('🎫 Tickets Staff');
+  embed.setTitle(space === 'staff' ? '🎫 Tickets Staff' : '🎫 Ticket - Questions');
   return embed;
 }
 
