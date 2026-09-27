@@ -75,14 +75,17 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
       // Rangé dans la bonne catégorie Discord (staff : pas de création ; joueurs : Divers/Besoin Resp.)
       const parentId = await resolveTicketParent(guild, space, category);
 
-      const safeName = interaction.user.username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
-      // Ticket STAFF -> un "S" (🇸) dans le nom ; ticket joueur -> AUCUN emoji.
-      const prefix = space === 'staff' ? '🇸' : '';
+      // Numéro AUTO-incrémenté par espace (les tickets fermés restent en base -> jamais réutilisé).
+      const cntRows = await db()<{ n: number }[]>`
+        select count(*)::int as n from tickets where space = ${space}
+      `.catch(() => [{ n: 0 }] as { n: number }[]);
+      const num = (cntRows[0]?.n ?? 0) + 1;
+      const chanName = space === 'staff' ? `ticket-staff-${num}` : `ticket-${num}`;
       // Position : en bas de la catégorie (après les salons existants). NB : Discord affiche
       // TOUJOURS les salons texte au-dessus des vocaux, donc "en bas" = bas de la section texte.
       const inCat = parentId ? guild.channels.cache.filter((c) => c.parentId === parentId).size : 0;
       const ticketChannel = await guild.channels.create({
-        name: `${prefix}ticket-${safeName || interaction.user.id.slice(-4)}`,
+        name: chanName,
         type: ChannelType.GuildText,
         parent: parentId,
         position: inCat + 10,
