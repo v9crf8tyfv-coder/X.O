@@ -10,6 +10,7 @@ import { removeall } from './moderation/removeall.js';
 import { panel } from './setup/panel.js';
 import { setupAbsence } from './setup/setup-absence.js';
 import { setupTicket } from './setup/setup-ticket.js';
+import { dmdfinish } from './setup/dmdfinish.js';
 import { setupEntree } from './setup/setup-entree.js';
 import { effectif } from './setup/effectif.js';
 import { setupLancerJeu } from './setup/setup-lancer-jeu.js';
@@ -43,6 +44,7 @@ export const commands: SlashCommand[] = [
   panel,
   setupAbsence,
   setupTicket,
+  dmdfinish,
   setupEntree,
   effectif,
   setupLancerJeu,
