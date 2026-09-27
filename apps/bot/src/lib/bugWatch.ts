@@ -26,6 +26,9 @@ const BUG_CHANNELS = new Set(
 );
 const OWNER_ID = process.env.BUG_OWNER_ID?.trim() || '';
 const EMOJI_ATTENTE = process.env.BUG_EMOJI_ATTENTE?.trim() || 'attente';
+// L'emoji custom :attente: vit dans la guild EmeriaMC (pas la guild Staff où sont les salons),
+// donc c'est un emoji EXTERNE : on réagit par son identifiant name:id (le bot est dans les 2 guilds).
+const EMOJI_ATTENTE_ID = process.env.BUG_EMOJI_ATTENTE_ID?.trim() || '1553471955967942826';
 
 /** Un vrai report suit le schéma : on ignore tout le reste (discussions, schéma épinglé…). */
 function isBugReport(content: string): boolean {
@@ -45,12 +48,20 @@ export async function onBugReport(client: Client, message: Message): Promise<voi
     if (!isBugReport(message.content || '')) return;
 
     // 1) Orange :attente: — le bot marque le report comme "détecté / à corriger".
-    let emoji = message.guild?.emojis.cache.find((e) => e.name === EMOJI_ATTENTE);
-    if (!emoji && message.guild) {
-      const all = await message.guild.emojis.fetch().catch(() => null);
-      emoji = all?.find((e) => e.name === EMOJI_ATTENTE) ?? undefined;
+    // Emoji externe : on réagit d'abord par son identifiant name:id ; sinon on cherche dans
+    // toutes les guilds du bot (client.emojis) ; en dernier recours, ⏳ unicode.
+    let reacted = false;
+    if (EMOJI_ATTENTE_ID) {
+      reacted = await message
+        .react(`${EMOJI_ATTENTE}:${EMOJI_ATTENTE_ID}`)
+        .then(() => true)
+        .catch(() => false);
     }
-    await message.react(emoji ?? '⏳').catch(() => {});
+    if (!reacted) {
+      const e = client.emojis.cache.find((x) => x.name === EMOJI_ATTENTE);
+      if (e) reacted = await message.react(e).then(() => true).catch(() => false);
+    }
+    if (!reacted) await message.react('⏳').catch(() => {});
 
     // 2) DM privé au propriétaire.
     if (!OWNER_ID) return;
