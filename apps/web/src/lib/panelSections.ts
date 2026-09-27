@@ -25,6 +25,7 @@ export const PANEL_SECTIONS: PanelSectionDef[] = [
   { id: 'affiches', label: 'Affiches', icon: '', defaultLevel: 50 },
   { id: 'linkemeria', label: 'Link Emeria', icon: '🔗', defaultLevel: 50 },
   { id: 'customitems', label: 'Items custom', icon: '🛠️', defaultLevel: 50 },
+  { id: 'zones', label: 'Zones', icon: '', defaultLevel: 45 },
   { id: 'formation', label: 'Gestion Formation', icon: '', defaultLevel: 50, extraGrade: 'modo_x' },
   { id: 'launcher', label: 'Launcher', icon: '🚀', defaultLevel: 90 },
   { id: 'support', label: 'Support', icon: '🎫', defaultLevel: 90 },
