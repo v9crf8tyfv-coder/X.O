@@ -27,7 +27,7 @@ const LAUNCHER_MAC_URL = process.env.LAUNCHER_MAC_URL ?? `${REL}/EmeriaMC-mac.dm
 const LAUNCHER_LINUX_URL = process.env.LAUNCHER_LINUX_URL ?? `${REL}/EmeriaMC-linux.AppImage`;
 
 export const setupLancerJeu: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('setup-lancer-lejeu')
     .setDescription('Poster l’embed « Lancer le jeu » dans le salon dédié')

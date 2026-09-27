@@ -190,3 +190,25 @@ export const RP_ROLE_ID = '1549513477670838353';
 export const OPRESP_RP_KEY = 'opresp_rp';
 export const OPRESP_RP_LABEL = 'OPResp. RP';
 export const OPRESP_RP_COLOR = '9b59ff';
+
+/**
+ * Emojis Discord "logo de grade" (clé de LOGO -> NOM de l'emoji custom sur le serveur).
+ * ⚠️ Indexé par la clé de LOGO (voir gradeLogoKey) : modo_test / modo_x partagent LogoModo,
+ * les resp spécialisés partagent LogoResp. Le bot résout l'emoji par ce NOM dans le serveur
+ * (pas d'ID en dur, comparaison souple sans accents/underscores). S'il n'est pas trouvé,
+ * rien ne s'affiche (pas de plantage). Ex : /dmdfinish -> "Cordialement, Pseudo <logo>".
+ * Noms tels qu'uploadés sur le Discord EmeriaMC.
+ */
+export const STAFF_GRADE_EMOJI: Record<string, string> = {
+  fondateur: 'LogoFondateur',
+  cofondateur: 'LogoCF',
+  responsable: 'LogoResp',
+  admin: 'LogoAdmin',
+  supermodo: 'logo_super_modo',
+  dev: 'LogoDev',
+  buildeur: 'LogoBuildeur',
+  com: 'LogoCom',
+  modo: 'LogoModo',
+  betatesteur: 'LogoBetaTest',
+  joueur: 'Logojoueur',
+};

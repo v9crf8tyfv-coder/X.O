@@ -176,6 +176,13 @@ html, body {
 .nav-item:hover { background: var(--bg); }
 .nav-item.active { background: var(--accent); color: #fff; }
 .nav-icon { font-size: 1.1rem; }
+/* Séparateur entre groupes de la sidebar (organisation visuelle). */
+.nav-sep {
+  height: 1px;
+  margin: 8px 8px;
+  background: var(--border, rgba(255, 255, 255, .12));
+  border-radius: 1px;
+}
 
 /* Menu déroulant de sections (mobile uniquement — caché en desktop) */
 .mobile-nav { display: none; }

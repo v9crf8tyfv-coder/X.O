@@ -5,11 +5,12 @@ import {
   type TextChannel,
 } from 'discord.js';
 import type { SlashCommand } from '../../types.js';
-import { CHANNELS } from '@xo/shared';
+import { CHANNELS, GRADES } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { buildCategorySelect, buildTicketPanelEmbed, type TicketSpace } from '../../lib/tickets.js';
 
 export const setupTicket: SlashCommand = {
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('setup-ticket')
     .setDescription('Poster le panneau de tickets')

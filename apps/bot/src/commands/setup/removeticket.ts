@@ -16,7 +16,7 @@ import { finalizeClose } from '../../interactions/ticket.js';
  * d'archives), puis supprime le salon. Même mécanique que le bouton "Fermer".
  */
 export const removeTicket: SlashCommand = {
-  minLevel: GRADES.modo.level,
+  minLevel: GRADES.supermodo.level,
   data: new SlashCommandBuilder()
     .setName('removeticket')
     .setDescription('Ferme et archive le ticket actuel')

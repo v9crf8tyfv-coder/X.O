@@ -9,7 +9,7 @@ import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const unmute: SlashCommand = {
-  minLevel: GRADES.admin.level, // admins et au-dessus peuvent démuter
+  minLevel: GRADES.responsable.level, // enlever une sanction : responsable et +
   data: new SlashCommandBuilder()
     .setName('unmute')
     .setDescription('Retirer le mute (timeout) d\'un membre')

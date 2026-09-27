@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import type { SlashCommand } from '../../types.js';
-import { OWNER_DISCORD_ID } from '@xo/shared';
+import { GRADES } from '@xo/shared';
 import { db, hasDatabase } from '@xo/db';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
@@ -13,44 +13,32 @@ async function setBlocked(value: boolean): Promise<boolean> {
   return true;
 }
 
-/** Verrouille TOUT le site (personne ne peut y accéder, même le proprio). */
+/** Verrouille TOUT le site (personne ne peut y accéder). Responsable et +. */
 export const blockfull: SlashCommand = {
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('blockfull')
-    .setDescription('Verrouiller TOTALEMENT le site (proprio uniquement)')
+    .setDescription('Verrouiller TOTALEMENT le site')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator), // caché aux admins
   async execute(interaction) {
-    if (interaction.user.id !== OWNER_DISCORD_ID) {
-      await interaction.reply({
-        embeds: [errorEmbed('Refusé', 'Commande réservée au propriétaire.')],
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
-    }
     const ok = await setBlocked(true);
     await interaction.reply({
       embeds: ok
-        ? [successEmbed('🔒 Site verrouillé', 'Tout accès au site est bloqué (même toi). Rien n\'est supprimé.')]
+        ? [successEmbed('🔒 Site verrouillé', 'Tout accès au site est bloqué. Rien n\'est supprimé.')]
         : [errorEmbed('Erreur', 'Base non configurée.')],
       flags: MessageFlags.Ephemeral,
     });
   },
 };
 
-/** Déverrouille le site. */
+/** Déverrouille le site. Responsable et +. */
 export const unblockfull: SlashCommand = {
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('unblockfull')
-    .setDescription('Déverrouiller le site (proprio uniquement)')
+    .setDescription('Déverrouiller le site')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator), // caché aux admins
   async execute(interaction) {
-    if (interaction.user.id !== OWNER_DISCORD_ID) {
-      await interaction.reply({
-        embeds: [errorEmbed('Refusé', 'Commande réservée au propriétaire.')],
-        flags: MessageFlags.Ephemeral,
-      });
-      return;
-    }
     const ok = await setBlocked(false);
     await interaction.reply({
       embeds: ok

@@ -37,7 +37,7 @@ async function setLock(guildLock: boolean, interaction: Parameters<SlashCommand[
 }
 
 export const luckDidi: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('luckdidi')
     .setDescription('Verrouiller le Discord : plus personne ne peut rejoindre')
@@ -46,7 +46,7 @@ export const luckDidi: SlashCommand = {
 };
 
 export const unluckDidi: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('unluckdidi')
     .setDescription('Déverrouiller le Discord : on peut de nouveau rejoindre')

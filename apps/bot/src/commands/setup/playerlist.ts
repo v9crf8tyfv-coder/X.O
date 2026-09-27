@@ -16,7 +16,7 @@ const HOST = 'emeriamc.mine.gg';
 const PORT = 10006;
 
 export const playerlist: SlashCommand = {
-  minLevel: GRADES.responsable.level,
+  minLevel: GRADES.supermodo.level,
   data: new SlashCommandBuilder()
     .setName('playerlist')
     .setDescription('Voir les joueurs en ligne (staff en haut, joueurs en bas)')

@@ -30,7 +30,7 @@ import StaffSection from './StaffSection';
 import RpSection from './RpSection';
 import ServeursSection from './ServeursSection';
 import LiensSection from './LiensSection';
-import PlaytimeSection from './PlaytimeSection';
+import SuivisSection from './SuivisSection';
 import SanctionsSection from './SanctionsSection';
 import BackgroundSection from './BackgroundSection';
 import EntryStatsSection from './EntryStatsSection';
@@ -77,6 +77,7 @@ interface Section {
   label: string;
   icon: string;
   soon?: boolean;
+  group: number;
 }
 
 export default function PanelClient({ account }: Props) {
@@ -106,7 +107,7 @@ export default function PanelClient({ account }: Props) {
     }
     if (level >= s.defaultLevel) return true;
     return Boolean(s.extraGrade && account.site_grades.includes(s.extraGrade));
-  }).map((s) => ({ id: s.id, label: s.label, icon: s.icon, soon: s.soon }));
+  }).map((s) => ({ id: s.id, label: s.label, icon: s.icon, soon: s.soon, group: s.group }));
 
   const [active, setActive] = useState('profil');
   const current = sections.find((s) => s.id === active) ?? sections[0];
@@ -190,15 +191,17 @@ export default function PanelClient({ account }: Props) {
           </button>
         </div>
         <nav className="sidebar-nav">
-          {sections.map((s) => (
-            <button
-              key={s.id}
-              className={`nav-item ${active === s.id ? 'active' : ''}`}
-              onClick={() => setActive(s.id)}
-            >
-              {s.icon && <span className="nav-icon">{s.icon}</span>}
-              <span>{s.label}</span>
-            </button>
+          {sections.map((s, i) => (
+            <div key={s.id} style={{ display: 'contents' }}>
+              {i > 0 && sections[i - 1]!.group !== s.group && <div className="nav-sep" aria-hidden="true" />}
+              <button
+                className={`nav-item ${active === s.id ? 'active' : ''}`}
+                onClick={() => setActive(s.id)}
+              >
+                {s.icon && <span className="nav-icon">{s.icon}</span>}
+                <span>{s.label}</span>
+              </button>
+            </div>
           ))}
         </nav>
         <select
@@ -262,8 +265,8 @@ export default function PanelClient({ account }: Props) {
           <ServeursSection />
         ) : current.id === 'cmdblocks' ? (
           <CmdBlocksSection />
-        ) : current.id === 'playtime' ? (
-          <PlaytimeSection />
+        ) : current.id === 'suivis' ? (
+          <SuivisSection />
         ) : current.id === 'sanctions' ? (
           <SanctionsSection />
         ) : current.id === 'affiches' ? (

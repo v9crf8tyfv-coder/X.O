@@ -10,7 +10,7 @@ import { successEmbed } from '../../lib/embeds.js';
  * de la déclencher/prévisualiser à la demande.)
  */
 export const resetMonde: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('resetmonde')
     .setDescription('Annoncer le reset Mine + Nether dans le salon Annonce')

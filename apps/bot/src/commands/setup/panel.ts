@@ -8,12 +8,13 @@ import {
   MessageFlags,
 } from 'discord.js';
 import type { SlashCommand } from '../../types.js';
-import { BRAND_COLOR } from '@xo/shared';
+import { BRAND_COLOR, GRADES } from '@xo/shared';
 
 // URL du site (Vercel). Configurable via .env → SITE_URL
 const SITE_URL = process.env.SITE_URL ?? 'https://x-o-web.vercel.app';
 
 export const panel: SlashCommand = {
+  minLevel: GRADES.supermodo.level,
   data: new SlashCommandBuilder()
     .setName('panel')
     .setDescription('Recevoir le lien du panel de gestion (fondateurs)')

@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import type { SlashCommand } from '../../types.js';
+import { GRADES } from '@xo/shared';
 import { hasDatabase } from '@xo/db';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { publishEffectif } from '../../lib/effectifPublish.js';
@@ -9,6 +10,7 @@ import { publishEffectif } from '../../lib/effectifPublish.js';
  * Basé sur la table `staff` (pseudos Minecraft reliés via le site).
  */
 export const effectif: SlashCommand = {
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('effectif')
     .setDescription("Publier / actualiser l'effectif du staff dans le salon accueil")

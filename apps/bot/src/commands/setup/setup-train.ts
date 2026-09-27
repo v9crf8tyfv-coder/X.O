@@ -10,7 +10,7 @@ import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { controlPanel } from '../../lib/train.js';
 
 export const setupTrain: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('setup-train')
     .setDescription('Poster le panneau d’entraînement modération (salon train modo)')

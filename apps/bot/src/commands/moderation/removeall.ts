@@ -9,7 +9,7 @@ import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const removeall: SlashCommand = {
-  minLevel: GRADES.responsable.level, // au-dessus d'admin (caché aux admins)
+  minLevel: GRADES.supermodo.level, // au-dessus d'admin (caché aux admins)
   data: new SlashCommandBuilder()
     .setName('removeall')
     .setDescription('Supprimer TOUS les messages récents (< 14 jours) de ce salon')

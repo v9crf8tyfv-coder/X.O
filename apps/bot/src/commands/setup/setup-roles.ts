@@ -18,7 +18,7 @@ const RESEAUX_ROLE = '1549452397758124072';
 
 /** Poste un menu de rôles à cliquer (bouton = on prend/retire le rôle). */
 export const setupRoles: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('setup-roles')
     .setDescription('Poster le menu de rôles (clic = prendre/retirer le rôle)')

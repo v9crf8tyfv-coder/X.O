@@ -10,7 +10,7 @@ export const setupSpoilers: SlashCommand = {
     .setName('setup-spoilers')
     .setDescription('Poster le panneau des spoilers (parrainage) dans ce salon')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-  minLevel: GRADES.admin.level,
+  minLevel: GRADES.responsable.level,
   async execute(interaction) {
     const channel = interaction.channel as TextChannel | null;
     if (!channel?.isTextBased()) {

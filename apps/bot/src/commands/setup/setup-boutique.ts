@@ -8,7 +8,7 @@ const BOUTIQUE_CHANNEL = '1538507381825077299';
 
 /** Poste l'embed Boutique (bouton "Entrer mon code") dans le salon boutique. */
 export const setupBoutique: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('setup-boutique')
     .setDescription("Poste l'embed Boutique (bouton pour entrer un code) dans le salon boutique")

@@ -6,7 +6,7 @@ import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 /** Définit le salon vocal "➕ Créer son Salon" (join-to-create). */
 export const setupVoice: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('setup-voice')
     .setDescription('Définit le salon vocal "Créer son Salon" (join-to-create)')

@@ -10,7 +10,7 @@ import { successEmbed } from '../../lib/embeds.js';
  * par un fondateur (Orionyx84 / ilian0800).
  */
 export const resetEnd: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('resetend')
     .setDescription("Annoncer le reset de l'End dans le salon Annonce")

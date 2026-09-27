@@ -5,7 +5,7 @@ import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { setServerTimer, fmtDuration, RENEWAL_SEC } from '../../lib/serverTimer.js';
 
 export const setbytenut: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('setbytenut')
     .setDescription('Régler le temps restant du serveur (ping fonda à 0, bouton pour relancer)')

@@ -6,7 +6,7 @@ import { publishVoteBoard } from '../../lib/voteBoard.js';
 
 /** Poste (ou déplace) l'embed du classement des votes dans le salon courant. Auto-actualisé. */
 export const setupVote: SlashCommand = {
-  minLevel: GRADES.cofondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('setup-vote')
     .setDescription('Poster le classement des votes (top 3) dans ce salon, auto-actualisé')

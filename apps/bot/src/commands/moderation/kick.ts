@@ -6,7 +6,7 @@ import { recordSanction } from '../../lib/sanctions.js';
 import { surveilCommand } from '../../lib/surveillance.js';
 
 export const kick: SlashCommand = {
-  minLevel: GRADES.modo.level, // modo et au-dessus
+  minLevel: GRADES.supermodo.level, // modo et au-dessus
   data: new SlashCommandBuilder()
     .setName('kick')
     .setDescription('Expulser un membre du serveur')

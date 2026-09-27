@@ -49,7 +49,7 @@ function escalationOverwrites(guild: Guild, openerId: string, minLevel: number):
  * retirer des membres via /add et /remove.
  */
 export const createTicket: SlashCommand = {
-  minLevel: GRADES.admin.level,
+  minLevel: GRADES.supermodo.level,
   data: new SlashCommandBuilder()
     .setName('createticket')
     .setDescription('Crée un ticket staff visible par ton grade et les grades au-dessus')

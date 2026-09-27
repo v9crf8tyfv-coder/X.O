@@ -10,33 +10,45 @@ export interface PanelSectionDef {
   founderOnly?: boolean;
   /** Grade qui a accès EN PLUS du niveau (ex : modo_x pour la formation). */
   extraGrade?: string;
+  /** Numéro de groupe : un séparateur s'affiche quand il change (organisation visuelle). */
+  group: number;
 }
 
+// Ordre + regroupement de la sidebar. `group` sert UNIQUEMENT à l'affichage
+// (un trait de séparation apparaît quand le numéro change). Aucune permission
+// n'est modifiée ici : defaultLevel / founderOnly / extraGrade sont inchangés.
 export const PANEL_SECTIONS: PanelSectionDef[] = [
-  { id: 'profil', label: 'Profil', icon: '', defaultLevel: 0 },
-  { id: 'liens', label: 'Liens utiles', icon: '🔗', defaultLevel: 50 },
-  { id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', defaultLevel: 50, soon: true },
-  { id: 'rp', label: 'Gestion RP', icon: '🎭', defaultLevel: 70, extraGrade: 'opresp_rp' },
-  { id: 'serveurs', label: 'Gestion Serveurs', icon: '🖥️', defaultLevel: 90 },
-  { id: 'cmdblocks', label: 'Command blocks', icon: '🧱', defaultLevel: 90 },
-  { id: 'playtime', label: 'Temps de jeu', icon: '⏱️', defaultLevel: 50 },
-  { id: 'reseaux', label: 'Gestion Réseaux', icon: '', defaultLevel: 70, soon: true },
-  { id: 'sanctions', label: 'Gestion Sanction(s)', icon: '', defaultLevel: 50 },
-  { id: 'affiches', label: 'Affiches', icon: '', defaultLevel: 50 },
-  { id: 'linkemeria', label: 'Link Emeria', icon: '🔗', defaultLevel: 50 },
-  { id: 'customitems', label: 'Items custom', icon: '🛠️', defaultLevel: 50 },
-  { id: 'zones', label: 'Zones', icon: '', defaultLevel: 45 },
-  { id: 'formation', label: 'Gestion Formation', icon: '', defaultLevel: 50, extraGrade: 'modo_x' },
-  { id: 'launcher', label: 'Launcher', icon: '🚀', defaultLevel: 90 },
-  { id: 'support', label: 'Support', icon: '🎫', defaultLevel: 90 },
-  { id: 'trafic', label: 'Trafic du site', icon: '📈', defaultLevel: 90 },
-  { id: 'automsg', label: 'Messages auto', icon: '💬', defaultLevel: 50 },
-  { id: 'site', label: 'Gestion Site', icon: '🔐', defaultLevel: 90 },
-  { id: 'fond', label: 'Arrière-plan site', icon: '🖼️', defaultLevel: 70 },
-  { id: 'entree', label: "Statistiques d'entrée", icon: '📊', defaultLevel: 70 },
-  { id: 'skins3d', label: 'Skins 3D', icon: '🧍', defaultLevel: 90 },
-  { id: 'da', label: 'DA', icon: '🎨', defaultLevel: 40 },
-  { id: 'acces', label: 'Accès (Fonda)', icon: '🔑', defaultLevel: 100, founderOnly: true },
+  // — Groupe 1 : perso —
+  { id: 'profil', label: 'Profil', icon: '👤', defaultLevel: 0, group: 1 },
+  { id: 'liens', label: 'Liens utiles', icon: '🔗', defaultLevel: 50, group: 1 },
+  // — Groupe 2 : staff —
+  { id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', defaultLevel: 50, soon: true, group: 2 },
+  { id: 'rp', label: 'Gestion RP', icon: '🎭', defaultLevel: 70, extraGrade: 'opresp_rp', group: 2 },
+  { id: 'suivis', label: 'Suivis Staff', icon: '📋', defaultLevel: 50, group: 2 },
+  // — Groupe 3 : gestion —
+  { id: 'formation', label: 'Gestion Formation', icon: '🎓', defaultLevel: 50, extraGrade: 'modo_x', group: 3 },
+  { id: 'sanctions', label: 'Gestion Sanction(s)', icon: '⚖️', defaultLevel: 50, group: 3 },
+  { id: 'serveurs', label: 'Gestion Serveurs', icon: '🖥️', defaultLevel: 90, group: 3 },
+  { id: 'reseaux', label: 'Gestion Réseaux', icon: '📡', defaultLevel: 70, soon: true, group: 3 },
+  { id: 'site', label: 'Gestion Site', icon: '🔐', defaultLevel: 90, group: 3 },
+  // — Groupe 4 : visuel —
+  { id: 'da', label: 'DA', icon: '🎨', defaultLevel: 40, group: 4 },
+  { id: 'affiches', label: 'Affiches', icon: '🪧', defaultLevel: 50, group: 4 },
+  { id: 'skins3d', label: 'Skins 3D', icon: '🧍', defaultLevel: 90, group: 4 },
+  { id: 'fond', label: 'Arrière-plan site', icon: '🖼️', defaultLevel: 70, group: 4 },
+  // — Groupe 5 : outils / jeu —
+  { id: 'launcher', label: 'Launcher', icon: '🚀', defaultLevel: 90, group: 5 },
+  { id: 'customitems', label: 'Items custom', icon: '🛠️', defaultLevel: 50, group: 5 },
+  { id: 'cmdblocks', label: 'Command blocks', icon: '🧱', defaultLevel: 90, group: 5 },
+  { id: 'automsg', label: 'Messages auto', icon: '💬', defaultLevel: 50, group: 5 },
+  { id: 'linkemeria', label: 'Link Emeria', icon: '🔗', defaultLevel: 50, group: 5 },
+  { id: 'zones', label: 'Zones', icon: '🗺️', defaultLevel: 45, group: 5 },
+  { id: 'support', label: 'Support', icon: '🎫', defaultLevel: 90, group: 5 },
+  // — Groupe 6 : stats —
+  { id: 'trafic', label: 'Trafic du site', icon: '📈', defaultLevel: 90, group: 6 },
+  { id: 'entree', label: "Statistiques d'entrée", icon: '📊', defaultLevel: 70, group: 6 },
+  // — Groupe 7 : Fonda (toujours en bas) —
+  { id: 'acces', label: 'Accès (Fonda)', icon: '🔑', defaultLevel: 100, founderOnly: true, group: 7 },
 ];
 
 /**

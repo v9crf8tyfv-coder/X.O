@@ -10,7 +10,7 @@ import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 /** /add <membre> — ajoute un membre au ticket (salon) actuel. */
 export const ticketAdd: SlashCommand = {
-  minLevel: GRADES.modo.level,
+  minLevel: GRADES.supermodo.level,
   data: new SlashCommandBuilder()
     .setName('add')
     .setDescription('Ajoute un membre au ticket actuel')
@@ -30,7 +30,7 @@ export const ticketAdd: SlashCommand = {
 
 /** /remove <membre> — retire un membre du ticket (salon) actuel. */
 export const ticketRemove: SlashCommand = {
-  minLevel: GRADES.modo.level,
+  minLevel: GRADES.supermodo.level,
   data: new SlashCommandBuilder()
     .setName('remove')
     .setDescription('Retire un membre du ticket actuel')

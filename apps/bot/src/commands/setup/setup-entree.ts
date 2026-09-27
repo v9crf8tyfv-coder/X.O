@@ -11,7 +11,7 @@ import { buildEntreeMessage } from '../../lib/entree.js';
 
 /** Publie le panneau "Comment as-tu connu EmeriaMC ?" dans le salon courant (fondateurs). */
 export const setupEntree: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('setup-entree')
     .setDescription("Publie le panneau d'entrée (Comment as-tu connu EmeriaMC ?) dans ce salon")

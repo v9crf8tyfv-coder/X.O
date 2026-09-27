@@ -9,10 +9,11 @@ import {
   type TextChannel,
 } from 'discord.js';
 import type { SlashCommand } from '../../types.js';
-import { CHANNELS, BRAND_COLOR } from '@xo/shared';
+import { CHANNELS, BRAND_COLOR, GRADES } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const setupAbsence: SlashCommand = {
+  minLevel: GRADES.responsable.level,
   data: new SlashCommandBuilder()
     .setName('setup-absence')
     .setDescription('Poster le panneau des absences dans le salon absences')

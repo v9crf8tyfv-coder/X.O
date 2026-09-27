@@ -5,7 +5,7 @@ import { startAnnounce, stopAnnounce } from '../../lib/announceState.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const annonceStart: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.supermodo.level,
   data: new SlashCommandBuilder()
     .setName('annoncestart')
     .setDescription('Active le mode annonce : tes messages ici seront postés par le bot')
@@ -32,7 +32,7 @@ export const annonceStart: SlashCommand = {
 };
 
 export const annonceStop: SlashCommand = {
-  minLevel: GRADES.fondateur.level,
+  minLevel: GRADES.supermodo.level,
   data: new SlashCommandBuilder()
     .setName('annoncestop')
     .setDescription('Désactive le mode annonce')
