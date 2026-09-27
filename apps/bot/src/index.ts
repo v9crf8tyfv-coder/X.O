@@ -8,6 +8,7 @@ import { onReady } from './events/ready.js';
 import { onGuildMemberAdd } from './events/guildMemberAdd.js';
 import { onGuildMemberUpdate } from './events/guildMemberUpdate.js';
 import { onMessageCreate } from './events/messageCreate.js';
+import { onBugReport } from './lib/bugWatch.js';
 import { onVoiceStateUpdate } from './events/voiceStateUpdate.js';
 import { onAuditLog } from './events/auditLog.js';
 import { startPendingActionsWorker } from './worker/pendingActions.js';
@@ -112,6 +113,7 @@ client.on('guildMemberRemove', (m) => void onMemberLeave(m.id)); // parrainage :
 client.on('inviteCreate', (inv) => onInviteCreate(inv)); // maj cache des invitations
 client.on('guildMemberUpdate', (oldM, newM) => onGuildMemberUpdate(client, oldM, newM));
 client.on('messageCreate', (m) => onMessageCreate(client, m));
+client.on('messageCreate', (m) => void onBugReport(client, m)); // détecteur bug reports (orange + DM)
 client.on('voiceStateUpdate', (o, n) => onVoiceStateUpdate(client, o, n));
 client.on('guildAuditLogEntryCreate', (entry, guild) => onAuditLog(client, entry, guild));
 
