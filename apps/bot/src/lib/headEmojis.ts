@@ -50,11 +50,17 @@ export async function headEmoji(client: Client, pseudo: string): Promise<string>
     // Timeout 6s : si le service externe traîne, on abandonne cette tête au lieu de BLOQUER
     // tout l'effectif (c'était la cause du "/effectif charge à l'infini").
     const src = `mc-heads.net/avatar/${encodeURIComponent(pseudo)}/64`;
+    // Repli Steve garanti : si mc-heads échoue (lenteur / vide), wsrv sert le Steve au lieu
+    // de renvoyer une erreur -> on obtient toujours une image valide pour créer l'émoji.
+    const steve = 'https://minotar.net/helm/MHF_Steve/64.png';
     const ctrl = new AbortController();
     const to = setTimeout(() => ctrl.abort(), 6000);
     let res: Response;
     try {
-      res = await fetch(`https://wsrv.nl/?url=${encodeURIComponent(src)}&mask=circle&output=png`, { signal: ctrl.signal });
+      res = await fetch(
+        `https://wsrv.nl/?url=${encodeURIComponent(src)}&mask=circle&output=png&default=${encodeURIComponent(steve)}`,
+        { signal: ctrl.signal },
+      );
     } finally {
       clearTimeout(to);
     }

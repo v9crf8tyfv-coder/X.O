@@ -8,6 +8,7 @@ import {
 } from 'discord.js';
 import { db, hasDatabase } from '@xo/db';
 import { GRADES, STAFF_GUILD_ID, STAFF_TAG_ROLE_IDS } from '@xo/shared';
+import { headUrl } from '../lib/headUrl.js';
 
 /** Salon où sont postées les nouvelles candidatures du forum (Discord staff). */
 const CANDID_CHANNEL_ID = '1548704058720780421';
@@ -90,7 +91,7 @@ async function poll(client: Client): Promise<void> {
       try {
         const grade = ev.grade || 'Staff';
         const player = ev.player || 'Joueur';
-        const face = `https://mc-heads.net/avatar/${encodeURIComponent(player)}/128`;
+        const face = headUrl(player, 128);
         const link = ev.thread_id ? `${SITE}/forum#thread=${ev.thread_id}` : `${SITE}/forum`;
         const embed = new EmbedBuilder()
           .setColor(colorFor(grade))

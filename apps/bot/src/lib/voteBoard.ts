@@ -2,6 +2,7 @@ import { EmbedBuilder, type Client, type TextChannel } from 'discord.js';
 import { BRAND_COLOR } from '@xo/shared';
 import { db, hasDatabase } from '@xo/db';
 import { getVoteRanking, type VoteRow } from './voteRanking.js';
+import { headUrl } from './headUrl.js';
 
 const CH_KEY = 'vote_board_channel';
 const MSG_KEY = 'vote_board_message';
@@ -24,7 +25,7 @@ function buildEmbed(top: VoteRow[]): EmbedBuilder {
       .map((p, i) => `**${rank[i]}** ${p.name} — **${p.votes}** vote${p.votes > 1 ? 's' : ''}`)
       .join('\n'),
   );
-  e.setThumbnail(`https://mc-heads.net/avatar/${encodeURIComponent(top3[0]!.name)}/128`);
+  e.setThumbnail(headUrl(top3[0]!.name, 128));
   return e;
 }
 

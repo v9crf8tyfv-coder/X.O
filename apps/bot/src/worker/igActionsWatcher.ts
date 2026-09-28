@@ -2,6 +2,7 @@ import type { Client } from 'discord.js';
 import { db, hasDatabase } from '@xo/db';
 import { getGrade, type SurveillanceCategory } from '@xo/shared';
 import { logSurveillance } from '../lib/surveillance.js';
+import { headUrl } from '../lib/headUrl.js';
 
 const EVERY_MS = 30_000;
 
@@ -71,7 +72,7 @@ async function tick(client: Client): Promise<void> {
           action: r.action,
           actor: r.actor,
           actorGradeKey: key,
-          actorAvatar: `https://mc-heads.net/avatar/${encodeURIComponent(r.actor)}/64`,
+          actorAvatar: headUrl(r.actor, 64),
           target: r.target,
           source: r.source === 'site' ? 'site' : 'ig',
           fields: r.details ? [{ name: '📋 Détails', value: r.details.slice(0, 1000) }] : undefined,
