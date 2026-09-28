@@ -9,7 +9,7 @@ import { parseDuration } from '../../lib/duration.js';
 const MAX_TIMEOUT = 28 * 86_400_000; // 28 jours (limite Discord)
 
 export const mute: SlashCommand = {
-  minLevel: GRADES.supermodo.level, // modo et au-dessus
+  minLevel: GRADES.modo.level, // modo et au-dessus
   data: new SlashCommandBuilder()
     .setName('mute')
     .setDescription('Réduire au silence un membre (timeout)')
