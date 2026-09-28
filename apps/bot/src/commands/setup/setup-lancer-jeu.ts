@@ -46,18 +46,15 @@ export const setupLancerJeu: SlashCommand = {
 
     const embed = new EmbedBuilder()
       .setColor(BRAND_COLOR)
-      .setTitle('👋 Bienvenue sur EmeriaMC')
       .setDescription(
-        'Bienvenue sur EmeriaMC, ton nouveau serveur Minecraft.\n\n' +
-          'Afin de rejoindre l’aventure dans les meilleures conditions, tu peux télécharger le launcher correspondant à ton système d’exploitation. Windows, macOS et Linux sont actuellement pris en charge.\n\n' +
-          'Chaque launcher te permettra d’installer et de lancer facilement le serveur avec la configuration nécessaire.\n\n' +
+        'Chaque launcher te permettra d’installer et de lancer facilement le serveur avec la configuration nécessaire.\n\n' +
           '**Téléchargements :**\n' +
-          '🪟 Launcher Windows\n' +
-          '🍎 Launcher macOS\n' +
-          '🐧 Launcher Linux\n\n' +
+          '1. Launcher Windows 🪟\n' +
+          '2. Launcher macOS 🍎\n' +
+          '3. Launcher Linux 🐧\n\n' +
           'Si tu rencontres un problème lors de l’installation ou du lancement, n’hésite pas à contacter notre équipe afin que nous puissions t’aider.\n\n' +
           'Bon jeu et bienvenue sur Emeria !\n\n' +
-          '> <:EmeriaMC:1541095551511298139>  **L’équipe d\'EmeriaMC.**',
+          '> **<:EmeriaMC:1541095551511298139> L’équipe d\'EmeriaMC.**',
       );
 
     // Image : fichier local prioritaire, sinon URL, sinon rien
