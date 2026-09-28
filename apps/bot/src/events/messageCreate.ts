@@ -4,6 +4,7 @@ import { getAnnounceChannel } from '../lib/announceState.js';
 import { isRunning, handleAnswer } from '../lib/train.js';
 import { highestGrade } from '../lib/permissions.js';
 import { handleVoteLogMessage } from '../lib/voteLog.js';
+import { reactSuggestion } from '../lib/suggestionReactions.js';
 
 /**
  * Entraînement modération : dans le salon en session, un staff répond
@@ -41,6 +42,9 @@ export async function onMessageCreate(_client: Client, message: Message): Promis
   if (await handleVoteLogMessage(message)) return;
 
   if (message.author.bot || !message.inGuild()) return;
+
+  // Salon suggestions : on ajoute les réactions de vote (Good / Refus) puis on s'arrête.
+  if (await reactSuggestion(message)) return;
 
   // Entraînement modération (salon en session) — prioritaire
   if (await handleTrainMessage(_client, message)) return;
