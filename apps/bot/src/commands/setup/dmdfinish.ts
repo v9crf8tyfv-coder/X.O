@@ -12,7 +12,7 @@ import { highestGrade } from '../../lib/permissions.js';
 import type { SlashCommand } from '../../types.js';
 
 /** Emoji flèche (custom) affiché avant le lien du message de base. */
-const ARROW_FALLBACK = '<:arrow:1537496475649703946>';
+const ARROW_FALLBACK = '<:arrow:1537513226747777064>';
 
 /** Normalise un nom d'emoji (sans accents/espaces, minuscule) pour comparer souplement. */
 function normName(s: string): string {
@@ -92,7 +92,7 @@ export const dmdfinish: SlashCommand = {
     const arrow = findEmoji('arrow') ?? ARROW_FALLBACK;
 
     const content =
-      `Cher <@${openerId}>, \n\n` +
+      `# Cher <@${openerId}>, \n\n` +
       '1. 👉 Nous pensons avoir répondu à l’ensemble de vos **demandes**. Si tel est le cas, nous vous invitons à **fermer votre ticket.** Dans le cas contraire, celui-ci pourra être fermé par un membre du Staff.\n\n' +
       '2. 👉 Si vous avez de nouvelles demandes, merci de nous les communiquer directement ici dans un délai maximum de **48 heures**.\n\n' +
       (baseLink ? `${arrow}${baseLink}\n` : '') +
