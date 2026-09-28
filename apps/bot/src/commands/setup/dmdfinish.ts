@@ -4,15 +4,11 @@ import {
   ButtonBuilder,
   ButtonStyle,
   type GuildMember,
-  type TextChannel,
 } from 'discord.js';
 import { GRADES, STAFF_GRADE_EMOJI, FOUNDER_IG_PSEUDO, gradeLogoKey } from '@xo/shared';
 import { db } from '@xo/db';
 import { highestGrade } from '../../lib/permissions.js';
 import type { SlashCommand } from '../../types.js';
-
-/** Emoji flèche (custom) affiché avant le lien du message de base. */
-const ARROW_FALLBACK = '<:arrow:1537513226747777064>';
 
 /** Normalise un nom d'emoji (sans accents/espaces, minuscule) pour comparer souplement. */
 function normName(s: string): string {
@@ -57,45 +53,24 @@ export const dmdfinish: SlashCommand = {
       pseudo = acc[0]?.pseudo ?? username;
     }
 
-    // Résolution d'un emoji custom par NOM dans le serveur (pas d'ID en dur).
-    const findEmoji = (name: string): string | null => {
-      if (!interaction.guild) return null;
-      const target = normName(name);
-      const e = interaction.guild.emojis.cache.find((em) => em.name && normName(em.name) === target);
-      return e ? e.toString() : null;
-    };
-
-    // Logo Discord du grade du staff (mutualisé par gradeLogoKey).
+    // Logo Discord du grade du staff : résolu par NOM dans le serveur (pas d'ID en dur).
     const member = interaction.member as GuildMember | null;
     const gradeKey = member ? highestGrade(member)?.key ?? null : null;
     let gradeEmoji = '';
-    if (gradeKey) {
+    if (gradeKey && interaction.guild) {
       const wanted = STAFF_GRADE_EMOJI[gradeLogoKey(gradeKey)];
-      const found = wanted ? findEmoji(wanted) : null;
-      if (found) gradeEmoji = ` ${found}`;
-    }
-
-    // Lien vers le message de BASE (l'en-tête épinglé posté par XO à la création du ticket).
-    let baseLink = '';
-    const chan = interaction.channel as TextChannel | null;
-    if (chan && 'messages' in chan) {
-      try {
-        const pins = await chan.messages.fetchPinned();
-        const botPins = [...pins.values()]
-          .filter((m) => m.author.id === interaction.client.user?.id)
-          .sort((a, b) => a.createdTimestamp - b.createdTimestamp);
-        if (botPins[0]) baseLink = botPins[0].url;
-      } catch {
-        /* pas de message épinglé -> pas de lien */
+      if (wanted) {
+        const target = normName(wanted);
+        const found = interaction.guild.emojis.cache.find((e) => e.name && normName(e.name) === target);
+        if (found) gradeEmoji = ` ${found.toString()}`;
       }
     }
-    const arrow = findEmoji('arrow') ?? ARROW_FALLBACK;
 
     const content =
-      `# Cher <@${openerId}>, \n\n` +
+      `**Cher <@${openerId}>,**\n` +
+      '_ _\n' +
       '1. 👉 Nous pensons avoir répondu à l’ensemble de vos **demandes**. Si tel est le cas, nous vous invitons à **fermer votre ticket.** Dans le cas contraire, celui-ci pourra être fermé par un membre du Staff.\n\n' +
       '2. 👉 Si vous avez de nouvelles demandes, merci de nous les communiquer directement ici dans un délai maximum de **48 heures**.\n\n' +
-      (baseLink ? `${arrow}${baseLink}\n` : '') +
       `> **Cordialement, ${pseudo}${gradeEmoji}**`;
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
