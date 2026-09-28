@@ -1,4 +1,4 @@
-import { EmbedBuilder, type Client, type Message, type TextChannel, type GuildMember } from 'discord.js';
+import { type Client, type Message, type TextChannel, type GuildMember } from 'discord.js';
 import { GRADES } from '@xo/shared';
 import { getAnnounceChannel } from '../lib/announceState.js';
 import { isRunning, handleAnswer } from '../lib/train.js';
@@ -56,26 +56,18 @@ export async function onMessageCreate(_client: Client, message: Message): Promis
   const atts = [...message.attachments.values()];
   if (!content && atts.length === 0) return;
 
-  const isImage = (a: (typeof atts)[number]) =>
-    (a.contentType?.startsWith('image/') ?? false) || /\.(png|jpe?g|gif|webp)$/i.test(a.name ?? '');
-
-  const files: Array<string | { attachment: string; name: string }> = [];
-  const embeds: EmbedBuilder[] = [];
-  let imgIdx = 0;
+  // Toutes les pièces jointes (images comprises) sont ré-uploadées en fichiers NORMAUX,
+  // jamais en embed : une image annoncée s'affiche comme une vraie image Discord.
+  const files: Array<{ attachment: string; name: string }> = [];
+  let idx = 0;
   for (const a of atts) {
-    if (isImage(a)) {
-      const ext = (a.name?.split('.').pop() || 'png').toLowerCase();
-      const name = `image${imgIdx++}.${ext}`;
-      files.push({ attachment: a.url, name }); // ré-upload -> l'image reste valide après suppression
-      embeds.push(new EmbedBuilder().setColor(0x8b5cf6).setImage(`attachment://${name}`));
-    } else {
-      files.push(a.url);
-    }
+    const ext = (a.name?.split('.').pop() || 'bin').toLowerCase();
+    files.push({ attachment: a.url, name: `file${idx++}.${ext}` }); // ré-upload -> reste valide après suppression
   }
 
-  // On envoie AVANT de supprimer (pour que les URLs des images soient encore valides)
+  // On envoie AVANT de supprimer (pour que les URLs des pièces jointes soient encore valides)
   await (message.channel as TextChannel)
-    .send({ content: content || undefined, files, embeds: embeds.length ? embeds : undefined })
+    .send({ content: content || undefined, files })
     .catch(() => {});
   await message.delete().catch(() => {});
 }
