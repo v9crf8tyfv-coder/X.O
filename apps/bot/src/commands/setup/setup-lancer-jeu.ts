@@ -46,6 +46,7 @@ export const setupLancerJeu: SlashCommand = {
 
     const embed = new EmbedBuilder()
       .setColor(BRAND_COLOR)
+      .setTitle('🚀 Launcher EmeriaMC')
       .setDescription(
         'Chaque launcher te permettra d’installer et de lancer facilement le serveur avec la configuration nécessaire.\n\n' +
           '**Téléchargements :**\n' +
