@@ -49,7 +49,7 @@ export async function headEmoji(client: Client, pseudo: string): Promise<string>
     // wsrv.nl arrondit l'image côté serveur (mask=circle) → aucun traitement sur le bot.
     // Timeout 6s : si le service externe traîne, on abandonne cette tête au lieu de BLOQUER
     // tout l'effectif (c'était la cause du "/effectif charge à l'infini").
-    const src = `mc-heads.net/avatar/${encodeURIComponent(pseudo)}/64`;
+    const src = `crafthead.net/avatar/${encodeURIComponent(pseudo)}/64`;
     // Repli Steve garanti : si mc-heads échoue (lenteur / vide), wsrv sert le Steve au lieu
     // de renvoyer une erreur -> on obtient toujours une image valide pour créer l'émoji.
     const steve = 'https://minotar.net/helm/MHF_Steve/64.png';

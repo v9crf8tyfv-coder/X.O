@@ -10,7 +10,10 @@
  * sans skin Mojang, on obtient un Steve (limite Mojang, pas un bug).
  */
 export function headUrl(pseudoOrUuid: string, size = 64): string {
-  const src = `mc-heads.net/avatar/${encodeURIComponent(pseudoOrUuid)}/${size}`;
+  // crafthead.net = vrai skin fiable (mc-heads servait un Steve en cache pour certains
+  // comptes premium). Proxifié via wsrv.nl avec un default Steve : si crafthead renvoie
+  // 404 (pseudo inconnu/cracké), wsrv sert le Steve -> jamais d'avatar cassé.
+  const src = `crafthead.net/avatar/${encodeURIComponent(pseudoOrUuid)}/${size}`;
   const steve = `https://minotar.net/helm/MHF_Steve/${size}.png`;
   return `https://wsrv.nl/?url=${encodeURIComponent(src)}&w=${size}&h=${size}&default=${encodeURIComponent(steve)}`;
 }
