@@ -96,7 +96,7 @@ export const dmdfinish: SlashCommand = {
       '1. 👉 Nous pensons avoir répondu à l’ensemble de vos **demandes**. Si tel est le cas, nous vous invitons à **fermer votre ticket.** Dans le cas contraire, celui-ci pourra être fermé par un membre du Staff.\n\n' +
       '2. 👉 Si vous avez de nouvelles demandes, merci de nous les communiquer directement ici dans un délai maximum de **48 heures**.\n\n' +
       (baseLink ? `${arrow}${baseLink}\n` : '') +
-      `**Cordialement, ${pseudo}${gradeEmoji}**`;
+      `> **Cordialement, ${pseudo}${gradeEmoji}**`;
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder().setCustomId('ticket:close').setLabel('Close le Ticket').setStyle(ButtonStyle.Danger),
