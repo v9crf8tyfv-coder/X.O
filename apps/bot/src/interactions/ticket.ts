@@ -11,7 +11,7 @@ import {
 } from 'discord.js';
 import type { ComponentHandler } from '../types.js';
 import { db, hasDatabase } from '@xo/db';
-import { CHANNELS, BRAND_COLOR, GRADES } from '@xo/shared';
+import { CHANNELS, BRAND_COLOR, GRADES, OWNER_DISCORD_ID, FOUNDER_IG_PSEUDO, getGrade } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../lib/embeds.js';
 import { highestGrade } from '../lib/permissions.js';
 import {
@@ -128,13 +128,45 @@ export const ticketOpen: ComponentHandler<StringSelectMenuInteraction> = {
   },
 };
 
+/**
+ * Un ticket ne doit PAS être archivé quand il a été ouvert par :
+ *  - un fondateur nommé sans carte staff (ilian0800 / orionyx84, ou le proprio par ID) ;
+ *  - un Responsable et + (grade récupéré via la carte staff, repli sur les rôles Discord).
+ */
+async function shouldSkipArchive(
+  client: Client,
+  channel: TextChannel,
+  openerId: string | null,
+): Promise<boolean> {
+  if (!openerId) return false;
+  // Fondateurs nommés (pas de carte staff) : par ID proprio ou par username Discord.
+  if (openerId === OWNER_DISCORD_ID) return true;
+  const user = await client.users.fetch(openerId).catch(() => null);
+  if (user && FOUNDER_IG_PSEUDO[user.username.toLowerCase()]) return true;
+  // Responsable et + via la carte staff.
+  if (hasDatabase()) {
+    const rows = await db()<{ grades: string[] }[]>`
+      select grades from staff where discord_id = ${openerId} and active = true limit 1
+    `.catch(() => [] as { grades: string[] }[]);
+    const grades = rows[0]?.grades ?? [];
+    if (grades.some((g) => getGrade(g).level >= GRADES.responsable.level)) return true;
+  }
+  // Repli : rôles Discord (responsable / co-fonda / fonda) si pas de carte staff.
+  const member = await channel.guild.members.fetch(openerId).catch(() => null);
+  if (member) {
+    const hg = highestGrade(member);
+    if (hg && hg.level >= GRADES.responsable.level) return true;
+  }
+  return false;
+}
+
 /** Archive (récap + transcription) puis supprime le salon. Partagé par Fermer, Refuser et /removeticket. */
 export async function finalizeClose(client: Client, channel: TextChannel, closedByTag: string): Promise<void> {
-  let info: { category_id: string; space: string; opener_tag: string } | null = null;
+  let info: { category_id: string; space: string; opener_tag: string; opener_id: string } | null = null;
   if (hasDatabase()) {
-    const rows = await db()<{ category_id: string; space: string; opener_tag: string }[]>`
-      select category_id, space, opener_tag from tickets where channel_id = ${channel.id}
-    `.catch(() => [] as { category_id: string; space: string; opener_tag: string }[]);
+    const rows = await db()<{ category_id: string; space: string; opener_tag: string; opener_id: string }[]>`
+      select category_id, space, opener_tag, opener_id from tickets where channel_id = ${channel.id}
+    `.catch(() => [] as { category_id: string; space: string; opener_tag: string; opener_id: string }[]);
     info = rows[0] ?? null;
     await db()`
       update tickets set status = 'closed', closed_by = ${closedByTag}, closed_at = now()
@@ -142,7 +174,11 @@ export async function finalizeClose(client: Client, channel: TextChannel, closed
     `.catch(() => {});
   }
 
-  try {
+  // Tickets NON archivés : ceux ouverts par un fondateur nommé (ilian0800 / orionyx84)
+  // ou par un Responsable et + (grade récupéré via la carte staff, avec repli sur les rôles).
+  const skipArchive = await shouldSkipArchive(client, channel, info?.opener_id ?? null);
+
+  if (!skipArchive) try {
     const transcript = await buildTranscript(channel);
     // Archive séparée : tickets STAFF -> archive staff (nouveau Discord) ; joueurs -> archive normale.
     const archiveId = info?.space === 'staff' ? CHANNELS.archivesTicketStaff : CHANNELS.archivesTicketNormal;
