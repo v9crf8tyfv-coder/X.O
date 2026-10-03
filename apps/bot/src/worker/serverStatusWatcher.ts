@@ -12,6 +12,11 @@ const STATE_KEY = 'server_online';
 const FAIL_THRESHOLD = 2;
 let consecutiveFails = 0;
 
+// Plafond anti-spam : au plus 1 post/ping toutes les 10 min, même si le serveur flappe
+// (maintenance qui répond par intermittence -> sinon ça ping en boucle).
+const POST_COOLDOWN_MS = 10 * 60 * 1000;
+let lastPostAt = 0;
+
 async function ping(): Promise<boolean> {
   try {
     await status(HOST, PORT, { timeout: 5000 });
@@ -39,6 +44,11 @@ async function check(client: Client): Promise<void> {
     prev = rows.length ? rows[0]!.value : null;
   }
   if (prev === cur) return; // pas de changement d'état
+
+  // Plafond anti-spam : si on a déjà posté il y a moins de 10 min, on attend (on ne met pas
+  // à jour l'état en base -> le vrai changement sera annoncé une fois le délai passé).
+  if (Date.now() - lastPostAt < POST_COOLDOWN_MS) return;
+  lastPostAt = Date.now();
 
   await postStatus(client, online);
   if (hasDatabase()) {
