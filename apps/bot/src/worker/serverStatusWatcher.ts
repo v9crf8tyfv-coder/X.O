@@ -9,7 +9,7 @@ const STATE_KEY = 'server_online';
 
 // Anti-spam : le serveur peut rater un ping ponctuellement (lag, pré-génération Chunky…).
 // On n'annonce CLOSE qu'après FAIL_THRESHOLD pings ratés d'affilée. OPEN reste immédiat.
-const FAIL_THRESHOLD = 2;
+const FAIL_THRESHOLD = 4; // ~80s de vrai down avant CLOSE (évite les faux "fermé" sur un blip réseau du host)
 let consecutiveFails = 0;
 
 // Plafond anti-spam : au plus 1 post/ping toutes les 10 min, même si le serveur flappe
@@ -18,12 +18,17 @@ const POST_COOLDOWN_MS = 10 * 60 * 1000;
 let lastPostAt = 0;
 
 async function ping(): Promise<boolean> {
-  try {
-    await status(HOST, PORT, { timeout: 5000 });
-    return true;
-  } catch {
-    return false;
+  // Re-tentatives + SRV : un blip réseau isolé entre l'hébergeur du bot et le serveur MC
+  // ne doit pas faire croire que le serveur est fermé (faux "CLOSE" alors qu'il est OPEN).
+  for (let i = 0; i < 3; i++) {
+    try {
+      await status(HOST, PORT, { timeout: 5000, enableSRV: true });
+      return true;
+    } catch {
+      /* on réessaie */
+    }
   }
+  return false;
 }
 
 async function check(client: Client): Promise<void> {
