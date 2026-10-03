@@ -1,14 +1,13 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const unban: SlashCommand = {
-  minLevel: GRADES.responsable.level, // au-dessus d'admin
+  minLevel: GRADES.admin.level, // admin et au-dessus (visible à tous, gardé par le grade du bot)
   data: new SlashCommandBuilder()
     .setName('unban')
     .setDescription('Débannir un membre (par son ID Discord)')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator) // caché aux admins
     .addStringOption((o) =>
       o.setName('id').setDescription("ID de l'utilisateur à débannir").setRequired(true),
     ),

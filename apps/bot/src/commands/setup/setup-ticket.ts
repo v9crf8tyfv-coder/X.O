@@ -10,7 +10,7 @@ import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 import { buildCategorySelect, buildTicketPanelEmbed, type TicketSpace } from '../../lib/tickets.js';
 
 export const setupTicket: SlashCommand = {
-  minLevel: GRADES.responsable.level,
+  minLevel: GRADES.admin.level, // admin et au-dessus (visible à tous, gardé par le grade du bot)
   data: new SlashCommandBuilder()
     .setName('setup-ticket')
     .setDescription('Poster le panneau de tickets')
@@ -23,8 +23,7 @@ export const setupTicket: SlashCommand = {
           { name: 'Staff', value: 'staff' },
           { name: 'Joueurs (normal)', value: 'normal' },
         ),
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    ),
 
   async execute(interaction) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });

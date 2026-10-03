@@ -9,11 +9,10 @@ import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
 
 export const unmute: SlashCommand = {
-  minLevel: GRADES.responsable.level, // enlever une sanction : responsable et +
+  minLevel: GRADES.admin.level, // admin et au-dessus (visible à tous, gardé par le grade du bot)
   data: new SlashCommandBuilder()
     .setName('unmute')
     .setDescription('Retirer le mute (timeout) d\'un membre')
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers) // visible modos/admins+
     .addUserOption((o) =>
       o.setName('membre').setDescription('Le membre à démuter').setRequired(true),
     ),
