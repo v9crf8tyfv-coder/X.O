@@ -56,7 +56,7 @@ export default function ServeursSection() {
   }, []);
   useEffect(() => {
     load();
-    const t = setInterval(load, 90_000); // refresh auto 1min30
+    const t = setInterval(() => { if (document.visibilityState === 'visible') load(); }, 90_000); // refresh auto 1min30, STOP si onglet caché
     return () => clearInterval(t);
   }, [load]);
 

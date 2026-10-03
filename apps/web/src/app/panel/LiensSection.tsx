@@ -50,7 +50,7 @@ export default function LiensSection({ myGrade }: { myGrade: string }) {
   }, []);
   useEffect(() => {
     load();
-    const t = setInterval(load, 90_000);
+    const t = setInterval(() => { if (document.visibilityState === 'visible') load(); }, 90_000); // STOP si onglet caché (quota Vercel)
     return () => clearInterval(t);
   }, [load]);
 

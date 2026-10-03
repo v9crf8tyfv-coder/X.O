@@ -51,7 +51,7 @@ export default function CmdBlocksSection() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 5000); // rafraîchit tout seul (le mod publie toutes les 10s)
+    const t = setInterval(() => { if (document.visibilityState === 'visible') load(); }, 15000); // auto-refresh, mais STOP si onglet caché (quota Vercel)
     return () => clearInterval(t);
   }, [load]);
 

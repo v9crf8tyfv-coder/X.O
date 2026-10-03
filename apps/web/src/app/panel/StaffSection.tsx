@@ -99,7 +99,7 @@ export default function StaffSection({
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 5000);
+    const t = setInterval(() => { if (document.visibilityState === 'visible') load(); }, 30000); // STOP si onglet caché (quota Vercel)
     return () => clearInterval(t);
   }, [load]);
 

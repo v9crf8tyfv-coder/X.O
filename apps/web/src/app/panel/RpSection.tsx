@@ -51,7 +51,7 @@ export default function RpSection() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 15000);
+    const t = setInterval(() => { if (document.visibilityState === 'visible') load(); }, 30000); // STOP si onglet caché (quota Vercel)
     return () => clearInterval(t);
   }, [load]);
 
