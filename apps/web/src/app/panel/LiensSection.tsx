@@ -20,6 +20,7 @@ const GRADE_CHOICES = [
   'dev',
   'buildeur',
   'com',
+  'supermodo',
   'modo',
   'betatesteur',
   'joueur',

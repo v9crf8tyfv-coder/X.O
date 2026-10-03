@@ -116,12 +116,12 @@ export const TICKET_CATEGORIES_NORMAL = [
     allowedGrades: ['supermodo', 'admin'],
   },
   {
-    // Accès : Admin (+ omniprésents : Resp, Co-fonda, Fonda)
+    // Accès : SM, Admin (+ omniprésents : Resp, Co-fonda, Fonda)
     id: 'remboursement',
     label: 'Remboursement',
     description: 'Demande de remboursement',
     emoji: '💰',
-    allowedGrades: ['admin'],
+    allowedGrades: ['supermodo', 'admin'],
   },
   {
     // Accès : SM, Admin (+ omniprésents : Resp, Co-fonda, Fonda)
