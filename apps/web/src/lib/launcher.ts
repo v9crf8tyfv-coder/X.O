@@ -22,6 +22,7 @@ export interface Manifest {
   resourcepacks: ManifestEntry[];
   optional: OptionalEntry[];
   axiomAllowed: string[]; // pseudos autorisés à voir/activer Axiom (staff build)
+  comAllowed: string[]; // pseudos autorisés à la catégorie Com du launcher
 }
 
 export function hasToken(): boolean {
@@ -72,7 +73,7 @@ export async function getModsRelease(): Promise<Release> {
   return (await r.json()) as Release;
 }
 
-const EMPTY: Manifest = { mods: [], resourcepacks: [], optional: [], axiomAllowed: [] };
+const EMPTY: Manifest = { mods: [], resourcepacks: [], optional: [], axiomAllowed: [], comAllowed: [] };
 
 /**
  * Lit manifest.json depuis la release.
@@ -98,6 +99,7 @@ export async function getManifest(rel?: Release): Promise<Manifest> {
     resourcepacks: Array.isArray(j.resourcepacks) ? (j.resourcepacks as ManifestEntry[]) : [],
     optional: Array.isArray(j.optional) ? (j.optional as OptionalEntry[]) : [],
     axiomAllowed: Array.isArray(j.axiomAllowed) ? (j.axiomAllowed as string[]) : [],
+    comAllowed: Array.isArray(j.comAllowed) ? (j.comAllowed as string[]) : [],
   };
 }
 
@@ -122,6 +124,7 @@ export async function getBackup(rel?: Release): Promise<Manifest | null> {
       resourcepacks: Array.isArray(j.resourcepacks) ? j.resourcepacks : [],
       optional: Array.isArray(j.optional) ? j.optional : [],
       axiomAllowed: Array.isArray(j.axiomAllowed) ? j.axiomAllowed : [],
+      comAllowed: Array.isArray(j.comAllowed) ? j.comAllowed : [],
     };
   } catch {
     return null;
@@ -290,6 +293,25 @@ export async function removeAxiom(pseudo: string): Promise<Manifest> {
   const release = await getModsRelease();
   const manifest = await getManifest(release);
   manifest.axiomAllowed = manifest.axiomAllowed.filter((x) => x.toLowerCase() !== pseudo.toLowerCase());
+  await putManifest(release, manifest);
+  return manifest;
+}
+
+export async function addCom(pseudo: string): Promise<Manifest> {
+  const release = await getModsRelease();
+  const manifest = await getManifest(release);
+  const p = pseudo.trim();
+  if (p && !manifest.comAllowed.some((x) => x.toLowerCase() === p.toLowerCase())) {
+    manifest.comAllowed.push(p);
+    await putManifest(release, manifest);
+  }
+  return manifest;
+}
+
+export async function removeCom(pseudo: string): Promise<Manifest> {
+  const release = await getModsRelease();
+  const manifest = await getManifest(release);
+  manifest.comAllowed = manifest.comAllowed.filter((x) => x.toLowerCase() !== pseudo.toLowerCase());
   await putManifest(release, manifest);
   return manifest;
 }

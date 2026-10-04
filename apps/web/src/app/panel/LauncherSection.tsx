@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 interface Entry { name: string; url: string; sha256: string }
-interface Manifest { mods: Entry[]; resourcepacks: Entry[]; optional: (Entry & { id: string })[]; axiomAllowed: string[] }
+interface Manifest { mods: Entry[]; resourcepacks: Entry[]; optional: (Entry & { id: string })[]; axiomAllowed: string[]; comAllowed: string[] }
 type Kind = 'mods' | 'resourcepacks';
 
 export default function LauncherSection() {
@@ -133,6 +133,24 @@ export default function LauncherSection() {
     else setError((await r.json().catch(() => ({}))).error || 'Échec de la suppression.');
   }
 
+  const [comInput, setComInput] = useState('');
+  async function addCom() {
+    const pseudo = comInput.trim();
+    if (!pseudo) return;
+    setError('');
+    const r = await fetch('/api/launcher/axiom', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pseudo, type: 'com' }),
+    });
+    if (r.ok) { setManifest((await r.json()).manifest); setComInput(''); }
+    else setError((await r.json().catch(() => ({}))).error || 'Échec de l’ajout.');
+  }
+  async function delCom(pseudo: string) {
+    if (!confirm(`Retirer ${pseudo} de la catégorie Com ?`)) return;
+    const r = await fetch(`/api/launcher/axiom?pseudo=${encodeURIComponent(pseudo)}&type=com`, { method: 'DELETE' });
+    if (r.ok) setManifest((await r.json()).manifest);
+    else setError((await r.json().catch(() => ({}))).error || 'Échec de la suppression.');
+  }
+
   /** Lance la mise à jour des 3 launchers (build 3 OS) + suit la progression. */
   async function update3() {
     setError('');
@@ -235,6 +253,32 @@ export default function LauncherSection() {
             onKeyDown={(e) => { if (e.key === 'Enter') addAxiom(); }}
           />
           <button className="btn-accent" onClick={addAxiom}>Ajouter</button>
+        </div>
+      </div>
+
+      {/* Com : liste des pseudos autorisés à la catégorie Com du launcher */}
+      <div className="lchr-card">
+        <h3>Com — catégorie launcher <span className="lchr-count">{manifest?.comAllowed?.length ?? 0}</span></h3>
+        <p className="lchr-hint">Ces pseudos Minecraft ont la catégorie Com dans le launcher (Xtazzking et Orionyx84 l’ont déjà par défaut, inutile de les ajouter).</p>
+        {manifest?.comAllowed?.length ? (
+          <ul className="lchr-list">
+            {manifest.comAllowed.map((p) => (
+              <li key={p}><span>{p}</span><button className="lchr-x" onClick={() => delCom(p)}>Retirer</button></li>
+            ))}
+          </ul>
+        ) : (
+          <p className="lchr-hint">Aucun pour l’instant.</p>
+        )}
+        <div className="lchr-add" style={{ marginTop: 12 }}>
+          <input
+            className="btn-sec"
+            style={{ flex: 1, minWidth: 160 }}
+            placeholder="Pseudo Minecraft"
+            value={comInput}
+            onChange={(e) => setComInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') addCom(); }}
+          />
+          <button className="btn-accent" onClick={addCom}>Ajouter</button>
         </div>
       </div>
 

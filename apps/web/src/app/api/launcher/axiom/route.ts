@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getGrade } from '@xo/shared';
 import { requireLevel, FOUNDER_LEVEL } from '@/lib/guard';
-import { addAxiom, removeAxiom, hasToken } from '@/lib/launcher';
+import { addAxiom, removeAxiom, addCom, removeCom, hasToken } from '@/lib/launcher';
 import { listStaff } from '@/lib/staff';
 
 export const runtime = 'nodejs';
@@ -20,25 +20,25 @@ const MANIFEST_URL =
  */
 export async function GET() {
   const set = new Set<string>();
-  // Auto : staff resp+.
+  const comSet = new Set<string>();
+  // Auto : staff resp+ (Axiom uniquement ; la Com n'a PAS d'auto, seulement les ajouts manuels).
   try {
     for (const s of await listStaff()) {
       const top = Math.max(0, ...(s.grades ?? []).map((k) => getGrade(k).level));
       if (top >= AXIOM_AUTO_LEVEL && s.pseudo) set.add(s.pseudo);
     }
   } catch { /* base indispo -> on garde juste le manuel */ }
-  // Manuel : axiomAllowed du manifest public.
+  // Manuel : axiomAllowed + comAllowed du manifest public (même fetch).
   try {
     const r = await fetch(MANIFEST_URL + '?t=' + Date.now(), { cache: 'no-store' });
     if (r.ok) {
       const m = await r.json();
-      for (const p of Array.isArray(m.axiomAllowed) ? m.axiomAllowed : []) {
-        if (typeof p === 'string' && p) set.add(p);
-      }
+      for (const p of Array.isArray(m.axiomAllowed) ? m.axiomAllowed : []) if (typeof p === 'string' && p) set.add(p);
+      for (const p of Array.isArray(m.comAllowed) ? m.comAllowed : []) if (typeof p === 'string' && p) comSet.add(p);
     }
   } catch { /* manifest indispo -> on garde juste l'auto */ }
   return NextResponse.json(
-    { allowed: [...set] },
+    { allowed: [...set], com: [...comSet] },
     { headers: { 'Cache-Control': 'public, max-age=60' } },
   );
 }
@@ -48,13 +48,15 @@ export async function POST(req: Request) {
   const g = await requireLevel(FOUNDER_LEVEL);
   if (g instanceof NextResponse) return g;
   if (!hasToken()) return NextResponse.json({ error: 'token_manquant' }, { status: 503 });
-  const { pseudo } = await req.json().catch(() => ({}));
-  const p = String(pseudo || '').trim();
+  const body = await req.json().catch(() => ({}));
+  const p = String(body.pseudo || '').trim();
+  const type = body.type === 'com' ? 'com' : 'axiom';
   if (!/^[A-Za-z0-9_]{2,16}$/.test(p)) {
     return NextResponse.json({ error: 'Pseudo Minecraft invalide.' }, { status: 400 });
   }
   try {
-    return NextResponse.json({ ok: true, manifest: await addAxiom(p) });
+    const manifest = type === 'com' ? await addCom(p) : await addAxiom(p);
+    return NextResponse.json({ ok: true, manifest });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 502 });
   }
@@ -65,10 +67,13 @@ export async function DELETE(req: Request) {
   const g = await requireLevel(FOUNDER_LEVEL);
   if (g instanceof NextResponse) return g;
   if (!hasToken()) return NextResponse.json({ error: 'token_manquant' }, { status: 503 });
-  const pseudo = new URL(req.url).searchParams.get('pseudo');
+  const url = new URL(req.url);
+  const pseudo = url.searchParams.get('pseudo');
+  const type = url.searchParams.get('type') === 'com' ? 'com' : 'axiom';
   if (!pseudo) return NextResponse.json({ error: 'pseudo requis.' }, { status: 400 });
   try {
-    return NextResponse.json({ ok: true, manifest: await removeAxiom(pseudo) });
+    const manifest = type === 'com' ? await removeCom(pseudo) : await removeAxiom(pseudo);
+    return NextResponse.json({ ok: true, manifest });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 502 });
   }
