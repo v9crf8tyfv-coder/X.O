@@ -258,8 +258,8 @@ export default function LauncherSection() {
 
       {/* Com : liste des pseudos autorisés à la catégorie Com du launcher */}
       <div className="lchr-card">
-        <h3>Com — catégorie launcher <span className="lchr-count">{manifest?.comAllowed?.length ?? 0}</span></h3>
-        <p className="lchr-hint">Ces pseudos Minecraft ont la catégorie Com dans le launcher (Xtazzking et Orionyx84 l’ont déjà par défaut, inutile de les ajouter).</p>
+        <h3>Équipe Com — catégorie launcher <span className="lchr-count">{manifest?.comAllowed?.length ?? 0}</span></h3>
+        <p className="lchr-hint">Ces pseudos Minecraft ont la catégorie Équipe Com dans le launcher (Xtazzking et Orionyx84 l’ont déjà par défaut, inutile de les ajouter).</p>
         {manifest?.comAllowed?.length ? (
           <ul className="lchr-list">
             {manifest.comAllowed.map((p) => (
