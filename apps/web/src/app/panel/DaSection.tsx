@@ -98,6 +98,16 @@ function Lockup({ dark = false, s = 30, brand = false }: { dark?: boolean; s?: n
   return <div style={{ display: 'inline-flex', alignItems: 'center', gap: s * 0.4 }}><Mark s={s} brand={brand} /><span style={{ fontSize: s * 0.62, fontWeight: 800, letterSpacing: s * 0.12, color: dark ? '#fff' : INK }}>EMERIA</span></div>;
 }
 
+/* Bouton « cubique » de la nouvelle DA (relief biseauté façon Minecraft, comme le site). */
+function CubBtn({ variant, label }: { variant: 'plein' | 'transparent' | 'sombre' | 'contour'; label: string }) {
+  const base: CSSProperties = { padding: '13px 26px', borderRadius: 5, fontWeight: 800, fontSize: 16, letterSpacing: 1, display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: FONT };
+  const sh = (l: string, d: string) => `inset 2px 2px 0 ${l}, inset -2px -2px 0 ${d}, 0 4px 0 rgba(0,0,0,.3)`;
+  if (variant === 'transparent') return <div style={{ ...base, background: 'transparent', color: 'var(--acc)', border: '1px solid var(--acc)', boxShadow: sh('rgba(124,92,255,.20)', 'rgba(0,0,0,.26)') }}><Edit init={label} /></div>;
+  if (variant === 'sombre') return <div style={{ ...base, background: CARD_DARK, color: '#fff', boxShadow: sh('rgba(255,255,255,.12)', 'rgba(0,0,0,.4)') }}><span style={{ color: 'var(--acc)' }}>+</span><Edit init={label} /></div>;
+  if (variant === 'contour') return <div style={{ ...base, background: 'transparent', color: 'var(--acc)', border: '2px solid var(--acc)', boxShadow: sh('rgba(124,92,255,.14)', 'rgba(0,0,0,.22)') }}><Edit init={label} /></div>;
+  return <div style={{ ...base, background: 'var(--acc)', color: '#fff', boxShadow: sh('rgba(255,255,255,.28)', 'rgba(0,0,0,.32)') }}><Edit init={label} /></div>;
+}
+
 // Glyphes réseaux (une seule couleur, currentColor).
 const SOCIAL_PATHS: Record<string, string> = {
   youtube: 'M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15.5v-7l6 3.5-6 3.5z',
@@ -310,13 +320,6 @@ export default function DaSection() {
           <Item name="bouton-plein" cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, background: 'var(--acc)', color: '#fff', fontWeight: 700, fontSize: 16 }}><Edit init="Postulez sur le forum" /></div></Item>
           <Item name="bouton-contour" cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, border: '2px solid var(--acc)', color: 'var(--acc)', fontWeight: 700, fontSize: 16 }}><Edit init="Rejoindre Emeria" /></div></Item>
           <Item name="bouton-sombre" cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, background: CARD_DARK, color: '#fff', fontWeight: 700, fontSize: 16, display: 'inline-flex', gap: 8 }}><span style={{ color: 'var(--acc)' }}>+</span><Edit init="Voir le règlement" /></div></Item>
-          {/* Nouveaux boutons — DA « cubique » (relief biseauté façon Minecraft, comme le site). */}
-          <Item name="bouton-cubique" cellStyle={{}} caption="bouton cubique — plein">
-            <div style={{ padding: '13px 26px', borderRadius: 5, background: 'var(--acc)', color: '#fff', fontWeight: 800, fontSize: 16, letterSpacing: 1, boxShadow: 'inset 2px 2px 0 rgba(255,255,255,.28), inset -2px -2px 0 rgba(0,0,0,.32), 0 4px 0 rgba(0,0,0,.35)' }}><Edit init="Jouer" /></div>
-          </Item>
-          <Item name="bouton-cubique-transparent" cellStyle={{}} caption="bouton cubique — transparent">
-            <div style={{ padding: '13px 26px', borderRadius: 5, background: 'transparent', color: 'var(--acc)', fontWeight: 800, fontSize: 16, letterSpacing: 1, border: '1px solid var(--acc)', boxShadow: 'inset 2px 2px 0 rgba(124,92,255,.20), inset -2px -2px 0 rgba(0,0,0,.26), 0 4px 0 rgba(0,0,0,.26)' }}><Edit init="Emeria" /></div>
-          </Item>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
           <Item name="cartouche" full cellStyle={{}} caption="cartouche d'information">
@@ -421,6 +424,23 @@ export default function DaSection() {
               ))}
             </div>
           </Item>
+        </div>
+
+        {/* 08 NOUVEAUX BOUTONS — DA cubique (relief biseauté façon Minecraft) */}
+        <SecTitle n="08">NOUVEAUX BOUTONS</SecTitle>
+        <Item name="boutons-pack" full cellStyle={{}} caption="pack complet — survole pour télécharger en PNG transparent">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, padding: 20 }}>
+            <CubBtn variant="plein" label="Jouer" />
+            <CubBtn variant="transparent" label="Emeria" />
+            <CubBtn variant="sombre" label="Voir le règlement" />
+            <CubBtn variant="contour" label="Rejoindre" />
+          </div>
+        </Item>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 14 }}>
+          <Item name="bouton-cubique-plein" cellStyle={{}} caption="plein"><CubBtn variant="plein" label="Jouer" /></Item>
+          <Item name="bouton-cubique-transparent" cellStyle={{}} caption="transparent"><CubBtn variant="transparent" label="Emeria" /></Item>
+          <Item name="bouton-cubique-sombre" cellStyle={{}} caption="sombre"><CubBtn variant="sombre" label="Voir le règlement" /></Item>
+          <Item name="bouton-cubique-contour" cellStyle={{}} caption="contour"><CubBtn variant="contour" label="Rejoindre" /></Item>
         </div>
       </div>
     </div>
