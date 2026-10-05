@@ -310,6 +310,13 @@ export default function DaSection() {
           <Item name="bouton-plein" cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, background: 'var(--acc)', color: '#fff', fontWeight: 700, fontSize: 16 }}><Edit init="Postulez sur le forum" /></div></Item>
           <Item name="bouton-contour" cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, border: '2px solid var(--acc)', color: 'var(--acc)', fontWeight: 700, fontSize: 16 }}><Edit init="Rejoindre Emeria" /></div></Item>
           <Item name="bouton-sombre" cellStyle={{}}><div style={{ padding: '13px 24px', borderRadius: 12, background: CARD_DARK, color: '#fff', fontWeight: 700, fontSize: 16, display: 'inline-flex', gap: 8 }}><span style={{ color: 'var(--acc)' }}>+</span><Edit init="Voir le règlement" /></div></Item>
+          {/* Nouveaux boutons — DA « cubique » (relief biseauté façon Minecraft, comme le site). */}
+          <Item name="bouton-cubique" cellStyle={{}} caption="bouton cubique — plein">
+            <div style={{ padding: '13px 26px', borderRadius: 5, background: 'var(--acc)', color: '#fff', fontWeight: 800, fontSize: 16, letterSpacing: 1, boxShadow: 'inset 2px 2px 0 rgba(255,255,255,.28), inset -2px -2px 0 rgba(0,0,0,.32), 0 4px 0 rgba(0,0,0,.35)' }}><Edit init="Jouer" /></div>
+          </Item>
+          <Item name="bouton-cubique-transparent" cellStyle={{}} caption="bouton cubique — transparent">
+            <div style={{ padding: '13px 26px', borderRadius: 5, background: 'transparent', color: 'var(--acc)', fontWeight: 800, fontSize: 16, letterSpacing: 1, border: '1px solid var(--acc)', boxShadow: 'inset 2px 2px 0 rgba(124,92,255,.20), inset -2px -2px 0 rgba(0,0,0,.26), 0 4px 0 rgba(0,0,0,.26)' }}><Edit init="Emeria" /></div>
+          </Item>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
           <Item name="cartouche" full cellStyle={{}} caption="cartouche d'information">
