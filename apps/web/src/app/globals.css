@@ -550,3 +550,22 @@ html, body {
   border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 9px; background: transparent; cursor: pointer; transition: background .15s;
 }
 .btn-sec:hover { background: rgba(255,255,255,.05); }
+
+/* ===== DA Emeria : boutons cubiques (relief biseauté façon Minecraft) ===== */
+.btn-launch, .btn-submit, .tab, .theme-toggle, .account-box,
+.back-btn, .remove-staff, .btn-accent, .btn-sec, .lchr-x, .sanctions-search button {
+  border-radius: 5px !important;
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.22),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.26),
+    0 4px 0 rgba(0, 0, 0, 0.22) !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn-launch:active, .btn-submit:active, .tab:active, .theme-toggle:active, .account-box:active,
+.back-btn:active, .remove-staff:active, .btn-accent:active, .btn-sec:active, .lchr-x:active, .sanctions-search button:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.18),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.24),
+    0 1px 0 rgba(0, 0, 0, 0.22) !important;
+}
