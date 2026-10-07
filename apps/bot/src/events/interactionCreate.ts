@@ -10,6 +10,9 @@ import { highestGrade } from '../lib/permissions.js';
 import { errorEmbed } from '../lib/embeds.js';
 import { logToDiscord, fmtError } from '../lib/logWebhook.js';
 
+/** Propriétaire : accès TOTAL à toutes les commandes, partout (y compris un salon privé). */
+const OWNER_ID = '1098211189059756115';
+
 export async function handleInteraction(
   client: XOClient,
   interaction: Interaction,
@@ -20,22 +23,25 @@ export async function handleInteraction(
       const command = client.commands.get(interaction.commandName);
       if (!command) return;
 
-      // Contrôle d'accès par NIVEAU de grade (défaut : fondateur)
-      let min = command.minLevel ?? GRADES.fondateur.level;
-      // Sur le Discord STAFF, les commandes réservées aux fonda/co-fonda sont
-      // ouvertes aux Responsables (et +). Les commandes déjà accessibles plus bas
-      // (modo, admin…) gardent leur propre seuil. Le serveur communautaire n'est pas touché.
-      if (interaction.guildId === STAFF_GUILD_ID) {
-        min = Math.min(min, GRADES.responsable.level);
-      }
-      const member = interaction.member as GuildMember | null;
-      const level = member ? highestGrade(member)?.level ?? 0 : 0;
-      if (level < min) {
-        await interaction.reply({
-          embeds: [errorEmbed('Accès refusé', 'Ton grade ne permet pas cette commande.')],
-          flags: MessageFlags.Ephemeral,
-        });
-        return;
+      // Le propriétaire a accès à TOUT (bypass du contrôle de grade).
+      if (interaction.user.id !== OWNER_ID) {
+        // Contrôle d'accès par NIVEAU de grade (défaut : fondateur)
+        let min = command.minLevel ?? GRADES.fondateur.level;
+        // Sur le Discord STAFF, les commandes réservées aux fonda/co-fonda sont
+        // ouvertes aux Responsables (et +). Les commandes déjà accessibles plus bas
+        // (modo, admin…) gardent leur propre seuil. Le serveur communautaire n'est pas touché.
+        if (interaction.guildId === STAFF_GUILD_ID) {
+          min = Math.min(min, GRADES.responsable.level);
+        }
+        const member = interaction.member as GuildMember | null;
+        const level = member ? highestGrade(member)?.level ?? 0 : 0;
+        if (level < min) {
+          await interaction.reply({
+            embeds: [errorEmbed('Accès refusé', 'Ton grade ne permet pas cette commande.')],
+            flags: MessageFlags.Ephemeral,
+          });
+          return;
+        }
       }
 
       await command.execute(interaction);
