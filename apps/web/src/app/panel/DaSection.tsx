@@ -337,8 +337,9 @@ export default function DaSection() {
               </div>
             </div>
           </Item>
-          <Item name="typo" full cellStyle={{}} caption="hiérarchie typographique">
+          <Item name="typo" full cellStyle={{}} caption="hiérarchie typographique — police officielle : Sora">
             <div style={{ ...card, width: '100%', background: CARD_DARK, padding: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, color: 'var(--acc)', marginBottom: 12 }}>POLICE EMERIA · SORA</div>
               <Edit init="Titre" style={{ display: 'block', fontSize: 34, fontWeight: 800, color: '#fff', lineHeight: 1 }} />
               <Edit init="SOUS-TITRE CAPS" style={{ display: 'block', fontSize: 15, fontWeight: 700, letterSpacing: 3, color: 'var(--acc)', marginTop: 10 }} />
               <Edit init="Accroche en serif italique" style={{ display: 'block', fontFamily: "'Playfair Display', serif", fontStyle: 'italic', fontSize: 16, color: '#d9d3e6', marginTop: 8 }} />
