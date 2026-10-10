@@ -5,6 +5,7 @@ import { isSiteBlocked } from './siteLock';
 import type { Account } from './accounts';
 
 export const ADMIN_LEVEL = GRADES.admin.level;
+export const SUPERMODO_LEVEL = GRADES.supermodo.level;
 export const RESP_LEVEL = GRADES.responsable.level;
 export const FOUNDER_LEVEL = GRADES.cofondateur.level;
 

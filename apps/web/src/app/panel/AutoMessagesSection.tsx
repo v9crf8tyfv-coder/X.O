@@ -1,6 +1,17 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
+import { getGrade } from '@xo/shared';
+
+type GameChannel = 'global' | 'fa' | 'fs' | 'fc';
+/** Niveau de grade minimum pour publier dans chaque canal en jeu. */
+const CHANNEL_MIN: Record<GameChannel, number> = { global: 50, fa: 45, fs: 45, fc: 90 };
+const CHANNEL_LABEL: Record<GameChannel, string> = {
+  global: 'Chat global',
+  fa: 'Chat admin (fa)',
+  fs: 'Chat staff (fs)',
+  fc: 'Chat fonda (fc)',
+};
 
 interface Msg {
   id: number;
@@ -13,11 +24,15 @@ interface Msg {
   days: string | null;
   enabled: boolean;
   prefix_color?: string | null;
+  game_channel?: string | null;
 }
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']; // index 0 = jour 1 (Lundi)
 
-export default function AutoMessagesSection() {
+export default function AutoMessagesSection({ myGrade }: { myGrade: string }) {
+  const myLevel = getGrade(myGrade).level;
+  const allowedChannels = (Object.keys(CHANNEL_MIN) as GameChannel[]).filter((c) => myLevel >= CHANNEL_MIN[c]);
+  const [gameChannel, setGameChannel] = useState<GameChannel>('global');
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -73,13 +88,14 @@ export default function AutoMessagesSection() {
   useEffect(() => { load(); }, []);
 
   function resetForm() {
-    setEditingId(null); setTarget('game'); setChannelId(''); setContent(''); setImageUrl('');
+    setEditingId(null); setTarget('game'); setChannelId(''); setGameChannel('global'); setContent(''); setImageUrl('');
     setMode('interval'); setEveryHours('2'); setAtHHMM('19:00'); setDays([1, 2, 3, 4, 5, 6, 7]);
     setPrefixColor(defaultColor);
   }
   function startEdit(m: Msg) {
     setEditingId(m.id);
     setTarget(m.channel_id ? 'discord' : 'game');
+    setGameChannel((['global', 'fa', 'fs', 'fc'].includes(m.game_channel || '') ? m.game_channel : 'global') as GameChannel);
     setChannelId(m.channel_id || '');
     setContent(m.content || '');
     setImageUrl(m.image_url || '');
@@ -94,7 +110,7 @@ export default function AutoMessagesSection() {
   async function save() {
     setSaving(true);
     setError('');
-    const payload = { target, channelId, content, imageUrl, mode, everyHours: Number(everyHours), atHHMM, days, prefixColor };
+    const payload = { target, channelId, gameChannel, content, imageUrl, mode, everyHours: Number(everyHours), atHHMM, days, prefixColor };
     const r = await fetch('/api/auto-messages', {
       method: editingId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -156,6 +172,14 @@ export default function AutoMessagesSection() {
           {target === 'discord' && (
             <input className="btn-sec" placeholder="ID du salon Discord (clic droit sur le salon → Copier l'identifiant)"
               value={channelId} onChange={(e) => setChannelId(e.target.value)} style={{ padding: '10px 12px' }} />
+          )}
+          {target === 'game' && (
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13 }}>
+              <span style={{ color: 'var(--muted,#8a8a94)' }}>Canal en jeu</span>
+              <select className="btn-sec" value={gameChannel} onChange={(e) => setGameChannel(e.target.value as GameChannel)} style={{ padding: '10px 12px' }}>
+                {allowedChannels.map((c) => <option key={c} value={c}>{CHANNEL_LABEL[c]}</option>)}
+              </select>
+            </label>
           )}
           <textarea className="btn-sec" placeholder="Message — Discord : **gras** __souligné__ · En jeu : &a couleur &l gras (voir aperçu)" rows={3}
             value={content} onChange={(e) => setContent(e.target.value)} style={{ padding: '10px 12px', resize: 'vertical' }} />

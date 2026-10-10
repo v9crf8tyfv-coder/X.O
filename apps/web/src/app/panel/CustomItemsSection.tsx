@@ -2,15 +2,6 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-interface Give {
-  id: number;
-  item: string;
-  name: string | null;
-  enchants: { id: string; lvl: number }[] | null;
-  target: string;
-  status: string;
-}
-
 const MC_COLORS: Record<string, string> = {
   '0': '#000000', '1': '#0000AA', '2': '#00AA00', '3': '#00AAAA', '4': '#AA0000',
   '5': '#AA00AA', '6': '#FFAA00', '7': '#AAAAAA', '8': '#555555', '9': '#5555FF',
@@ -143,7 +134,6 @@ function Picker({ value, onChange, options, placeholder }: {
 export default function CustomItemsSection() {
   const [items, setItems] = useState<string[]>([]);
   const [enchList, setEnchList] = useState<string[]>([]);
-  const [gives, setGives] = useState<Give[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -168,11 +158,7 @@ export default function CustomItemsSection() {
   async function loadRegistry() {
     try { const d = await (await fetch('/api/registry')).json(); setItems(d.items ?? []); setEnchList(d.enchants ?? []); } catch { /* saisie libre */ }
   }
-  async function loadGives() {
-    try { const r = await fetch('/api/custom-items'); if (!r.ok) throw new Error('Accès refusé'); setGives((await r.json()).items ?? []); }
-    catch (e) { setError((e as Error).message); }
-  }
-  useEffect(() => { loadRegistry(); loadGives(); }, []);
+  useEffect(() => { loadRegistry(); }, []);
 
   function insertCode(code: string) {
     if (focusRef.current === 'name') setName((s) => s + code); else setLore((s) => s + code);
@@ -187,9 +173,8 @@ export default function CustomItemsSection() {
       body: JSON.stringify({ item, name, lore: loreLines, enchants: enchants.filter((e) => e.id.trim()), target, head, glint, rarity }),
     });
     setSaving(false);
-    if (r.ok) { await loadGives(); setError(''); } else setError((await r.json().catch(() => ({}))).error || 'Échec.');
+    if (r.ok) { setError(''); } else setError((await r.json().catch(() => ({}))).error || 'Échec.');
   }
-  async function del(id: number) { await fetch(`/api/custom-items?id=${id}`, { method: 'DELETE' }); await loadGives(); }
 
   const muted = 'var(--muted, #8a8a94)';
   const codeBtns = ['l', 'o', 'n', 'm', 'r'];
@@ -327,27 +312,6 @@ export default function CustomItemsSection() {
         </div>
       </div>
 
-      <div className="lchr-card">
-        <h3>File d’attente <span className="lchr-count">{gives.length}</span></h3>
-        {gives.length === 0 ? (
-          <p className="lchr-hint">Aucun item pour l’instant.</p>
-        ) : (
-          <ul className="lchr-list">
-            {gives.map((g) => (
-              <li key={g.id}>
-                <span style={{ flex: 1 }}>
-                  <span>{g.name ? renderMc(g.name) : short(g.item)}</span><br />
-                  <span style={{ color: muted, fontSize: 12.5 }}>
-                    {g.item} · pour <b>{g.target}</b> · {g.status === 'pending' ? 'en attente' : 'donné'}
-                    {Array.isArray(g.enchants) && g.enchants.length ? ' · ' + g.enchants.map((e) => `${short(e.id)} ${e.lvl}`).join(', ') : ''}
-                  </span>
-                </span>
-                <button className="lchr-x" onClick={() => del(g.id)}>Suppr.</button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
     </div>
   );
 }

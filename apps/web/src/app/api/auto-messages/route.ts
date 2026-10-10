@@ -1,6 +1,26 @@
 import { NextResponse } from 'next/server';
 import { db } from '@xo/db';
-import { requireLevel, FOUNDER_LEVEL, ADMIN_LEVEL } from '@/lib/guard';
+import { getGrade } from '@xo/shared';
+import { requireLevel, FOUNDER_LEVEL, ADMIN_LEVEL, SUPERMODO_LEVEL } from '@/lib/guard';
+
+/** Canal en jeu d'un message auto : chat global, ou un salon staff (fa/fs/fc). */
+const GAME_CHANNELS = ['global', 'fa', 'fs', 'fc'] as const;
+type GameChannel = (typeof GAME_CHANNELS)[number];
+
+/** Niveau de grade minimum requis pour publier dans chaque canal en jeu. */
+function minLevelForChannel(ch: GameChannel): number {
+  switch (ch) {
+    case 'fc': return FOUNDER_LEVEL;     // Co-fondateur et + seulement
+    case 'fa': return SUPERMODO_LEVEL;   // Super-Modérateur et +
+    case 'fs': return SUPERMODO_LEVEL;   // Super-Modérateur et +
+    default:   return ADMIN_LEVEL;       // global : Admin et +
+  }
+}
+
+/** Ajoute la colonne game_channel si absente (canal en jeu PAR message). */
+async function ensureGameChannelColumn(): Promise<void> {
+  await db()`alter table auto_messages add column if not exists game_channel text`.catch(() => {});
+}
 
 export const runtime = 'nodejs';
 
@@ -16,6 +36,7 @@ interface Row {
   enabled: boolean;
   last_sent_at: string | null;
   prefix_color: string | null;
+  game_channel: string | null;
 }
 
 const DEFAULT_PREFIX_COLOR = '#FFAA00'; // or (gold), couleur historique du [EmeriaMC]
@@ -47,8 +68,9 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   await ensurePrefixColumn();
   if (url.searchParams.get('for') === 'game') {
+    await ensureGameChannelColumn();
     const rows = await db()<Row[]>`
-      select id, content, mode, every_hours, at_hhmm, days, prefix_color
+      select id, content, mode, every_hours, at_hhmm, days, prefix_color, game_channel
       from auto_messages
       where enabled = true and (channel_id is null or channel_id = '')
       order by id`;
@@ -57,10 +79,11 @@ export async function GET(req: Request) {
     return res;
   }
 
-  const g = await requireLevel(ADMIN_LEVEL);
+  const g = await requireLevel(SUPERMODO_LEVEL); // super-modo+ : peut gérer les messages (fs/fa) ; le canal est contrôlé à la création
   if (g instanceof NextResponse) return g;
+  await ensureGameChannelColumn();
   const rows = await db()<Row[]>`
-    select id, channel_id, content, image_url, mode, every_hours, at_hhmm, days, enabled, last_sent_at, prefix_color
+    select id, channel_id, content, image_url, mode, every_hours, at_hhmm, days, enabled, last_sent_at, prefix_color, game_channel
     from auto_messages order by created_at desc`;
   return NextResponse.json({ messages: rows, prefixColor: await prefixColor() });
 }
@@ -80,11 +103,21 @@ export async function PUT(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const g = await requireLevel(ADMIN_LEVEL);
+  const g = await requireLevel(SUPERMODO_LEVEL);
   if (g instanceof NextResponse) return g;
+  const level = getGrade(g.account.site_grade).level;
 
   const b = await req.json().catch(() => ({}));
   const target = b.target === 'discord' ? 'discord' : 'game'; // défaut : en jeu
+  // Canal en jeu (global/fa/fs/fc) + contrôle du grade autorisé à publier dedans.
+  const gameChannel: GameChannel = target === 'game' && GAME_CHANNELS.includes(b.gameChannel)
+    ? (b.gameChannel as GameChannel) : 'global';
+  if (target === 'discord' && level < ADMIN_LEVEL) {
+    return NextResponse.json({ error: 'Accès refusé (Discord réservé aux admins).' }, { status: 403 });
+  }
+  if (target === 'game' && level < minLevelForChannel(gameChannel)) {
+    return NextResponse.json({ error: 'Ton grade ne permet pas de publier dans ce canal.' }, { status: 403 });
+  }
   const channelId = target === 'discord' ? String(b.channelId || '').trim() : '';
   const content = String(b.content || '').trim();
   // Image autorisée partout ; elle ne s'affiche qu'en Discord (le chat en jeu est textuel).
@@ -114,9 +147,10 @@ export async function POST(req: Request) {
 
   const color = cleanColor(b.prefixColor);
   await ensurePrefixColumn();
+  await ensureGameChannelColumn();
   await db()`
-    insert into auto_messages (channel_id, content, image_url, mode, every_hours, at_hhmm, days, prefix_color)
-    values (${channelId}, ${content}, ${imageUrl}, ${mode}, ${everyHours}, ${atHHMM}, ${days}, ${color})`;
+    insert into auto_messages (channel_id, content, image_url, mode, every_hours, at_hhmm, days, prefix_color, game_channel)
+    values (${channelId}, ${content}, ${imageUrl}, ${mode}, ${everyHours}, ${atHHMM}, ${days}, ${color}, ${gameChannel})`;
   return NextResponse.json({ ok: true });
 }
 

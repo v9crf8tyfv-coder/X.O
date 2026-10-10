@@ -40,9 +40,8 @@ export const PANEL_SECTIONS: PanelSectionDef[] = [
   { id: 'launcher', label: 'Launcher', icon: '🚀', defaultLevel: 90, group: 5 },
   { id: 'customitems', label: 'Items custom', icon: '🛠️', defaultLevel: 50, group: 5 },
   { id: 'cmdblocks', label: 'Command blocks', icon: '🧱', defaultLevel: 90, group: 5 },
-  { id: 'automsg', label: 'Messages auto', icon: '💬', defaultLevel: 50, group: 5 },
+  { id: 'automsg', label: 'Messages auto', icon: '💬', defaultLevel: 45, group: 5 },
   { id: 'linkemeria', label: 'Link Emeria', icon: '🔗', defaultLevel: 50, group: 5 },
-  { id: 'zones', label: 'Zones', icon: '🗺️', defaultLevel: 45, group: 5 },
   { id: 'support', label: 'Support', icon: '🎫', defaultLevel: 90, group: 5 },
   // — Groupe 6 : stats —
   { id: 'trafic', label: 'Trafic du site', icon: '📈', defaultLevel: 90, group: 6 },

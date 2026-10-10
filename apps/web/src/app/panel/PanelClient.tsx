@@ -39,7 +39,6 @@ import DaSection from './DaSection';
 import AffichesSection from './AffichesSection';
 import LinkEmeriaSection from './LinkEmeriaSection';
 import CustomItemsSection from './CustomItemsSection';
-import ZonesSection from './ZonesSection';
 import CmdBlocksSection from './CmdBlocksSection';
 import FormationSection from './FormationSection';
 import AccessSection from './AccessSection';
@@ -250,7 +249,7 @@ export default function PanelClient({ account }: Props) {
         ) : current.id === 'trafic' ? (
           <VisitsSection />
         ) : current.id === 'automsg' ? (
-          <AutoMessagesSection />
+          <AutoMessagesSection myGrade={account.site_grade} />
         ) : current.id === 'acces' ? (
           <AccessSection initial={access} />
         ) : current.id === 'staff' ? (
@@ -275,8 +274,6 @@ export default function PanelClient({ account }: Props) {
           <LinkEmeriaSection />
         ) : current.id === 'customitems' ? (
           <CustomItemsSection />
-        ) : current.id === 'zones' ? (
-          <ZonesSection />
         ) : current.id === 'formation' ? (
           <FormationSection />
         ) : (

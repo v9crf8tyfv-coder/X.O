@@ -25,6 +25,8 @@ async function ensure(): Promise<void> {
   await db()`alter table custom_items add column if not exists head text`.catch(() => {});
   await db()`alter table custom_items add column if not exists glint boolean default false`.catch(() => {});
   await db()`alter table custom_items add column if not exists rarity text`.catch(() => {});
+  // Purge unique : on vide tout l'historique accumulé (items déjà livrés). Ne garde que l'attente réelle.
+  await db()`delete from custom_items where status <> 'pending'`.catch(() => {});
 }
 
 const idRe = /^[a-z0-9_.-]+:[a-z0-9_./-]+$/;
@@ -76,7 +78,8 @@ export async function POST(req: Request) {
   if (Array.isArray(b.done)) {
     const ids = b.done.map((n: unknown) => Number(n)).filter((n: number) => Number.isInteger(n) && n > 0);
     for (const id of ids) {
-      await db()`update custom_items set status = 'done' where id = ${id}`.catch(() => {});
+      // On SUPPRIME la ligne une fois l'item livré (plus d'historique qui s'accumule et prend de la place).
+      await db()`delete from custom_items where id = ${id}`.catch(() => {});
     }
     return NextResponse.json({ ok: true, done: ids.length });
   }
