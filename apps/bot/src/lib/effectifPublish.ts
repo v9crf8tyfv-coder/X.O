@@ -127,9 +127,12 @@ export async function publishEffectif(client: Client): Promise<void> {
   const description =
     '__**🔗 Liens utiles**__\n' +
     '> 🌐 [Site officiel](https://emeria-site.com)\n' +
-    '> 🎵 [TikTok](https://www.tiktok.com/@emeriamc)\n' +
-    '> 🟣 [Twitch](https://www.twitch.tv/emeriamc)\n' +
+    '> 💬 [Discord Communauté](https://discord.gg/mhmKc8dasx)\n' +
+    '> 📣 [Discord Communication](https://discord.gg/DUa3QDyDB)\n\n' +
+    '__**🎬 Réseaux**__\n' +
     '> ▶️ [YouTube](https://youtube.com/@emeriamc)\n' +
+    '> 🟣 [Twitch](https://www.twitch.tv/emeriamc)\n' +
+    '> 🎵 [TikTok](https://www.tiktok.com/@emeriamc)\n' +
     '> 📸 [Instagram](https://www.instagram.com/emeriamc)\n\n' +
     '__**🗳️ Vote**__\n' +
     '> ⭐ [Serveur Minecraft Vote](https://serveur-minecraft-vote.fr/serveur/2803/voter)\n' +
