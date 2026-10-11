@@ -1,5 +1,6 @@
 import type {
   ChatInputCommandInteraction,
+  AutocompleteInteraction,
   SlashCommandBuilder,
   SlashCommandOptionsOnlyBuilder,
   ButtonInteraction,
@@ -16,6 +17,8 @@ export interface SlashCommand {
   /** Niveau de grade MINIMUM requis (défaut : fondateur). Ex : GRADES.modo.level */
   minLevel?: number;
   execute(interaction: ChatInputCommandInteraction): Promise<void> | void;
+  /** Optionnel : réponses d'autocomplétion pour les options `setAutocomplete(true)`. */
+  autocomplete?(interaction: AutocompleteInteraction): Promise<void> | void;
 }
 
 /**

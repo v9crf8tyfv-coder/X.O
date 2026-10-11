@@ -31,6 +31,7 @@ import { luckDidi, unluckDidi } from './setup/luck-didi.js';
 import { track } from './setup/track.js';
 import { createTicket } from './setup/createticket.js';
 import { removeTicket } from './setup/removeticket.js';
+import { historique } from './setup/historique.js';
 
 export const commands: SlashCommand[] = [
   ban,
@@ -69,4 +70,5 @@ export const commands: SlashCommand[] = [
   track,
   createTicket,
   removeTicket,
+  historique,
 ];

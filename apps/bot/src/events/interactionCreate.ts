@@ -18,6 +18,13 @@ export async function handleInteraction(
   interaction: Interaction,
 ): Promise<void> {
   try {
+    // ---- Autocomplétion (pas de contrôle de grade : ne renvoie que des suggestions) ----
+    if (interaction.isAutocomplete()) {
+      const command = client.commands.get(interaction.commandName);
+      if (command?.autocomplete) await command.autocomplete(interaction);
+      return;
+    }
+
     // ---- Commandes slash ----
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
