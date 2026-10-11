@@ -43,7 +43,7 @@ async function tick(client: Client): Promise<void> {
     await db()`insert into seen_players (pseudo) values (${p}) on conflict (pseudo) do nothing`;
     if (ch?.isTextBased()) {
       await (ch as TextChannel)
-        .send(`${LOGO} Bienvenue à **${p}**, qui vient de se connecter pour la première fois !`)
+        .send(`> ${LOGO} Bienvenue à **${p}**, qui vient de se connecter pour la première fois !`)
         .catch(() => {});
     }
   }
