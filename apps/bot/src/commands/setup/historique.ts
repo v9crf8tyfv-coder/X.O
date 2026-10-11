@@ -248,7 +248,7 @@ export const historique: SlashCommand = {
         for (const key of ev.removes) {
           const g = getGrade(key);
           const logo = logoFor(interaction.client, key);
-          lines.push(`➖ ${logo ? logo + ' ' : ''}**${g.label}** (retiré) — <t:${sec}:f>`);
+          lines.push(`➖ ${logo ? logo + ' ' : ''}**${g.label}** — <t:${sec}:f>`);
         }
       }
     }
