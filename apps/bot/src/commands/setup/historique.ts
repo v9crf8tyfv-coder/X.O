@@ -53,6 +53,25 @@ function gradeKeyFromText(raw: string): string | null {
 }
 
 /**
+ * Plusieurs grades sur une même ligne (ex "Modérateur, Super-Modérateur" ou "Modo + Dev").
+ * Découpe sur , / + & et "et", mappe chaque morceau, sans doublon.
+ */
+function gradeKeysFromText(raw: string): string[] {
+  const parts = raw.split(/[,/+&]|\bet\b|\bpuis\b/i);
+  const keys: string[] = [];
+  for (const p of parts) {
+    const k = gradeKeyFromText(p);
+    if (k && !keys.includes(k)) keys.push(k);
+  }
+  // Repli : si le découpage n'a rien donné, tenter la ligne entière.
+  if (keys.length === 0) {
+    const k = gradeKeyFromText(raw);
+    if (k) keys.push(k);
+  }
+  return keys;
+}
+
+/**
  * Markup de l'emoji-logo du grade, résolu par NOM dans TOUS les serveurs du bot
  * (le bot peut utiliser un emoji de n'importe quel serveur où il est présent — donc
  * les logos hébergés sur le Discord communauté marchent aussi dans le salon staff).
@@ -91,10 +110,39 @@ function messageText(m: Message): string {
   return parts.join('\n');
 }
 
+const MONTHS_FR: Record<string, number> = {
+  janvier: 0, fevrier: 1, mars: 2, avril: 3, mai: 4, juin: 5, juillet: 6,
+  aout: 7, septembre: 8, octobre: 9, novembre: 10, decembre: 11,
+};
+
+/**
+ * Cherche une date ÉCRITE dans le texte du message (ex "22 octobre 2017", "21/01/2018").
+ * Les vieux ranks réimportés ont tous la même date Discord → on préfère la date du texte.
+ * Renvoie le timestamp (ms) ou null si rien trouvé.
+ */
+function parseDateFromText(text: string): number | null {
+  // "22 octobre 2017" (mois en toutes lettres)
+  const m1 = text.match(
+    /\b(\d{1,2})\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre)\s+(\d{4})\b/i,
+  );
+  if (m1) {
+    const mon = MONTHS_FR[norm(m1[2]!)];
+    if (mon != null) return new Date(Number(m1[3]), mon, Number(m1[1])).getTime();
+  }
+  // "21/01/2018" ou "21-01-2018" ou "21.01.2018"
+  const m2 = text.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})\b/);
+  if (m2) {
+    let y = Number(m2[3]);
+    if (y < 100) y += 2000;
+    return new Date(y, Number(m2[2]) - 1, Number(m2[1])).getTime();
+  }
+  return null;
+}
+
 interface GradeEvent {
   ts: number; // ms
-  add: string | null; // clé de grade obtenu
-  remove: string | null; // clé de grade retiré (dérank seul)
+  adds: string[]; // grades obtenus (plusieurs possibles sur une ligne)
+  removes: string[]; // grades retirés (dérank seul)
 }
 
 export const historique: SlashCommand = {
@@ -161,10 +209,12 @@ export const historique: SlashCommand = {
       if (norm(mPseudo[1]!) !== target && !norm(mPseudo[1]!).startsWith(target)) continue;
       const mAdd = text.match(/grade\s*[àa]\s*mettre\s*:?\s*([^\n]+)/i);
       const mRem = text.match(/grade\s*[àa]\s*retirer\s*:?\s*([^\n]+)/i);
-      const add = mAdd ? gradeKeyFromText(mAdd[1]!) : null;
-      const remove = mRem ? gradeKeyFromText(mRem[1]!) : null;
-      if (!add && !remove) continue;
-      events.push({ ts: m.createdTimestamp, add, remove });
+      const adds = mAdd ? gradeKeysFromText(mAdd[1]!) : [];
+      const removes = mRem ? gradeKeysFromText(mRem[1]!) : [];
+      if (!adds.length && !removes.length) continue;
+      // Date écrite dans le message en priorité, sinon la date Discord du message.
+      const ts = parseDateFromText(text) ?? m.createdTimestamp;
+      events.push({ ts, adds, removes });
     }
 
     events.sort((a, b) => a.ts - b.ts);
@@ -186,14 +236,19 @@ export const historique: SlashCommand = {
       if (prevTs && ev.ts - prevTs > 120 * 86400_000) lines.push('▬▬▬▬▬▬▬▬▬▬▬▬');
       prevTs = ev.ts;
       const sec = Math.floor(ev.ts / 1000);
-      if (ev.add) {
-        const g = getGrade(ev.add);
-        const logo = logoFor(interaction.client, ev.add);
-        lines.push(`➕ ${logo ? logo + ' ' : ''}**${g.label}** — <t:${sec}:f>`);
-      } else if (ev.remove) {
-        const g = getGrade(ev.remove);
-        const logo = logoFor(interaction.client, ev.remove);
-        lines.push(`➖ ${logo ? logo + ' ' : ''}**${g.label}** (retiré) — <t:${sec}:f>`);
+      // Un rank = on montre le(s) grade(s) OBTENU(S) avec un +. Un dérank seul = grade retiré avec -.
+      if (ev.adds.length) {
+        for (const key of ev.adds) {
+          const g = getGrade(key);
+          const logo = logoFor(interaction.client, key);
+          lines.push(`➕ ${logo ? logo + ' ' : ''}**${g.label}** — <t:${sec}:D>`);
+        }
+      } else {
+        for (const key of ev.removes) {
+          const g = getGrade(key);
+          const logo = logoFor(interaction.client, key);
+          lines.push(`➖ ${logo ? logo + ' ' : ''}**${g.label}** (retiré) — <t:${sec}:D>`);
+        }
       }
     }
 
@@ -210,7 +265,7 @@ export const historique: SlashCommand = {
       body = '…(plus anciens masqués)\n' + kept.join('\n');
     }
 
-    const latestAdd = [...events].reverse().find((e) => e.add)?.add ?? null;
+    const latestAdd = [...events].reverse().find((e) => e.adds.length)?.adds[0] ?? null;
     const embed = new EmbedBuilder()
       .setDescription(`${titleLine}\n\n${body}`)
       .setColor(latestAdd ? gradeColorInt(latestAdd) : 0x3b82f6);
