@@ -74,6 +74,20 @@ export async function setStaffGrades(id: string, grades: string[]): Promise<void
   await db()`update staff set grades = ${grades}, primary_grade = ${primary} where id = ${id}`;
 }
 
+/** Met à jour les INFOS d'une carte staff (pseudo IG, tag Discord, compte site). */
+export async function updateStaffInfo(
+  id: string,
+  info: { pseudo: string; discordTag: string; siteUsername: string | null },
+): Promise<void> {
+  await db()`
+    update staff
+    set pseudo = ${info.pseudo},
+        discord_tag = ${info.discordTag},
+        site_username = ${info.siteUsername}
+    where id = ${id} and active = true
+  `;
+}
+
 export async function getStaff(id: string): Promise<Staff | null> {
   const rows = await db()<Omit<Staff, 'records'>[]>`
     select id, pseudo, discord_tag, site_username, grades, is_absent

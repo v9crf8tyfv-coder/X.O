@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getGrade } from '@xo/shared';
 import { requireLevel, RESP_LEVEL, canAssignGrade } from '@/lib/guard';
-import { setStaffGrades, getStaff, removeStaff, syncSiteAccess, queueAction } from '@/lib/staff';
+import { setStaffGrades, getStaff, removeStaff, syncSiteAccess, queueAction, updateStaffInfo } from '@/lib/staff';
 import { ensureFormationFor } from '@/lib/formations';
 import { igSurveil } from '@/lib/igSurveil';
 
@@ -42,6 +42,38 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   await igSurveil(g.account.minecraft_pseudo ?? g.account.username,
     isPromotion ? 'Carte staff — promotion' : 'Carte staff — modification des grades',
     staff.pseudo, `Avant : ${staff.grades.join(', ') || '—'}\nAprès : ${grades.join(', ')}`);
+  return NextResponse.json({ ok: true });
+}
+
+/** Modifier les INFOS d'une carte staff (pseudo IG, tag Discord, compte site) — responsable+ */
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  const g = await requireLevel(RESP_LEVEL);
+  if (g instanceof NextResponse) return g;
+
+  const body = await req.json().catch(() => ({}));
+  const pseudo = typeof body.pseudo === 'string' ? body.pseudo.trim() : '';
+  const discordTag = typeof body.discordTag === 'string' ? body.discordTag.trim() : '';
+  const siteUsernameRaw = typeof body.siteUsername === 'string' ? body.siteUsername.trim() : '';
+  const siteUsername = siteUsernameRaw || null;
+  if (!pseudo || !discordTag) {
+    return NextResponse.json({ error: 'Pseudo IG et tag Discord sont requis.' }, { status: 400 });
+  }
+
+  const staff = await getStaff(params.id);
+  if (!staff) return NextResponse.json({ error: 'Staff introuvable.' }, { status: 404 });
+
+  await updateStaffInfo(params.id, { pseudo, discordTag, siteUsername });
+  // Si le compte site a changé, on reporte les grades sur le nouveau compte.
+  if ((siteUsername ?? '') !== (staff.site_username ?? '')) {
+    await syncSiteAccess(siteUsername, staff.grades);
+  }
+  await igSurveil(
+    g.account.minecraft_pseudo ?? g.account.username,
+    'Carte staff — modification des infos',
+    staff.pseudo,
+    `IG : ${staff.pseudo} → ${pseudo}\nDiscord : ${staff.discord_tag} → ${discordTag}\n` +
+      `Site : ${staff.site_username ?? '—'} → ${siteUsername ?? '—'}`,
+  );
   return NextResponse.json({ ok: true });
 }
 

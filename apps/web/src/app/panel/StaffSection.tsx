@@ -77,6 +77,12 @@ export default function StaffSection({
   const [recType, setRecType] = useState<'warn' | 'blame' | 'note'>('warn');
   const [recReason, setRecReason] = useState('');
 
+  // Édition des infos d'une carte (pseudo IG / tag Discord / compte site) — resp+
+  const [editInfo, setEditInfo] = useState(false);
+  const [eMc, setEMc] = useState('');
+  const [eTag, setETag] = useState('');
+  const [eSite, setESite] = useState('');
+
   // Compteur de modifs en cours : tant qu'une modif optimiste n'est pas confirmée,
   // le rafraîchissement automatique NE réécrit PAS la liste (sinon le bouton "revient").
   const pending = useRef(0);
@@ -173,6 +179,33 @@ export default function StaffSection({
     load();
   }
 
+  function startEditInfo(s: Staff) {
+    setEMc(s.pseudo);
+    setETag(s.discord_tag);
+    setESite(s.site_username ?? '');
+    setEditInfo(true);
+  }
+
+  async function submitInfo(s: Staff) {
+    setError('');
+    if (!eMc.trim() || !eTag.trim()) {
+      setError('Pseudo IG et tag Discord sont requis.');
+      return;
+    }
+    const res = await fetch(`/api/staff/${s.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pseudo: eMc, discordTag: eTag, siteUsername: eSite }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error ?? 'Modification refusée.');
+      return;
+    }
+    setEditInfo(false);
+    load();
+  }
+
   async function submitRecord(s: Staff) {
     if (!recReason.trim()) return;
     const res = await fetch(`/api/staff/${s.id}/record`, {
@@ -212,9 +245,28 @@ export default function StaffSection({
         </button>
         <div className="staff-detail">
           <h2>{s.pseudo}</h2>
-          <div className="site-meta">
-            🎮 {s.pseudo} · 💬 {s.discord_tag} · 🌐 {s.site_username ?? '—'}
-          </div>
+          {!editInfo ? (
+            <div className="site-meta">
+              🎮 {s.pseudo} · 💬 {s.discord_tag} · 🌐 {s.site_username ?? '—'}
+              {canRank && (
+                <button
+                  className="chip"
+                  style={{ marginLeft: 10 }}
+                  onClick={() => startEditInfo(s)}
+                >
+                  ✏️ Éditer les infos
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="record-add" style={{ flexWrap: 'wrap' }}>
+              <input placeholder="Pseudo IG" value={eMc} onChange={(e) => setEMc(e.target.value)} />
+              <input placeholder="Tag Discord" value={eTag} onChange={(e) => setETag(e.target.value)} />
+              <input placeholder="Compte site (optionnel)" value={eSite} onChange={(e) => setESite(e.target.value)} />
+              <button className="btn-submit" onClick={() => submitInfo(s)}>Enregistrer</button>
+              <button className="chip" onClick={() => setEditInfo(false)}>Annuler</button>
+            </div>
+          )}
           <div className="staff-grades">
             {s.grades.map((gk) => (
               <span
