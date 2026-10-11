@@ -236,19 +236,13 @@ export const historique: SlashCommand = {
       if (prevTs && ev.ts - prevTs > 120 * 86400_000) lines.push('▬▬▬▬▬▬▬▬▬▬▬▬');
       prevTs = ev.ts;
       const sec = Math.floor(ev.ts / 1000);
-      // Un rank = on montre le(s) grade(s) OBTENU(S) avec un +. Un dérank seul = grade retiré avec -.
-      if (ev.adds.length) {
-        for (const key of ev.adds) {
-          const g = getGrade(key);
-          const logo = logoFor(interaction.client, key);
-          lines.push(`➕ ${logo ? logo + ' ' : ''}**${g.label}** — <t:${sec}:D>`);
-        }
-      } else {
-        for (const key of ev.removes) {
-          const g = getGrade(key);
-          const logo = logoFor(interaction.client, key);
-          lines.push(`➖ ${logo ? logo + ' ' : ''}**${g.label}** (retiré) — <t:${sec}:D>`);
-        }
+      // TOUJOURS un "+" (jamais de "-"), avec le grade concerné. On privilégie le(s)
+      // grade(s) OBTENU(S) ; si le message n'a que des retraits, on affiche ce grade-là.
+      const keys = ev.adds.length ? ev.adds : ev.removes;
+      for (const key of keys) {
+        const g = getGrade(key);
+        const logo = logoFor(interaction.client, key);
+        lines.push(`➕ ${logo ? logo + ' ' : ''}**${g.label}** — <t:${sec}:D>`);
       }
     }
 
