@@ -242,7 +242,7 @@ export const historique: SlashCommand = {
       for (const key of keys) {
         const g = getGrade(key);
         const logo = logoFor(interaction.client, key);
-        lines.push(`➕ ${logo ? logo + ' ' : ''}**${g.label}** — <t:${sec}:D>`);
+        lines.push(`➕ ${logo ? logo + ' ' : ''}**${g.label}** — <t:${sec}:f>`);
       }
     }
 
