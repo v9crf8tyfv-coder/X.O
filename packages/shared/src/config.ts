@@ -16,6 +16,7 @@ export const CHANNELS = {
   surveillanceRespo: '1548689103149732013',
   surveillanceAdmin: '1548688857099145216',
   surveillanceStaff: '1548688673430708315',
+  surveillanceSupermodo: '1559240232195588157', // surveillance dédiée des Super-Modérateurs
   // --- Salons du serveur COMMUNAUTÉ (principal) ---
   accueil: '1535380217257005148',
   ticketNormal: '1535383613263183883',

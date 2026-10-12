@@ -10,7 +10,7 @@
  * ⚠️ Certaines couleurs / IDs restent à compléter (marqués TODO).
  */
 
-export type SurveillanceCategory = 'respo' | 'admin' | 'staff' | 'none';
+export type SurveillanceCategory = 'respo' | 'admin' | 'supermodo' | 'staff' | 'none';
 
 export interface GradeDef {
   /** Clé stable utilisée en base et dans le code */
@@ -73,7 +73,7 @@ export const GRADES = {
     color: '3b82f6', // bleu
     roleId: '1552746453687079043', // rôle Discord communauté
     level: 45, // au-dessus des modérateurs, épaule les admins dans la gestion
-    surveillance: 'staff', // surveillés par les admin
+    surveillance: 'supermodo', // salon de surveillance dédié
   },
   // Grade INTERNE : donne juste la gestion RP. Ne s'affiche PAS en effectif/tab/équipe.
   // Assignable par admin et + (level 49 < admin 50).

@@ -35,6 +35,7 @@ export async function surveilCommand(
 const CATEGORY_CHANNEL: Record<Exclude<SurveillanceCategory, 'none'>, string> = {
   respo: CHANNELS.surveillanceRespo, // les fonda surveillent les respo
   admin: CHANNELS.surveillanceAdmin, // les respo surveillent les admins
+  supermodo: CHANNELS.surveillanceSupermodo, // salon dédié super-modo
   staff: CHANNELS.surveillanceStaff, // les admins surveillent les staffs
 };
 
@@ -42,12 +43,14 @@ const CATEGORY_CHANNEL: Record<Exclude<SurveillanceCategory, 'none'>, string> = 
 const CATEGORY_COLOR: Record<Exclude<SurveillanceCategory, 'none'>, number> = {
   respo: 0x811010,
   admin: 0xdc1a1a,
+  supermodo: 0x3b82f6,
   staff: 0x3ba55d,
 };
 
 const CATEGORY_LABEL: Record<Exclude<SurveillanceCategory, 'none'>, string> = {
   respo: 'Responsables',
   admin: 'Admins',
+  supermodo: 'Super-Modérateurs',
   staff: 'Staff',
 };
 
