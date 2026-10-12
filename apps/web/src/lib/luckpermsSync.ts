@@ -175,8 +175,13 @@ export async function syncRpToGame(pseudo: string, rpGrades: string[]): Promise<
   const p = getPool();
   if (!p) return;
   const { RP_GRADES } = await import('@xo/shared');
-  const rpGroups = Object.keys(RP_GRADES);
-  const wanted = new Set(rpGrades.filter((g) => rpGroups.includes(g)));
+  // La clé du grade RP n'est PAS toujours le nom exact du groupe LuckPerms créé en jeu
+  // (ex: clé "necromancien" -> groupe LP "nécromanciens"). On mappe clé -> nom de groupe LP.
+  const RP_LP_GROUP: Record<string, string> = { necromancien: 'nécromanciens' };
+  const lpName = (key: string): string => RP_LP_GROUP[key] ?? key;
+  const rpKeys = Object.keys(RP_GRADES);
+  const rpGroups = rpKeys.map(lpName); // noms de groupes LP réels
+  const wanted = new Set(rpGrades.filter((g) => rpKeys.includes(g)).map(lpName));
   const uuid = (await uuidFromDb(pseudo)) ?? (await fetchUuid(pseudo));
   if (!uuid) throw new Error(`UUID introuvable pour "${pseudo}"`);
   const perms = `${PREFIX}user_permissions`;
