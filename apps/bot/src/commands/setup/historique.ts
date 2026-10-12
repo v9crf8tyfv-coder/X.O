@@ -236,20 +236,18 @@ export const historique: SlashCommand = {
       if (prevTs && ev.ts - prevTs > 120 * 86400_000) lines.push('▬▬▬▬▬▬▬▬▬▬▬▬');
       prevTs = ev.ts;
       const sec = Math.floor(ev.ts / 1000);
-      // Promotion (un grade est MIS) → "+" sur le grade obtenu (on n'affiche pas le retrait implicite).
-      // Dérank SEUL (que des retraits) → "-" sur le grade retiré.
-      if (ev.adds.length) {
-        for (const key of ev.adds) {
-          const g = getGrade(key);
-          const logo = logoFor(interaction.client, key);
-          lines.push(`➕ ${logo ? logo + ' ' : ''}**${g.label}** — <t:${sec}:f>`);
-        }
-      } else {
-        for (const key of ev.removes) {
-          const g = getGrade(key);
-          const logo = logoFor(interaction.client, key);
-          lines.push(`➖ ${logo ? logo + ' ' : ''}**${g.label}** — <t:${sec}:f>`);
-        }
+      // Promotion vs dérank : on compare les NIVEAUX. Un dérank a souvent un "Grade à mettre"
+      // (le grade plus bas) ET un "Grade à retirer" → on détecte via le niveau le plus haut.
+      const topAdd = ev.adds.length ? Math.max(...ev.adds.map((k) => getGrade(k).level)) : -1;
+      const topRem = ev.removes.length ? Math.max(...ev.removes.map((k) => getGrade(k).level)) : -1;
+      // Dérank si : rien n'est mis, OU le grade mis est plus bas que le grade retiré.
+      const isDerank = ev.removes.length > 0 && (ev.adds.length === 0 || topAdd < topRem);
+      const keys = isDerank ? ev.removes : ev.adds;
+      const sign = isDerank ? '➖' : '➕';
+      for (const key of keys) {
+        const g = getGrade(key);
+        const logo = logoFor(interaction.client, key);
+        lines.push(`${sign} ${logo ? logo + ' ' : ''}**${g.label}** — <t:${sec}:f>`);
       }
     }
 
