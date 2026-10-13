@@ -151,6 +151,12 @@ async function processAction(client: Client, guild: Guild, a: PendingAction): Pr
       }
     }
   }
+
+  // Grades internes (Responsable RP / Com) : rôle Discord posé sur le serveur qui le possède,
+  // où que soit ce serveur (no-op si le bot n'y est pas).
+  await reconcileInternalRolesAnywhere(client, a).catch((e) =>
+    console.error('[worker] rôles grades internes échoués', e),
+  );
 }
 
 /**
@@ -158,6 +164,29 @@ async function processAction(client: Client, guild: Guild, a: PendingAction): Pr
  * Ne manipule que les rôles réellement présents sur `guild` (les IDs des autres serveurs
  * sont filtrés par `exists`), donc la même logique marche pour le communautaire et le staff.
  */
+/**
+ * Grades INTERNES dont le rôle Discord vit sur un AUTRE serveur (ni communauté ni staff) :
+ * Responsable RP, Responsable Com. On cherche le rôle sur TOUS les serveurs où le bot est
+ * présent et on l'ajoute/retire là-bas. No-op si le bot n'est pas sur le serveur en question
+ * (Discord interdit de toucher aux rôles d'un serveur dont le bot n'est pas membre).
+ */
+async function reconcileInternalRolesAnywhere(client: Client, a: PendingAction): Promise<void> {
+  const internal = Object.values(ALL_GRADES).filter((g) => g.internal && g.roleId);
+  if (internal.length === 0) return;
+  const wanted = new Set(a.type === 'staff.remove' ? [] : a.grades);
+  for (const g of internal) {
+    const roleId = g.roleId as string;
+    const guild = client.guilds.cache.find((gd) => gd.roles.cache.has(roleId));
+    if (!guild) continue; // bot pas présent sur ce Discord -> impossible, on ignore
+    const member = await findMember(guild, a.discord_tag).catch(() => null);
+    if (!member) continue;
+    const has = member.roles.cache.has(roleId);
+    const want = wanted.has(g.key);
+    if (want && !has) await member.roles.add(roleId, 'Grade interne (site)').catch(() => {});
+    else if (!want && has) await member.roles.remove(roleId, 'Retrait grade interne (site)').catch(() => {});
+  }
+}
+
 /** Applique/retire UNIQUEMENT les rôles RP (Nécromancien/Mage + rôle RP générique). */
 async function reconcileRpRoles(guild: Guild, member: GuildMember, grades: string[]): Promise<void> {
   const wanted = new Set<string>();

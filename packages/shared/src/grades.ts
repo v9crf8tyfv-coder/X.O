@@ -84,7 +84,7 @@ export const GRADES = {
     key: 'opresp_rp',
     label: 'Responsable RP',
     color: '9b59ff',
-    roleId: '1552732934098911262', // rôle Discord "Responsable RP" posé à l'utilisateur
+    roleId: '1552731546392199258', // rôle Discord "Responsable RP" posé à l'utilisateur
     level: 49,
     surveillance: 'staff',
     internal: true, // grade interne / dispatching
@@ -95,7 +95,7 @@ export const GRADES = {
     key: 'opresp_com',
     label: 'Responsable Com',
     color: 'd98e2b',
-    roleId: '1552735838062911650', // rôle Discord "Responsable Com" posé à l'utilisateur
+    roleId: '1552735625260834969', // rôle Discord "Responsable Com" posé à l'utilisateur
     level: 48,
     surveillance: 'staff',
     internal: true,
