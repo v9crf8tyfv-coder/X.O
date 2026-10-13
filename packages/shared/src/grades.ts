@@ -27,6 +27,9 @@ export interface GradeDef {
   surveillance: SurveillanceCategory;
   /** true = grade "responsable spécialisé" (Resp.X), sous-catégorie de Responsable */
   isRespoSpecialise?: boolean;
+  /** true = grade INTERNE / dispatching (RP, World Edit…) : affiché sous une ligne à part
+   *  sur la carte staff, assignable UNIQUEMENT par les admins. Pas un "vrai" grade affiché. */
+  internal?: boolean;
 }
 
 /**
@@ -84,6 +87,18 @@ export const GRADES = {
     roleId: null, // aucun rôle Discord communauté (interne à la carte staff)
     level: 49,
     surveillance: 'staff',
+    internal: true, // grade interne / dispatching
+  },
+  // Grade INTERNE "World Edit" : pose le groupe LuckPerms `worldedit` en jeu (toutes les perms WE).
+  // Pas de rôle Discord. Assignable uniquement par les admins (grade interne).
+  worldedit: {
+    key: 'worldedit',
+    label: 'World Edit',
+    color: '2ecc71',
+    roleId: null,
+    level: 41,
+    surveillance: 'staff',
+    internal: true,
   },
   dev: {
     key: 'dev',

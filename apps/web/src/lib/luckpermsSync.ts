@@ -35,6 +35,8 @@ const LP_GROUP: Record<string, string> = {
   modo_x: 'modo',    // Modérateur X -> groupe modo en jeu
   com: 'com/g',
   betatesteur: 'béta-test',
+  // Grade interne World Edit -> groupe LuckPerms `worldedit` (toutes les perms WorldEdit) en jeu.
+  worldedit: 'worldedit',
 };
 
 const PREFIX = process.env.LP_TABLE_PREFIX || 'luckperms_';
