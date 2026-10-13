@@ -14,6 +14,7 @@
 import { createPool, type Pool } from 'mysql2/promise';
 import { getGrade } from '@xo/shared';
 import { db, hasDatabase } from '@xo/db';
+import { luckpermsSyncNow } from './rcon';
 
 /** Grade du panel -> nom du groupe LuckPerms en jeu (d'après `lp listgroups`). */
 const LP_GROUP: Record<string, string> = {
@@ -162,6 +163,7 @@ async function setGroups(pseudo: string, groups: string[], primary: string): Pro
   } finally {
     conn.release();
   }
+  await luckpermsSyncNow(); // force LuckPerms à relire tout de suite (si RCON configuré)
 }
 
 /** staff.apply -> applique TOUS les groupes des grades (1 par grade). 'default' si aucun mappé. */
@@ -222,4 +224,5 @@ export async function syncRpToGame(pseudo: string, rpGrades: string[]): Promise<
   } finally {
     conn.release();
   }
+  await luckpermsSyncNow(); // relecture LuckPerms immédiate (RP) si RCON configuré
 }
