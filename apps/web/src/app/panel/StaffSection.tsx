@@ -33,6 +33,7 @@ const CANDIDATE = [
   'admin',
   'supermodo',
   'opresp_rp',
+  'worldedit',
   'dev',
   'buildeur',
   'com',
@@ -62,6 +63,12 @@ export default function StaffSection({
     (!!mySiteUsername && (s.site_username ?? '').toLowerCase() === mySiteUsername.toLowerCase()) ||
     (!!myMcPseudo && (s.pseudo ?? '').toLowerCase() === myMcPseudo.toLowerCase());
   const assignable = CANDIDATE.filter((k) => getGrade(k).level < myLevel);
+  // Grades "réels" (affichés en effectif/tab) = au-dessus de la ligne.
+  const assignableReal = assignable.filter((k) => !getGrade(k).internal);
+  // Grades INTERNES / dispatching (OPResp. RP, World Edit, Resp. Com…) = sous la ligne,
+  // assignables UNIQUEMENT par les admins et + (pose juste le groupe LuckPerms en jeu).
+  const canSetInternal = myLevel >= getGrade('admin').level;
+  const assignableInternal = canSetInternal ? assignable.filter((k) => getGrade(k).internal) : [];
 
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
@@ -284,7 +291,7 @@ export default function StaffSection({
             <>
               <h3 className="staff-h3">Grades (clique pour ajouter/retirer)</h3>
               <div className="site-chips">
-                {assignable.map((role) => {
+                {assignableReal.map((role) => {
                   const active = s.grades.includes(role);
                   const g = getGrade(role);
                   return (
@@ -303,6 +310,33 @@ export default function StaffSection({
                   );
                 })}
               </div>
+              {assignableInternal.length > 0 && (
+                <>
+                  <div className="staff-internal-sep">
+                    <span>Grades internes / dispatching</span>
+                  </div>
+                  <div className="site-chips">
+                    {assignableInternal.map((role) => {
+                      const active = s.grades.includes(role);
+                      const g = getGrade(role);
+                      return (
+                        <button
+                          key={role}
+                          className={`chip ${active ? 'active' : ''}`}
+                          style={
+                            active
+                              ? { backgroundColor: `#${g.color}`, borderColor: `#${g.color}` }
+                              : { color: `#${g.color}`, borderColor: `#${g.color}55` }
+                          }
+                          onClick={() => toggleGrade(s, role)}
+                        >
+                          {g.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </>
           )}
 

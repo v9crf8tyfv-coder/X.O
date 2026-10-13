@@ -45,7 +45,12 @@ let pool: Pool | null = null;
 function getPool(): Pool | null {
   if (pool) return pool;
   const { MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE } = process.env;
-  if (!MYSQL_HOST || !MYSQL_USER || !MYSQL_PASSWORD || !MYSQL_DATABASE) return null;
+  if (!MYSQL_HOST || !MYSQL_USER || !MYSQL_PASSWORD || !MYSQL_DATABASE) {
+    // Sync IG désactivée : AUCUN grade n'est appliqué NI retiré en jeu (Discord + site OK).
+    // C'est la cause #1 du bug "l'ancien grade ne se retire pas en jeu".
+    console.warn('[IG sync] DÉSACTIVÉE — variables MySQL absentes sur Vercel (MYSQL_HOST/USER/PASSWORD/DATABASE). Aucun grade LuckPerms appliqué ni retiré en jeu.');
+    return null;
+  }
   pool = createPool({
     host: MYSQL_HOST,
     port: Number(process.env.MYSQL_PORT || 3306),
@@ -135,12 +140,16 @@ async function setGroups(pseudo: string, groups: string[], primary: string): Pro
        ON DUPLICATE KEY UPDATE username=VALUES(username), primary_group=VALUES(primary_group)`,
       [uuid, pseudo, primary],
     );
-    // Retire les groupes STAFF gérés qui ne sont plus voulus (ex: on enlève SuperModo -> group.supermodo supprimé).
+    // Retire les groupes STAFF gérés qui ne sont plus voulus (ex: on enlève Admin -> group.admin supprimé).
+    const removed: string[] = [];
     for (const g of STAFF_MANAGED_GROUPS) {
       if (!wanted.has(g)) {
-        await conn.query(`DELETE FROM \`${perms}\` WHERE uuid=? AND permission=?`, [uuid, `group.${g}`]);
+        const [r] = await conn.query(`DELETE FROM \`${perms}\` WHERE uuid=? AND permission=?`, [uuid, `group.${g}`]);
+        if ((r as { affectedRows?: number }).affectedRows) removed.push(g);
       }
     }
+    if (removed.length) console.log(`[IG sync] ${pseudo}: groupes retirés en jeu -> ${removed.join(', ')}`);
+    console.log(`[IG sync] ${pseudo}: groupes voulus -> ${[...wanted].join(', ') || '(aucun)'} (primary ${primary})`);
     // Ajoute les groupes voulus (sans doublon).
     for (const g of wanted) {
       await conn.query(

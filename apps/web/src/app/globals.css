@@ -286,6 +286,10 @@ html, body {
 .staff-detail h2 { font-size: 1.7rem; font-weight: 800; }
 .staff-h3 { margin: 20px 0 10px; font-size: 1rem; font-weight: 700; }
 .staff-grades { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+/* Séparateur "grades internes / dispatching" sur la carte staff */
+.staff-internal-sep { display: flex; align-items: center; gap: 10px; margin: 14px 0 8px; }
+.staff-internal-sep::before, .staff-internal-sep::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,0.14); }
+.staff-internal-sep span { font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.45); white-space: nowrap; }
 
 .record-add { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .record-add select, .record-add input { padding: 9px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--card); color: var(--text); }
