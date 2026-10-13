@@ -62,7 +62,7 @@ export const GRADES = {
   responsable: {
     key: 'responsable',
     label: 'Responsable',
-    abbrev: 'R',
+    abbrev: 'RESP',
     color: '811010',
     roleId: '1535321330075828306',
     level: 70,
@@ -262,17 +262,54 @@ export function isFounderTier(key: string | null | undefined): boolean {
 }
 
 /**
+ * HIÉRARCHIE D'AFFICHAGE officielle, du plus BAS au plus HAUT.
+ * Sert PARTOUT où il faut choisir "le plus haut grade" pour l'AFFICHAGE
+ * (pseudo Discord, logos…). ⚠️ DIFFÉRENT de `level` qui sert aux PERMISSIONS :
+ * ex. com a un level 40 > modo 30 pour l'accès, mais ici modo est AU-DESSUS de com.
+ * Les resp. spécialisés et grades internes sont placés mais n'ont pas d'incidence
+ * sur le pseudo (ils n'ont pas/plus d'abbrev prise en compte).
+ */
+export const GRADE_HIERARCHY: string[] = [
+  'joueur',
+  'mage',
+  'necromancien',
+  'betatesteur',
+  'com',
+  'buildeur',
+  'modo_test',
+  'modo',
+  'modo_x',
+  'supermodo',
+  'admin',
+  'dev',
+  'responsable',
+  'resp_admin',
+  'resp_com',
+  'resp_dev',
+  'resp_build',
+  'resp_infra',
+  'resp_systeme',
+  'cofondateur',
+  'fondateur',
+];
+
+/** Rang d'affichage d'un grade (plus grand = plus haut). -1 si inconnu. */
+export function gradeRank(key: string | null | undefined): number {
+  return GRADE_HIERARCHY.indexOf(String(key ?? ''));
+}
+
+/**
  * Pseudo Discord communauté d'un staff : "<abbrev du plus haut VRAI grade> | <pseudoMC>".
- * Les grades internes (RP/Com/WorldEdit) sont ignorés pour le préfixe. Si aucun grade réel
- * n'a d'abréviation, renvoie juste le pseudo. Tronqué à 32 caractères (limite Discord).
+ * "Plus haut" = selon GRADE_HIERARCHY (affichage), PAS selon level. Les grades internes
+ * (RP/Com/WorldEdit) sont ignorés. Sans abréviation applicable -> juste le pseudo. Max 32 car.
  */
 export function staffNickname(grades: string[], pseudoMc: string): string {
   const real = grades.filter((g) => !getGrade(g).internal && getGrade(g).abbrev);
   let abbrev = '';
   let best = -1;
   for (const g of real) {
-    const lvl = getGrade(g).level;
-    if (lvl > best) { best = lvl; abbrev = getGrade(g).abbrev ?? ''; }
+    const r = gradeRank(g);
+    if (r > best) { best = r; abbrev = getGrade(g).abbrev ?? ''; }
   }
   const nick = abbrev ? `${abbrev} | ${pseudoMc}` : pseudoMc;
   return nick.slice(0, 32);
