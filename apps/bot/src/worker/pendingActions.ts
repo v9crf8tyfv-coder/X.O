@@ -12,6 +12,7 @@ import {
   CHANNELS,
   getGrade,
   staffNickname,
+  isFounderTier,
   RP_GRADES,
   RP_ROLE_ID,
 } from '@xo/shared';
@@ -258,7 +259,9 @@ async function reconcileGuildRoles(guild: Guild, member: GuildMember, a: Pending
   if (toRemove.length) await member.roles.remove(toRemove, 'MAJ staff (site)');
 
   // Communauté : renomme le pseudo "<abbrev du grade> | <pseudoMC>" (ex: "M | Faiko2004").
-  if (!isStaffGuild) await setNick(member, staffNickname(a.grades, a.minecraft_pseudo));
+  // Exception : on NE touche PAS au pseudo des fondateurs / co-fondateurs.
+  if (!isStaffGuild && !a.grades.some(isFounderTier))
+    await setNick(member, staffNickname(a.grades, a.minecraft_pseudo));
 }
 
 /** Renomme un membre, en silence si le bot n'a pas les droits (owner, hiérarchie des rôles…). */
