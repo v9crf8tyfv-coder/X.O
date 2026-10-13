@@ -33,6 +33,7 @@ const CANDIDATE = [
   'admin',
   'supermodo',
   'opresp_rp',
+  'opresp_com',
   'worldedit',
   'dev',
   'buildeur',
@@ -287,29 +288,33 @@ export default function StaffSection({
             ))}
           </div>
 
-          {canRank && (
+          {(canRank || assignableInternal.length > 0) && (
             <>
               <h3 className="staff-h3">Grades (clique pour ajouter/retirer)</h3>
-              <div className="site-chips">
-                {assignableReal.map((role) => {
-                  const active = s.grades.includes(role);
-                  const g = getGrade(role);
-                  return (
-                    <button
-                      key={role}
-                      className={`chip ${active ? 'active' : ''}`}
-                      style={
-                        active
-                          ? { backgroundColor: `#${g.color}`, borderColor: `#${g.color}` }
-                          : { color: `#${g.color}`, borderColor: `#${g.color}55` }
-                      }
-                      onClick={() => toggleGrade(s, role)}
-                    >
-                      {g.label}
-                    </button>
-                  );
-                })}
-              </div>
+              {/* Vrais grades : responsables uniquement */}
+              {canRank && (
+                <div className="site-chips">
+                  {assignableReal.map((role) => {
+                    const active = s.grades.includes(role);
+                    const g = getGrade(role);
+                    return (
+                      <button
+                        key={role}
+                        className={`chip ${active ? 'active' : ''}`}
+                        style={
+                          active
+                            ? { backgroundColor: `#${g.color}`, borderColor: `#${g.color}` }
+                            : { color: `#${g.color}`, borderColor: `#${g.color}55` }
+                        }
+                        onClick={() => toggleGrade(s, role)}
+                      >
+                        {g.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {/* Grades internes / dispatching : admins et + (barre de séparation si on voit aussi les vrais) */}
               {assignableInternal.length > 0 && (
                 <>
                   <div className="staff-internal-sep">

@@ -82,12 +82,23 @@ export const GRADES = {
   // Assignable par admin et + (level 49 < admin 50).
   opresp_rp: {
     key: 'opresp_rp',
-    label: 'OPResp. RP',
+    label: 'Responsable RP',
     color: '9b59ff',
-    roleId: null, // aucun rôle Discord communauté (interne à la carte staff)
+    roleId: '1552732934098911262', // rôle Discord "Responsable RP" posé à l'utilisateur
     level: 49,
     surveillance: 'staff',
     internal: true, // grade interne / dispatching
+  },
+  // Grade INTERNE "Responsable Com" : dispatching com (pas de rôle Discord, pas de groupe LP).
+  // Assignable par admin et +.
+  opresp_com: {
+    key: 'opresp_com',
+    label: 'Responsable Com',
+    color: 'd98e2b',
+    roleId: '1552735838062911650', // rôle Discord "Responsable Com" posé à l'utilisateur
+    level: 48,
+    surveillance: 'staff',
+    internal: true,
   },
   // Grade INTERNE "World Edit" : pose le groupe LuckPerms `worldedit` en jeu (toutes les perms WE).
   // Pas de rôle Discord. Assignable uniquement par les admins (grade interne).
