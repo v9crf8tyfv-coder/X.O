@@ -11,6 +11,7 @@ import {
   STAFF_TAG_ROLE_IDS,
   CHANNELS,
   getGrade,
+  staffNickname,
   RP_GRADES,
   RP_ROLE_ID,
 } from '@xo/shared';
@@ -220,6 +221,8 @@ async function reconcileGuildRoles(guild: Guild, member: GuildMember, a: Pending
     if (toRemove.length) await member.roles.remove(toRemove, 'Retrait du staff (site)');
     if (exists(guild, joueur) && !member.roles.cache.has(joueur))
       await member.roles.add(joueur, 'Retour joueur');
+    // Communauté : on remet le pseudo nu (sans préfixe de grade).
+    if (!isStaffGuild) await setNick(member, a.minecraft_pseudo);
     return;
   }
 
@@ -253,6 +256,19 @@ async function reconcileGuildRoles(guild: Guild, member: GuildMember, a: Pending
   const toRemove = managed.filter((id) => !desired.has(id) && member.roles.cache.has(id));
   if (toAdd.length) await member.roles.add(toAdd, 'Grade staff (site)');
   if (toRemove.length) await member.roles.remove(toRemove, 'MAJ staff (site)');
+
+  // Communauté : renomme le pseudo "<abbrev du grade> | <pseudoMC>" (ex: "M | Faiko2004").
+  if (!isStaffGuild) await setNick(member, staffNickname(a.grades, a.minecraft_pseudo));
+}
+
+/** Renomme un membre, en silence si le bot n'a pas les droits (owner, hiérarchie des rôles…). */
+async function setNick(member: GuildMember, nick: string): Promise<void> {
+  if ((member.nickname ?? member.user.username) === nick) return; // déjà bon
+  try {
+    await member.setNickname(nick, 'Pseudo staff (site)');
+  } catch (e) {
+    console.warn('[worker] renommage impossible', member.user.username, e instanceof Error ? e.message : e);
+  }
 }
 
 /** Messages automatiques de rank / départ (taverne + général staff) */

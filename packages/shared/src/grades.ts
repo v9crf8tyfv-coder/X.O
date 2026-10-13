@@ -25,6 +25,9 @@ export interface GradeDef {
   level: number;
   /** Dans quel salon de surveillance les changements de ce grade sont loggés */
   surveillance: SurveillanceCategory;
+  /** Abréviation affichée dans le pseudo Discord communauté : "<abbrev> | <pseudoMC>"
+   *  (ex: Modérateur -> "M", Modérateur Test -> "M.T"). Vide/absent = pas de préfixe. */
+  abbrev?: string;
   /** true = grade "responsable spécialisé" (Resp.X), sous-catégorie de Responsable */
   isRespoSpecialise?: boolean;
   /** true = grade INTERNE / dispatching (RP, World Edit…) : affiché sous une ligne à part
@@ -41,6 +44,7 @@ export const GRADES = {
   fondateur: {
     key: 'fondateur',
     label: 'Fondateur',
+    abbrev: 'F',
     color: '7cabca',
     roleId: '1535320390908387479',
     level: 100,
@@ -49,6 +53,7 @@ export const GRADES = {
   cofondateur: {
     key: 'cofondateur',
     label: 'Co-fondateur',
+    abbrev: 'CF',
     color: '1a6594',
     roleId: '1535322549242699826',
     level: 90,
@@ -57,6 +62,7 @@ export const GRADES = {
   responsable: {
     key: 'responsable',
     label: 'Responsable',
+    abbrev: 'R',
     color: '811010',
     roleId: '1535321330075828306',
     level: 70,
@@ -65,6 +71,7 @@ export const GRADES = {
   admin: {
     key: 'admin',
     label: 'Admin',
+    abbrev: 'A',
     color: 'dc1a1a',
     roleId: '1535321559252606986',
     level: 50,
@@ -73,6 +80,7 @@ export const GRADES = {
   supermodo: {
     key: 'supermodo',
     label: 'Super-Modérateur',
+    abbrev: 'SM',
     color: '3b82f6', // bleu
     roleId: '1552746453687079043', // rôle Discord communauté
     level: 45, // au-dessus des modérateurs, épaule les admins dans la gestion
@@ -114,6 +122,7 @@ export const GRADES = {
   dev: {
     key: 'dev',
     label: 'Dev',
+    abbrev: 'D',
     color: 'e0a82b',
     roleId: '1535321787783446628',
     level: 40,
@@ -122,6 +131,7 @@ export const GRADES = {
   buildeur: {
     key: 'buildeur',
     label: 'Buildeur',
+    abbrev: 'B',
     color: '3ba55d', // TODO: couleur exacte du rôle Discord à confirmer
     roleId: '1535321714731261972',
     level: 40,
@@ -130,6 +140,7 @@ export const GRADES = {
   com: {
     key: 'com',
     label: 'Communication / Graphiste',
+    abbrev: 'C',
     color: 'd98e2b', // TODO: couleur exacte du rôle Discord à confirmer
     roleId: '1535322033771118623',
     level: 40,
@@ -140,6 +151,7 @@ export const GRADES = {
   modo: {
     key: 'modo',
     label: 'Modérateur',
+    abbrev: 'M',
     color: '9b59b6', // violet
     roleId: '1535321625614880849',
     level: 30,
@@ -150,6 +162,7 @@ export const GRADES = {
   modo_test: {
     key: 'modo_test',
     label: 'Modérateur test',
+    abbrev: 'M.T',
     color: 'a78bfa', // mauve plus clair
     roleId: '1544819766546407496',
     level: 30,
@@ -158,6 +171,7 @@ export const GRADES = {
   modo_x: {
     key: 'modo_x',
     label: 'Modérateur X',
+    abbrev: 'M.X',
     color: '6d28d9', // mauve plus foncé
     roleId: '1544819950542262332',
     level: 30,
@@ -167,6 +181,7 @@ export const GRADES = {
   betatesteur: {
     key: 'betatesteur',
     label: 'Bêta-testeur',
+    abbrev: 'BT',
     color: '7e8c9c',
     roleId: '1535332321635344494',
     level: 10,
@@ -179,18 +194,19 @@ export const GRADES = {
  * Aucun ID de rôle Discord fourni pour l'instant → à compléter.
  */
 export const GRADES_RESPO_SPECIALISE = {
-  resp_admin: mkRespo('resp_admin', 'Resp. Admin'),
-  resp_com: mkRespo('resp_com', 'Resp. Com'),
-  resp_dev: mkRespo('resp_dev', 'Resp. Dev'),
-  resp_build: mkRespo('resp_build', 'Resp. Build'),
-  resp_infra: mkRespo('resp_infra', 'Resp. Infra'),
-  resp_systeme: mkRespo('resp_systeme', 'Resp. Système'),
+  resp_admin: mkRespo('resp_admin', 'Resp. Admin', 'R.A'),
+  resp_com: mkRespo('resp_com', 'Resp. Com', 'R.C'),
+  resp_dev: mkRespo('resp_dev', 'Resp. Dev', 'R.D'),
+  resp_build: mkRespo('resp_build', 'Resp. Build', 'R.B'),
+  resp_infra: mkRespo('resp_infra', 'Resp. Infra', 'R.I'),
+  resp_systeme: mkRespo('resp_systeme', 'Resp. Système', 'R.S'),
 } as const satisfies Record<string, GradeDef>;
 
-function mkRespo(key: string, label: string): GradeDef {
+function mkRespo(key: string, label: string, abbrev: string): GradeDef {
   return {
     key,
     label,
+    abbrev,
     color: '811010', // même famille que Responsable — TODO à ajuster
     roleId: null, // TODO: ID du rôle Discord
     level: 75, // au-dessus d'un responsable simple
@@ -243,4 +259,21 @@ export function gradeLogoKey(key: string | null | undefined): string {
 /** Est-ce un fondateur (ou co-fondateur) ? — non surveillé, accès max */
 export function isFounderTier(key: string | null | undefined): boolean {
   return key === 'fondateur' || key === 'cofondateur';
+}
+
+/**
+ * Pseudo Discord communauté d'un staff : "<abbrev du plus haut VRAI grade> | <pseudoMC>".
+ * Les grades internes (RP/Com/WorldEdit) sont ignorés pour le préfixe. Si aucun grade réel
+ * n'a d'abréviation, renvoie juste le pseudo. Tronqué à 32 caractères (limite Discord).
+ */
+export function staffNickname(grades: string[], pseudoMc: string): string {
+  const real = grades.filter((g) => !getGrade(g).internal && getGrade(g).abbrev);
+  let abbrev = '';
+  let best = -1;
+  for (const g of real) {
+    const lvl = getGrade(g).level;
+    if (lvl > best) { best = lvl; abbrev = getGrade(g).abbrev ?? ''; }
+  }
+  const nick = abbrev ? `${abbrev} | ${pseudoMc}` : pseudoMc;
+  return nick.slice(0, 32);
 }
