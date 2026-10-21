@@ -10,8 +10,10 @@ export const trainMark: ComponentHandler<ButtonInteraction> = {
   async execute(interaction) {
     const member = interaction.member as GuildMember | null;
     const level = member ? highestGrade(member)?.level ?? 0 : 0;
-    if (level < GRADES.admin.level) {
-      await interaction.reply({ embeds: [errorEmbed('Non autorisé', 'Réservé aux admins et +.')], flags: MessageFlags.Ephemeral });
+    const OP_ROLE = '1562464071385878621';
+    const isOp = member ? member.roles.cache.has(OP_ROLE) : false;
+    if (level < GRADES.admin.level && !isOp) {
+      await interaction.reply({ embeds: [errorEmbed('Non autorisé', 'Réservé aux admins et + (ou aux OP).')], flags: MessageFlags.Ephemeral });
       return;
     }
     const ok = interaction.customId.split(':')[1] === 'ok';
