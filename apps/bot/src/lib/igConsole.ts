@@ -33,7 +33,8 @@ export async function handleConsoleMessage(message: Message): Promise<boolean> {
   if (message.channelId !== CM_IG_CHANNEL) return false;
   if (message.author.bot) return false;
   const cmd = message.content.trim();
-  if (!cmd) return false;
+  // Il FAUT un « / » devant pour exécuter une commande ; sinon c'est un message normal.
+  if (!cmd.startsWith('/')) return false;
 
   const member = message.member as GuildMember | null;
   const level = member ? highestGrade(member)?.level ?? 0 : 0;
