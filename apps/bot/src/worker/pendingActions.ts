@@ -15,6 +15,7 @@ import {
   isFounderTier,
   RP_GRADES,
   RP_ROLE_ID,
+  DISPATCH,
 } from '@xo/shared';
 import { ENV } from '../env.js';
 import { publishEffectif } from '../lib/effectifPublish.js';
@@ -121,6 +122,22 @@ function desiredTagRole(grades: string[]): string | null {
 }
 
 async function processAction(client: Client, guild: Guild, a: PendingAction): Promise<void> {
+  // DISPATCHING : pose/retire le rôle "didi" sur le serveur Com ou RP (serveurs séparés du staff).
+  if (a.type.startsWith('dispatch.')) {
+    const [, side, op] = a.type.split('.'); // dispatch.<com|rp>.<add|remove>
+    const conf = DISPATCH[side as keyof typeof DISPATCH];
+    if (!conf) throw new Error(`Dispatch inconnu: ${a.type}`);
+    const guildId = side === 'com' ? ENV.DISCORD_COM_GUILD_ID : ENV.DISCORD_RP_GUILD_ID;
+    if (!guildId) throw new Error(`Serveur Discord ${side} non configuré (env ${conf.guildEnv}).`);
+    const target = await client.guilds.fetch(guildId).catch(() => null);
+    if (!target) throw new Error(`Serveur ${side} introuvable (le bot y est-il ?).`);
+    const dm = await findMember(target, a.discord_tag);
+    if (!dm) throw new Error(`Membre introuvable sur le serveur ${side}: ${a.discord_tag}`);
+    if (op === 'add') await dm.roles.add(conf.roleId, 'Dispatching (panel)');
+    else await dm.roles.remove(conf.roleId, 'Dispatching (panel)');
+    return;
+  }
+
   const member = await findMember(guild, a.discord_tag);
   if (!member) throw new Error(`Membre Discord introuvable: ${a.discord_tag}`);
 

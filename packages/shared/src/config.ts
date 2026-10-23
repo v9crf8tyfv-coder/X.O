@@ -193,6 +193,17 @@ export const OPRESP_RP_LABEL = 'OPResp. RP';
 export const OPRESP_RP_COLOR = '9b59ff';
 
 /**
+ * Dispatching : le Responsable Com (opresp_com) peut poser le rôle "didi com" sur le SERVEUR Discord Com,
+ * et le Responsable RP (opresp_rp) le rôle "didi rp" sur le SERVEUR Discord RP. Les IDs des serveurs
+ * (guilds) sont fournis au bot via les variables d'env ci-dessous (serveurs séparés du staff).
+ */
+export const DISPATCH = {
+  com: { roleId: '1552735838062911650', guildEnv: 'DISCORD_COM_GUILD_ID', managerGrade: 'opresp_com', label: 'Com' },
+  rp: { roleId: '1552732934098911262', guildEnv: 'DISCORD_RP_GUILD_ID', managerGrade: 'opresp_rp', label: 'RP' },
+} as const;
+export type DispatchSide = keyof typeof DISPATCH;
+
+/**
  * Emojis Discord "logo de grade" (clé de LOGO -> NOM de l'emoji custom sur le serveur).
  * ⚠️ Indexé par la clé de LOGO (voir gradeLogoKey) : modo_test / modo_x partagent LogoModo,
  * les resp spécialisés partagent LogoResp. Le bot résout l'emoji par ce NOM dans le serveur

@@ -22,4 +22,7 @@ export const ENV = {
   DISCORD_GUILD_ID: required('DISCORD_GUILD_ID'),
   // Optionnel : webhook Discord où le bot poste son démarrage + ses erreurs (pour voir les logs).
   LOG_WEBHOOK_URL: process.env.LOG_WEBHOOK_URL ?? '',
+  // Optionnel : serveurs Discord Com / RP (dispatching). Le bot doit y être avec « Gérer les rôles ».
+  DISCORD_COM_GUILD_ID: process.env.DISCORD_COM_GUILD_ID ?? '',
+  DISCORD_RP_GUILD_ID: process.env.DISCORD_RP_GUILD_ID ?? '',
 };

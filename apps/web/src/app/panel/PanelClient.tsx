@@ -28,6 +28,7 @@ import VisitsSection from './VisitsSection';
 import AutoMessagesSection from './AutoMessagesSection';
 import StaffSection from './StaffSection';
 import RpSection from './RpSection';
+import DispatchSection from './DispatchSection';
 import ServeursSection from './ServeursSection';
 import LiensSection from './LiensSection';
 import SuivisSection from './SuivisSection';
@@ -260,6 +261,8 @@ export default function PanelClient({ account }: Props) {
           />
         ) : current.id === 'rp' ? (
           <RpSection />
+        ) : current.id === 'dispatch' ? (
+          <DispatchSection myGrades={account.site_grades ?? []} isAdmin={grade.level >= getGrade('admin').level} />
         ) : current.id === 'serveurs' ? (
           <ServeursSection />
         ) : current.id === 'cmdblocks' ? (
