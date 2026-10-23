@@ -170,6 +170,62 @@ export default function CustomItemsSection() {
     return c.toDataURL('image/png');
   }
 
+  // Modèles 16x16 prêts à colorier. Chaque caractère = une couleur (voir MODEL_COLORS).
+  const MODEL_COLORS: Record<string, string> = {
+    '.': '', w: '#FFFFFF', s: '#B9C2CC', g: '#6E7781', k: '#15181C',
+    b: '#5A3E29', l: '#9C7A4E', o: '#C8872F', f: '#E2E8EE',
+  };
+  const MODELS: { label: string; rows: string[] }[] = [
+    { label: 'Épée', rows: [
+      '.......w........', '.......ws.......', '.......ws.......', '.......ws.......',
+      '.......ws.......', '.......ws.......', '.......ws.......', '.......ws.......',
+      '.......ws.......', '.....bbbbbb.....', '.......ll.......', '.......ll.......',
+      '.......ll.......', '.......ll.......', '................', '................' ] },
+    { label: 'Pioche', rows: [
+      '................', '..ss......ss....', '..ssssssssss....', '.......ll.......',
+      '.......ll.......', '.......ll.......', '.......ll.......', '.......ll.......',
+      '.......ll.......', '.......ll.......', '.......ll.......', '.......ll.......',
+      '.......ll.......', '.......ll.......', '.......ll.......', '................' ] },
+    { label: 'Pelle', rows: [
+      '................', '......ssss......', '......ssss......', '......ssss......',
+      '......ssss......', '.......ll.......', '.......ll.......', '.......ll.......',
+      '.......ll.......', '.......ll.......', '.......ll.......', '.......ll.......',
+      '.......ll.......', '.......ll.......', '................', '................' ] },
+    { label: 'Casque', rows: [
+      '................', '....ssssss......', '...ssssssss.....', '..ssssssssss....',
+      '..ssssssssss....', '..ssssssssss....', '..ss......ss....', '..ss......ss....',
+      '..ssssssssss....', '...ssssssss.....', '................', '................',
+      '................', '................', '................', '................' ] },
+    { label: 'Plastron', rows: [
+      '................', '..sss....sss....', '..ssssssssss....', '..ssssssssss....',
+      '..ssssssssss....', '..ssssssssss....', '..ssssssssss....', '..ssssssssss....',
+      '..ssssssssss....', '...ssssssss.....', '...ssssssss.....', '....ssssss......',
+      '................', '................', '................', '................' ] },
+    { label: 'Jambières', rows: [
+      '................', '..ssssssssss....', '..ssssssssss....', '..ssssssssss....',
+      '..ssss..ssss....', '..ssss..ssss....', '..ssss..ssss....', '..ssss..ssss....',
+      '..ssss..ssss....', '..ssss..ssss....', '..ssss..ssss....', '..sss....sss....',
+      '..sss....sss....', '................', '................', '................' ] },
+    { label: 'Arc', rows: [
+      '................', '......o...k.....', '.....o....k.....', '....o.....k.....',
+      '...o......k.....', '..o.......k.....', '..o.......k.....', '..o.......k.....',
+      '..o.......k.....', '..o.......k.....', '..o.......k.....', '...o......k.....',
+      '....o.....k.....', '.....o....k.....', '......o...k.....', '................' ] },
+    { label: 'Flèche', rows: [
+      '.......s........', '......sss.......', '.....sssss......', '.......l........',
+      '.......l........', '.......l........', '.......l........', '.......l........',
+      '.......l........', '.......l........', '......fff.......', '.....f.l.f......',
+      '....f..l..f.....', '....f..l..f.....', '................', '................' ] },
+  ];
+  function loadModel(rows: string[]) {
+    const out = Array(PX_GRID * PX_GRID).fill('');
+    for (let y = 0; y < PX_GRID; y++) {
+      const row = rows[y] ?? '';
+      for (let x = 0; x < PX_GRID; x++) out[y * PX_GRID + x] = MODEL_COLORS[row[x]] ?? '';
+    }
+    setPixels(out);
+  }
+
   function applyGradient() {
     if (focusRef.current === 'lore') setLore((s) => gradient(s, g1, g2));
     else setName((s) => gradient(s, g1, g2));
@@ -331,14 +387,23 @@ export default function CustomItemsSection() {
             </label>
             {pixelMode && (
               <div style={{ marginTop: 10 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${PX_GRID}, 15px)`, gap: 1, width: 'fit-content', background: '#111', padding: 4, borderRadius: 6 }}
-                  onMouseLeave={() => undefined}>
-                  {pixels.map((c, i) => (
-                    <div key={i}
-                      onMouseDown={() => setPixels((p) => { const n = [...p]; n[i] = pen === '' ? '' : (n[i] === pen ? '' : pen); return n; })}
-                      onMouseEnter={(e) => { if (e.buttons === 1) setPixels((p) => { const n = [...p]; n[i] = pen; return n; }); }}
-                      style={{ width: 15, height: 15, background: c || 'transparent', backgroundImage: c ? undefined : 'linear-gradient(45deg,#2226 25%,transparent 25%,transparent 75%,#2226 75%)', backgroundSize: '8px 8px', cursor: 'pointer', outline: '0.5px solid #0004' }} />
-                  ))}
+                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: `repeat(${PX_GRID}, 15px)`, gap: 1, width: 'fit-content', background: '#111', padding: 4, borderRadius: 6 }}
+                    onMouseLeave={() => undefined}>
+                    {pixels.map((c, i) => (
+                      <div key={i}
+                        onMouseDown={() => setPixels((p) => { const n = [...p]; n[i] = pen === '' ? '' : (n[i] === pen ? '' : pen); return n; })}
+                        onMouseEnter={(e) => { if (e.buttons === 1) setPixels((p) => { const n = [...p]; n[i] = pen; return n; }); }}
+                        style={{ width: 15, height: 15, background: c || 'transparent', backgroundImage: c ? undefined : 'linear-gradient(45deg,#2226 25%,transparent 25%,transparent 75%,#2226 75%)', backgroundSize: '8px 8px', cursor: 'pointer', outline: '0.5px solid #0004' }} />
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 120 }}>
+                    <span style={{ fontSize: 12, color: muted, fontWeight: 700 }}>Modèles</span>
+                    {MODELS.map((m) => (
+                      <button key={m.label} type="button" className="btn-sec" style={{ padding: '6px 10px', textAlign: 'left' }}
+                        onClick={() => loadModel(m.rows)}>{m.label}</button>
+                    ))}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                   {PX_PALETTE.map((p, idx) => (
