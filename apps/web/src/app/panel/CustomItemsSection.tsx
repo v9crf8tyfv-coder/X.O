@@ -170,65 +170,6 @@ export default function CustomItemsSection() {
     return c.toDataURL('image/png');
   }
 
-  // Modèles 16x16 : contour noir + forme en gris clair neutre (à colorier soi-même).
-  const OUTLINE = '#14161A', FILL = '#D7DBE0';
-  const MODEL_COLORS: Record<string, string> = {
-    '.': '', K: OUTLINE, B: OUTLINE,
-    // tout le reste = remplissage neutre (la forme, sans couleur)
-    W: FILL, S: FILL, D: FILL, E: FILL, H: FILL, h: FILL, o: FILL, O: FILL,
-    G: OUTLINE, F: FILL, f: FILL, n: FILL, N: FILL, c: FILL, C: FILL, d: FILL,
-  };
-  const MODELS: { label: string; rows: string[] }[] = [
-    { label: 'Épée', rows: [
-      '.............KK.', '............KWWK', '...........KWSK.', '..........KWSK..',
-      '.........KWSK...', '........KWSK....', '.......KWSK.....', '......KWSKK.....',
-      '.....KWSKhK.....', '.K..KKWKhK......', '.KK.KhKKK.......', '..KKKhhK........',
-      '...KhhhK........', '..KhhK..........', '.KKK............', '................' ] },
-    { label: 'Pioche', rows: [
-      '................', '..KSSSSSSSSK....', '..KS......SK....', '..KK.KhhK.KK....',
-      '.....KhhK.......', '.....KhhK.......', '....KhhK........', '....KhhK........',
-      '...KhhK.........', '...KhhK.........', '..KhhK..........', '..KhhK..........',
-      '.KhhK...........', '.KhhK...........', '.KKK............', '................' ] },
-    { label: 'Pelle', rows: [
-      '.......KKK......', '......KSSSK.....', '......KSSSK.....', '......KSSSK.....',
-      '......KKhKK.....', '.......KhhK.....', '.......KhhK.....', '......KhhK......',
-      '......KhhK......', '.....KhhK.......', '.....KhhK.......', '....KhhK........',
-      '....KhhK........', '...KhhK.........', '...KK...........', '................' ] },
-    { label: 'Casque', rows: [
-      '................', '...KKKKKKKK.....', '..KCccccccK....', '.KCcccccccdK...',
-      '.KCccccccddK...', '.KCccccccddK...', '.KKKccccKKKK...', '.KcKKccKKcK....',
-      '.KccKKKKccK....', '.KKcccccKK.....', '..KKKKKKK......', '................',
-      '................', '................', '................', '................' ] },
-    { label: 'Plastron', rows: [
-      '................', '.KKK......KKK...', 'KCcKKKKKKKCcK...', 'KCccccccccddK...',
-      'KCccccccccddK...', '.KCcccccccdK...', '.KCcccccccdK...', '.KCccccccddK...',
-      '..KCcccccdK....', '..KCccccddK....', '...KccccdK.....', '...KKKKKK......',
-      '................', '................', '................', '................' ] },
-    { label: 'Jambières', rows: [
-      '................', '.KKKKKKKKKK.....', 'KCccccccccdK....', 'KCccccccccdK....',
-      'KCcKKKKKccdK....', 'KKcK..KKccK....', '.KcK..KCcdK....', '.KcK..KCcdK....',
-      '.KcK..KCcdK....', '.KcK..KCcdK....', '.KcK..KKcK.....', '.KKK..KKK......',
-      '................', '................', '................', '................' ] },
-    { label: 'Arc', rows: [
-      '.........KKK....', '........KOOhK...', '.......KOhhK....', '......KOhK.G....',
-      '.....KOhK..G....', '....KOhK...G....', '...KOhK....G....', '..KOhK.....G....',
-      '..KOhK....G.....', '..KOhK...G......', '..KOhK..G.......', '...KOhKG........',
-      '...KOhG.........', '....KhKG........', '....KK..........', '................' ] },
-    { label: 'Flèche', rows: [
-      '.........KKK....', '........KnNK....', '.......KnNK.....', '......KhhK......',
-      '.....KhhK.......', '....KhhK........', '...KhhK.........', '..KhhK..........',
-      '.KhhK..KF.......', 'KhhK..KFF.......', 'KhK..KFFK.......', '.K..KFFK........',
-      '...KFFK.........', '...KFK..........', '...KK...........', '................' ] },
-  ];
-  function loadModel(rows: string[]) {
-    const out = Array(PX_GRID * PX_GRID).fill('');
-    for (let y = 0; y < PX_GRID; y++) {
-      const row = rows[y] ?? '';
-      for (let x = 0; x < PX_GRID; x++) out[y * PX_GRID + x] = MODEL_COLORS[row[x]] ?? '';
-    }
-    setPixels(out);
-  }
-
   function applyGradient() {
     if (focusRef.current === 'lore') setLore((s) => gradient(s, g1, g2));
     else setName((s) => gradient(s, g1, g2));
@@ -390,23 +331,14 @@ export default function CustomItemsSection() {
             </label>
             {pixelMode && (
               <div style={{ marginTop: 10 }}>
-                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: `repeat(${PX_GRID}, 15px)`, gap: 1, width: 'fit-content', background: '#111', padding: 4, borderRadius: 6 }}
-                    onMouseLeave={() => undefined}>
-                    {pixels.map((c, i) => (
-                      <div key={i}
-                        onMouseDown={() => setPixels((p) => { const n = [...p]; n[i] = pen === '' ? '' : (n[i] === pen ? '' : pen); return n; })}
-                        onMouseEnter={(e) => { if (e.buttons === 1) setPixels((p) => { const n = [...p]; n[i] = pen; return n; }); }}
-                        style={{ width: 15, height: 15, background: c || 'transparent', backgroundImage: c ? undefined : 'linear-gradient(45deg,#2226 25%,transparent 25%,transparent 75%,#2226 75%)', backgroundSize: '8px 8px', cursor: 'pointer', outline: '0.5px solid #0004' }} />
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 120 }}>
-                    <span style={{ fontSize: 12, color: muted, fontWeight: 700 }}>Modèles</span>
-                    {MODELS.map((m) => (
-                      <button key={m.label} type="button" className="btn-sec" style={{ padding: '6px 10px', textAlign: 'left' }}
-                        onClick={() => loadModel(m.rows)}>{m.label}</button>
-                    ))}
-                  </div>
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${PX_GRID}, 15px)`, gap: 1, width: 'fit-content', background: '#111', padding: 4, borderRadius: 6 }}
+                  onMouseLeave={() => undefined}>
+                  {pixels.map((c, i) => (
+                    <div key={i}
+                      onMouseDown={() => setPixels((p) => { const n = [...p]; n[i] = pen === '' ? '' : (n[i] === pen ? '' : pen); return n; })}
+                      onMouseEnter={(e) => { if (e.buttons === 1) setPixels((p) => { const n = [...p]; n[i] = pen; return n; }); }}
+                      style={{ width: 15, height: 15, background: c || 'transparent', backgroundImage: c ? undefined : 'linear-gradient(45deg,#2226 25%,transparent 25%,transparent 75%,#2226 75%)', backgroundSize: '8px 8px', cursor: 'pointer', outline: '0.5px solid #0004' }} />
+                  ))}
                 </div>
                 <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                   {PX_PALETTE.map((p, idx) => (
