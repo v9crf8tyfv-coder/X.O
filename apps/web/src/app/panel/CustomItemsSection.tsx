@@ -170,14 +170,13 @@ export default function CustomItemsSection() {
     return c.toDataURL('image/png');
   }
 
-  // Modèles 16x16 style Minecraft (contour noir + ombrage + diagonale). Chaque lettre = une couleur.
+  // Modèles 16x16 : contour noir + forme en gris clair neutre (à colorier soi-même).
+  const OUTLINE = '#14161A', FILL = '#D7DBE0';
   const MODEL_COLORS: Record<string, string> = {
-    '.': '', K: '#14161A', B: '#14161A',
-    W: '#F2F4F6', S: '#AEB4BB', D: '#767C84', E: '#4C5056',   // métal (lame/tête)
-    H: '#8A6A43', h: '#5E4328',                               // manche bois
-    o: '#B07A2E', O: '#7E5620', G: '#3A3D42',                 // arc + corde
-    F: '#E6ECF1', f: '#B7C0C8', n: '#C9CDD2', N: '#70757B',   // plume + silex
-    c: '#60D6CB', C: '#B0F1EB', d: '#2C9694',                 // diamant (armures)
+    '.': '', K: OUTLINE, B: OUTLINE,
+    // tout le reste = remplissage neutre (la forme, sans couleur)
+    W: FILL, S: FILL, D: FILL, E: FILL, H: FILL, h: FILL, o: FILL, O: FILL,
+    G: OUTLINE, F: FILL, f: FILL, n: FILL, N: FILL, c: FILL, C: FILL, d: FILL,
   };
   const MODELS: { label: string; rows: string[] }[] = [
     { label: 'Épée', rows: [
