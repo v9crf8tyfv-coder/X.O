@@ -25,6 +25,7 @@ async function ensure(): Promise<void> {
   await db()`alter table custom_items add column if not exists head text`.catch(() => {});
   await db()`alter table custom_items add column if not exists glint boolean default false`.catch(() => {});
   await db()`alter table custom_items add column if not exists rarity text`.catch(() => {});
+  await db()`alter table custom_items add column if not exists texture text`.catch(() => {});
   // Purge unique : on vide tout l'historique accumulé (items déjà livrés). Ne garde que l'attente réelle.
   await db()`delete from custom_items where status <> 'pending'`.catch(() => {});
 }
@@ -43,8 +44,8 @@ export async function GET(req: Request) {
   await ensure();
   const url = new URL(req.url);
   if (url.searchParams.get('for') === 'game') {
-    const rows = await db()<{ id: number; item: string; name: string | null; lore: unknown; enchants: unknown; target: string; head: string | null; glint: boolean | null; rarity: string | null }[]>`
-      select id, item, name, lore, enchants, target, head, glint, rarity from custom_items where status = 'pending' order by id limit 50`;
+    const rows = await db()<{ id: number; item: string; name: string | null; lore: unknown; enchants: unknown; target: string; head: string | null; glint: boolean | null; rarity: string | null; texture: string | null }[]>`
+      select id, item, name, lore, enchants, target, head, glint, rarity, texture from custom_items where status = 'pending' order by id limit 50`;
     const gives = rows.map((r) => ({
       id: r.id,
       item: r.item,
@@ -55,6 +56,7 @@ export async function GET(req: Request) {
       head: r.head ?? '',
       glint: !!r.glint,
       rarity: r.rarity ?? '',
+      texture: r.texture ?? '',
     }));
     const res = NextResponse.json({ gives });
     res.headers.set('Cache-Control', 'no-store');
@@ -108,10 +110,13 @@ export async function POST(req: Request) {
   const glint = !!b.glint;
   const rarities = ['common', 'uncommon', 'rare', 'epic'];
   const rarity = rarities.includes(String(b.rarity)) ? String(b.rarity) : null;
+  // Texture pixel (data URL PNG) : item donné en carte. Cap de taille (16x16 reste minuscule).
+  const rawTex = typeof b.texture === 'string' ? b.texture : '';
+  const texture = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(rawTex) && rawTex.length <= 200000 ? rawTex : null;
 
   await db()`
-    insert into custom_items (item, name, lore, enchants, target, head, glint, rarity)
-    values (${item}, ${name}, ${JSON.stringify(lore)}::jsonb, ${JSON.stringify(enchants)}::jsonb, ${target}, ${head}, ${glint}, ${rarity})`;
+    insert into custom_items (item, name, lore, enchants, target, head, glint, rarity, texture)
+    values (${item}, ${name}, ${JSON.stringify(lore)}::jsonb, ${JSON.stringify(enchants)}::jsonb, ${target}, ${head}, ${glint}, ${rarity}, ${texture})`;
   return NextResponse.json({ ok: true });
 }
 

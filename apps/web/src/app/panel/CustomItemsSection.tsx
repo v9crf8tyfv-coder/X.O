@@ -150,6 +150,26 @@ export default function CustomItemsSection() {
   const [headTag, setHeadTag] = useState('');
   const focusRef = useRef<'name' | 'lore'>('name');
 
+  // Éditeur pixel (16x16) : l'item devient une carte affichant le dessin.
+  const PX_GRID = 16;
+  const PX_PALETTE = ['', '#FFFFFF', '#1A1A1A', '#E53935', '#FB8C00', '#FDD835', '#43A047', '#1E88E5', '#8E24AA', '#EC407A', '#6D4C41', '#00ACC1', '#9E9E9E', '#3949AB', '#7CB342', '#5D4037'];
+  const [pixelMode, setPixelMode] = useState(false);
+  const [pen, setPen] = useState('#E53935');
+  const [pixels, setPixels] = useState<string[]>(() => Array(PX_GRID * PX_GRID).fill(''));
+  function pixelTextureDataUrl(): string | null {
+    if (pixels.every((c) => !c)) return null;
+    const c = document.createElement('canvas');
+    c.width = PX_GRID; c.height = PX_GRID;
+    const ctx = c.getContext('2d');
+    if (!ctx) return null;
+    for (let i = 0; i < pixels.length; i++) {
+      if (!pixels[i]) continue;
+      ctx.fillStyle = pixels[i];
+      ctx.fillRect(i % PX_GRID, Math.floor(i / PX_GRID), 1, 1);
+    }
+    return c.toDataURL('image/png');
+  }
+
   function applyGradient() {
     if (focusRef.current === 'lore') setLore((s) => gradient(s, g1, g2));
     else setName((s) => gradient(s, g1, g2));
@@ -170,7 +190,7 @@ export default function CustomItemsSection() {
     const loreLines = lore.split('\n').map((s) => s.trim()).filter(Boolean);
     const r = await fetch('/api/custom-items', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ item, name, lore: loreLines, enchants: enchants.filter((e) => e.id.trim()), target, head, glint, rarity }),
+      body: JSON.stringify({ item, name, lore: loreLines, enchants: enchants.filter((e) => e.id.trim()), target, head, glint, rarity, texture: pixelMode ? pixelTextureDataUrl() : null }),
     });
     setSaving(false);
     if (r.ok) { setError(''); } else setError((await r.json().catch(() => ({}))).error || 'Échec.');
@@ -302,6 +322,34 @@ export default function CustomItemsSection() {
             <div style={{ fontSize: 12, color: muted, marginBottom: 6 }}>Aperçu</div>
             <div style={{ fontSize: 17 }}>{renderMc(name || '(sans nom)')}</div>
             {lore.split('\n').filter(Boolean).map((l, i) => <div key={i} style={{ fontSize: 14 }}>{renderMc(l)}</div>)}
+          </div>
+
+          <div style={{ margin: '4px 0 10px' }}>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, fontWeight: 700 }}>
+              <input type="checkbox" checked={pixelMode} onChange={(e) => setPixelMode(e.target.checked)} />
+              Créer l&apos;item pixel par pixel (16×16)
+            </label>
+            {pixelMode && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${PX_GRID}, 15px)`, gap: 1, width: 'fit-content', background: '#111', padding: 4, borderRadius: 6 }}
+                  onMouseLeave={() => undefined}>
+                  {pixels.map((c, i) => (
+                    <div key={i}
+                      onMouseDown={() => setPixels((p) => { const n = [...p]; n[i] = pen === '' ? '' : (n[i] === pen ? '' : pen); return n; })}
+                      onMouseEnter={(e) => { if (e.buttons === 1) setPixels((p) => { const n = [...p]; n[i] = pen; return n; }); }}
+                      style={{ width: 15, height: 15, background: c || 'transparent', backgroundImage: c ? undefined : 'linear-gradient(45deg,#2226 25%,transparent 25%,transparent 75%,#2226 75%)', backgroundSize: '8px 8px', cursor: 'pointer', outline: '0.5px solid #0004' }} />
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {PX_PALETTE.map((p, idx) => (
+                    <button key={idx} type="button" onClick={() => setPen(p)} title={p === '' ? 'Gomme' : p}
+                      style={{ width: 24, height: 24, background: p || 'transparent', color: '#fff', border: pen === p ? '2px solid #fff' : '1px solid #0008', borderRadius: 4, cursor: 'pointer', backgroundImage: p ? undefined : 'linear-gradient(45deg,#2226 25%,transparent 25%,transparent 75%,#2226 75%)', backgroundSize: '10px 10px' }}>{p === '' ? '×' : ''}</button>
+                  ))}
+                  <button type="button" className="btn-sec" style={{ padding: '4px 10px' }} onClick={() => setPixels(Array(PX_GRID * PX_GRID).fill(''))}>Effacer</button>
+                </div>
+                <p style={{ fontSize: 12, color: muted, marginTop: 6 }}>L&apos;item donné sera une carte affichant ton dessin. Le nom, la description et les enchantements s&apos;appliquent quand même.</p>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
