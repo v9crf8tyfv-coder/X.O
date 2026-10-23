@@ -24,7 +24,6 @@ export const PANEL_SECTIONS: PanelSectionDef[] = [
   // — Groupe 2 : staff —
   { id: 'staff', label: 'Gestion Staff', icon: '🧑‍💼', defaultLevel: 50, soon: true, group: 2 },
   { id: 'rp', label: 'Gestion RP', icon: '🎭', defaultLevel: 70, extraGrade: 'opresp_rp', group: 2 },
-  { id: 'dispatch', label: 'Dispatching', icon: '📨', defaultLevel: 48, group: 2 },
   { id: 'suivis', label: 'Suivis Staff', icon: '📋', defaultLevel: 50, group: 2 },
   // — Groupe 3 : gestion —
   { id: 'formation', label: 'Gestion Formation', icon: '🎓', defaultLevel: 50, extraGrade: 'modo_x', group: 3 },
