@@ -104,7 +104,8 @@ export async function uploadToServer(
  */
 export async function restartServer(): Promise<{ done: boolean; reason?: string }> {
   if (process.env.OMGSERV_RESTART !== '1') return { done: false, reason: 'restart_non_arme' };
-  const cmd = process.env.OMGSERV_RESTART_CMD || 'stop';
+  // ecrestart = commande EmeriaCore qui sauvegarde puis force l'arrêt -> OMGServ relance (restart-on-crash).
+  const cmd = process.env.OMGSERV_RESTART_CMD || 'ecrestart';
   const ok = await rconCommand(cmd);
   return ok ? { done: true } : { done: false, reason: 'rcon_indisponible' };
 }
