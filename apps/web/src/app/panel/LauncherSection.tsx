@@ -159,8 +159,8 @@ export default function LauncherSection() {
     const j = await r.json().catch(() => ({}));
     if (j.done === false) {
       const msg = j.reason === 'restart_non_arme'
-        ? 'Launcher + serveur OK. Redémarrage non armé : mets OMGSERV_RESTART=1 dans Vercel (après avoir vérifié que /stop relance le serveur). Pour l\'instant, redémarre à la main.'
-        : 'Launcher + serveur OK. RCON indisponible : redémarre le serveur à la main.';
+        ? 'Launcher + serveur OK. Clique maintenant "Redémarrer" sur ton panneau OMGServ (panel.omgserv.com) pour appliquer — OMGServ ne permet pas le redémarrage automatique.'
+        : 'Launcher + serveur OK. Redémarre le serveur à la main sur OMGServ.';
       setRst({ phase: 'skipped', label: msg, pct: 100 });
       return;
     }
