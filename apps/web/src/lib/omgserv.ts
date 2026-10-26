@@ -70,7 +70,24 @@ export async function uploadToServer(
       password: c.password,
       secure: c.secure,
     });
-    await client.ensureDir(c.modsDir); // crée si besoin et se place dedans
+    await client.ensureDir(c.modsDir); // crée si besoin et se place dedans (on est maintenant DANS mods/)
+
+    // Supprime les ANCIENNES versions du même mod avant d'uploader (ex : emeriacore-*.jar),
+    // pour ne jamais laisser traîner un vieux jar à côté du neuf.
+    // base = nom sans le numéro de version ni .jar (ex "emeriacore-1.0.0.jar" -> "emeriacore").
+    const base = name.replace(/-v?\d[\d.]*\.jar$/i, '').replace(/\.jar$/i, '');
+    if (base && base !== name) {
+      const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const oldRe = new RegExp('^' + esc + '-v?\\d[\\d.]*\\.jar$', 'i');
+      try {
+        for (const f of await client.list()) {
+          if (f.isFile && f.name !== name && oldRe.test(f.name)) {
+            try { await client.remove(f.name); } catch { /* on continue */ }
+          }
+        }
+      } catch { /* listing indispo : on écrasera juste le même nom */ }
+    }
+
     await client.uploadFrom(source, name); // écrase si déjà présent
     let size = -1;
     try { size = await client.size(name); } catch { /* certains serveurs refusent SIZE */ }

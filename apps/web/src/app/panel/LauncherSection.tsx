@@ -404,6 +404,12 @@ export default function LauncherSection() {
             ok={rst.phase === 'done'}
             fail={rst.phase === 'fail'} />
         )}
+        {rst.phase === 'skipped' && (
+          <a href="https://panel.omgserv.com" target="_blank" rel="noopener"
+            className="btn-accent" style={{ display: 'inline-block', marginTop: 10, textDecoration: 'none' }}>
+            Ouvrir OMGServ pour redémarrer
+          </a>
+        )}
 
         {!!staged.length && !impl.on && !srv.on && (
           <>
