@@ -6,6 +6,36 @@ interface Entry { name: string; url: string; sha256: string }
 interface Manifest { mods: Entry[]; resourcepacks: Entry[]; optional: (Entry & { id: string })[]; axiomAllowed: string[]; comAllowed: string[] }
 type Kind = 'mods' | 'resourcepacks';
 
+/** POST multipart avec progression RÉELLE de l'upload (navigateur -> serveur), via XHR. */
+function xhrUpload(
+  url: string,
+  form: FormData,
+  onProgress: (frac: number) => void,
+): Promise<{ ok: boolean; json: () => Promise<{ error?: string }> }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+    xhr.onload = () => resolve({
+      ok: xhr.status >= 200 && xhr.status < 300,
+      json: () => {
+        try { return Promise.resolve(JSON.parse(xhr.responseText || '{}') as { error?: string }); }
+        catch { return Promise.resolve({} as { error?: string }); }
+      },
+    });
+    xhr.onerror = () => reject(new Error('Erreur réseau'));
+    xhr.send(form);
+  });
+}
+
+/** Fait avancer une barre tant qu'une requête tourne (upload fait côté serveur = non mesurable ici). */
+function startCreep(set: (v: { on: boolean; pct: number }) => void, from = 8): () => void {
+  let p = from;
+  set({ on: true, pct: p });
+  const id = window.setInterval(() => { p = Math.min(92, p + 4); set({ on: true, pct: p }); }, 250);
+  return () => window.clearInterval(id);
+}
+
 export default function LauncherSection() {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -13,20 +43,19 @@ export default function LauncherSection() {
   const [error, setError] = useState('');
 
   const [staged, setStaged] = useState<{ file: File; kind: Kind }[]>([]);
-  const [impl, setImpl] = useState<{ on: boolean; done: number; total: number }>({ on: false, done: 0, total: 0 });
+  const [impl, setImpl] = useState<{ on: boolean; pct: number }>({ on: false, pct: 0 });
   const [implemented, setImplemented] = useState(false);
 
   // Sync serveur OMGServ + redémarrage (une seule action : launcher + serveur + restart)
   const [srvConfigured, setSrvConfigured] = useState(false);
   const [toServer, setToServer] = useState(false);
-  const [srv, setSrv] = useState<{ on: boolean; done: number; total: number }>({ on: false, done: 0, total: 0 });
-  const [rst, setRst] = useState<{ phase: 'idle' | 'restarting' | 'waiting' | 'done' | 'skipped' | 'fail'; label: string; pct: number }>(
-    { phase: 'idle', label: '', pct: 0 },
-  );
+  const [srv, setSrv] = useState<{ on: boolean; pct: number }>({ on: false, pct: 0 });
+  // Fin d'implémentation : 'success' = barre verte brève, 'restart' = encadré "tu peux redémarrer" (15 s)
+  const [finish, setFinish] = useState<'idle' | 'success' | 'restart'>('idle');
 
   // Sync Google Drive (dossier Mod(s), partagé avec Orion)
   const [gdrive, setGdrive] = useState<{ configured: boolean; connected: boolean }>({ configured: false, connected: false });
-  const [drv, setDrv] = useState<{ on: boolean; done: number; total: number }>({ on: false, done: 0, total: 0 });
+  const [drv, setDrv] = useState<{ on: boolean; pct: number }>({ on: false, pct: 0 });
   const [backup, setBackup] = useState<{ available: boolean; counts?: { mods: number; resourcepacks: number; optional: number } } | null>(null);
   const [restoring, setRestoring] = useState(false);
 
@@ -106,60 +135,73 @@ export default function LauncherSection() {
   async function implement() {
     if (!staged.length) return;
     setError('');
-    setRst({ phase: 'idle', label: '', pct: 0 });
+    setFinish('idle');
 
-    // --- (1) Launcher ---
-    setImpl({ on: true, done: 0, total: staged.length });
+    const total = staged.length;
+
+    // --- (1) Launcher : progression RÉELLE de l'upload (navigateur -> serveur) ---
+    setImpl({ on: true, pct: 0 });
     const uploadedMods: string[] = [];
-    for (let i = 0; i < staged.length; i++) {
+    for (let i = 0; i < total; i++) {
       const { file, kind } = staged[i];
       const fd = new FormData();
       fd.append('kind', kind);
       fd.append('file', file);
-      const r = await fetch('/api/launcher/mods', { method: 'POST', body: fd });
+      let r: { ok: boolean; json: () => Promise<{ error?: string }> };
+      try {
+        r = await xhrUpload('/api/launcher/mods', fd, (frac) =>
+          setImpl({ on: true, pct: Math.round(((i + frac * 0.95) / total) * 100) }));
+      } catch {
+        setError(`${file.name} : erreur réseau pendant l'upload`);
+        setImpl({ on: false, pct: 0 });
+        return;
+      }
       if (!r.ok) {
-        const msg = (await r.json().catch(() => ({}))).error || `Échec sur ${file.name}`;
+        const msg = (await r.json().catch(() => ({} as { error?: string }))).error || `Échec sur ${file.name}`;
         setError(`${file.name} : ${msg}`);
-        setImpl({ on: false, done: i, total: staged.length });
+        setImpl({ on: false, pct: 0 });
         return;
       }
       if (kind === 'mods') uploadedMods.push(file.name);
-      setImpl({ on: true, done: i + 1, total: staged.length });
+      setImpl({ on: true, pct: Math.round(((i + 1) / total) * 100) });
     }
     setStaged([]);
-    setImpl({ on: false, done: 0, total: 0 });
+    setImpl({ on: false, pct: 0 });
     await load();
 
-    // --- (2) Google Drive (dossier Mod(s)), si connecté — indépendant du serveur ---
+    // --- (2) Google Drive (dossier Mod(s)), si connecté — upload fait côté serveur (barre animée) ---
     if (gdrive.connected && uploadedMods.length) {
-      setDrv({ on: true, done: 0, total: uploadedMods.length });
       for (let i = 0; i < uploadedMods.length; i++) {
+        const stop = startCreep(setDrv);
         const r = await fetch('/api/gdrive', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: uploadedMods[i] }),
         });
+        stop();
         if (!r.ok) {
-          const j = await r.json().catch(() => ({}));
-          setDrv({ on: false, done: i, total: uploadedMods.length });
+          const j = await r.json().catch(() => ({} as { error?: string }));
+          setDrv({ on: false, pct: 0 });
           setError(`Google Drive (${uploadedMods[i]}) : ${j.error || 'échec'}`);
           break;
         }
-        setDrv({ on: true, done: i + 1, total: uploadedMods.length });
+        setDrv({ on: true, pct: Math.round(((i + 1) / uploadedMods.length) * 100) });
       }
-      setDrv({ on: false, done: 0, total: 0 });
+      setDrv({ on: false, pct: 0 });
     }
 
-    // --- (3) Serveur OMGServ (seulement les mods, si la case est cochée) ---
+    // --- (3) Serveur OMGServ (si la case est cochée) — upload FTP côté serveur (barre animée) ---
+    let serverPushed = false;
     if (toServer && uploadedMods.length) {
-      setSrv({ on: true, done: 0, total: uploadedMods.length });
       for (let i = 0; i < uploadedMods.length; i++) {
+        const stop = startCreep(setSrv);
         const r = await fetch('/api/launcher/server-sync', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: uploadedMods[i] }),
         });
-        const j = await r.json().catch(() => ({}));
+        stop();
+        const j = await r.json().catch(() => ({} as { error?: string }));
         if (!r.ok) {
-          setSrv({ on: false, done: i, total: uploadedMods.length });
+          setSrv({ on: false, pct: 0 });
           if (j.error === 'ftp_non_configure') {
             setError('Mods bien dans le launcher. Upload serveur non configuré : ajoute OMGSERV_FTP_USER + OMGSERV_FTP_PASSWORD dans Vercel.');
           } else {
@@ -168,46 +210,21 @@ export default function LauncherSection() {
           setImplemented(true);
           return;
         }
-        setSrv({ on: true, done: i + 1, total: uploadedMods.length });
+        setSrv({ on: true, pct: Math.round(((i + 1) / uploadedMods.length) * 100) });
       }
-      setSrv({ on: false, done: 0, total: 0 });
-
-      // --- (3) Redémarrage auto, une fois launcher + serveur OK ---
-      await doRestart();
+      setSrv({ on: false, pct: 0 });
+      serverPushed = true;
     }
 
     setImplemented(true);
+    finishFlow(serverPushed); // barre verte brève, puis rappel "tu peux redémarrer" 15 s si serveur poussé
   }
 
-  /** Déclenche le redémarrage puis suit l'état via ping (barre jusqu'à remise en ligne). */
-  async function doRestart() {
-    setRst({ phase: 'restarting', label: 'Tout est uploadé. Demande de redémarrage…', pct: 12 });
-    const r = await fetch('/api/launcher/server-sync', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'restart' }),
-    });
-    const j = await r.json().catch(() => ({}));
-    if (j.done === false) {
-      const msg = j.reason === 'restart_non_arme'
-        ? 'Launcher + serveur OK. Clique maintenant "Redémarrer" sur ton panneau OMGServ (panel.omgserv.com) pour appliquer — OMGServ ne permet pas le redémarrage automatique.'
-        : 'Launcher + serveur OK. Redémarre le serveur à la main sur OMGServ.';
-      setRst({ phase: 'skipped', label: msg, pct: 100 });
-      return;
-    }
-    // Attend que le serveur tombe puis remonte.
-    setRst({ phase: 'waiting', label: 'Serveur en cours de redémarrage…', pct: 30 });
-    let sawDown = false;
-    let tries = 0;
-    const poll = async () => {
-      tries++;
-      let online = false;
-      try { online = (await (await fetch('/api/launcher/server-sync')).json()).online; } catch { /* retry */ }
-      if (!online) sawDown = true;
-      if (sawDown && online) { setRst({ phase: 'done', label: 'Serveur redémarré et de nouveau en ligne.', pct: 100 }); return; }
-      if (tries > 24) { setRst({ phase: 'done', label: 'Redémarrage lancé (vérification en ligne expirée, regarde en jeu).', pct: 100 }); return; }
-      setRst({ phase: 'waiting', label: sawDown ? 'Serveur redémarre, remise en ligne…' : 'Arrêt du serveur en cours…', pct: Math.min(92, 30 + tries * 4) });
-      setTimeout(poll, 5000);
-    };
-    setTimeout(poll, 5000);
+  /** Fin : barre verte ~2 s, puis (si le serveur a reçu des mods) rappel de redémarrage pendant 15 s. */
+  function finishFlow(serverPushed: boolean) {
+    setFinish('success');
+    window.setTimeout(() => setFinish(serverPushed ? 'restart' : 'idle'), 2000);
+    if (serverPushed) window.setTimeout(() => setFinish('idle'), 17000);
   }
 
   async function del(kind: Kind, name: string) {
@@ -452,25 +469,19 @@ export default function LauncherSection() {
           </ul>
         )}
 
-        {impl.on && (
-          <Bar pct={Math.round((impl.done / Math.max(1, impl.total)) * 100)} label={`1/2 Launcher… ${impl.done}/${impl.total}`} />
+        {impl.on && <Bar pct={impl.pct} label={`Launcher… ${impl.pct}%`} />}
+        {drv.on && <Bar pct={drv.pct} label={`Google Drive… ${drv.pct}%`} />}
+        {srv.on && <Bar pct={srv.pct} label={`Serveur OMGServ… ${srv.pct}%`} />}
+        {finish === 'success' && (
+          <Bar pct={100} label="Terminé — tout est uploadé." ok />
         )}
-        {srv.on && (
-          <Bar pct={Math.round((srv.done / Math.max(1, srv.total)) * 100)} label={`Serveur OMGServ… ${srv.done}/${srv.total}`} />
-        )}
-        {drv.on && (
-          <Bar pct={Math.round((drv.done / Math.max(1, drv.total)) * 100)} label={`Google Drive… ${drv.done}/${drv.total}`} />
-        )}
-        {rst.phase !== 'idle' && (
-          <Bar pct={rst.pct} label={rst.label}
-            ok={rst.phase === 'done'}
-            fail={rst.phase === 'fail'} />
-        )}
-        {rst.phase === 'skipped' && (
-          <a href="https://panel.omgserv.com" target="_blank" rel="noopener"
-            className="btn-accent" style={{ display: 'inline-block', marginTop: 10, textDecoration: 'none' }}>
-            Ouvrir OMGServ pour redémarrer
-          </a>
+        {finish === 'restart' && (
+          <div style={{ marginTop: 12, background: 'rgba(124,92,255,.10)', border: '1px solid rgba(124,92,255,.35)', borderRadius: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13 }}>Mods en ligne. Tu peux redémarrer le serveur pour les appliquer.</span>
+            <a href="https://panel.omgserv.com" target="_blank" rel="noopener" className="btn-accent" style={{ textDecoration: 'none' }}>
+              Redémarrer le serveur
+            </a>
+          </div>
         )}
 
         {!!staged.length && !impl.on && !srv.on && (
