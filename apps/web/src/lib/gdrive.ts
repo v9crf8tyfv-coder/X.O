@@ -158,3 +158,28 @@ export async function syncModToDrive(name: string, data: Buffer): Promise<{ ok: 
   if (!ur.ok) throw new Error('Upload Drive échoué : ' + (await ur.text()).slice(0, 200));
   return { ok: true };
 }
+
+/**
+ * Supprime un mod du dossier Drive (toutes ses versions : même base avant le numéro).
+ * Renvoie le nombre de fichiers retirés.
+ */
+export async function deleteFromDrive(name: string): Promise<{ removed: number }> {
+  const token = await accessToken();
+  const fid = folderId();
+  const base = modBase(name);
+  const esc = base ? base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+  const re = base ? new RegExp('^' + esc + '-v?\\d.*\\.jar$', 'i') : null;
+  let removed = 0;
+  const q = encodeURIComponent(`'${fid}' in parents and trashed = false`);
+  const lr = await fetch(`${API}/files?q=${q}&fields=files(id,name)&pageSize=1000`, { headers: { Authorization: `Bearer ${token}` } });
+  if (lr.ok) {
+    const files = ((await lr.json()) as { files?: { id: string; name: string }[] }).files ?? [];
+    for (const f of files) {
+      if (f.name === name || (re && re.test(f.name))) {
+        const dr = await fetch(`${API}/files/${f.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        if (dr.ok) removed++;
+      }
+    }
+  }
+  return { removed };
+}

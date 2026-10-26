@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireLevel, FOUNDER_LEVEL } from '@/lib/guard';
 import { getManifest, hasToken } from '@/lib/launcher';
-import { gdriveConfigured, gdriveConnected, gdriveAuthUrl, syncModToDrive } from '@/lib/gdrive';
+import { gdriveConfigured, gdriveConnected, gdriveAuthUrl, syncModToDrive, deleteFromDrive } from '@/lib/gdrive';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -55,6 +55,21 @@ export async function POST(req: Request) {
     const data = Buffer.from(await res.arrayBuffer());
     await syncModToDrive(name, data);
     return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 502 });
+  }
+}
+
+/** Retire un mod (toutes versions) du dossier Drive. */
+export async function DELETE(req: Request) {
+  const g = await requireLevel(FOUNDER_LEVEL);
+  if (g instanceof NextResponse) return g;
+  if (!gdriveConfigured()) return NextResponse.json({ error: 'gdrive_non_configure' }, { status: 503 });
+  const name = new URL(req.url).searchParams.get('name') || '';
+  if (!/\.jar$/i.test(name)) return NextResponse.json({ error: 'nom_invalide' }, { status: 400 });
+  try {
+    const r = await deleteFromDrive(name);
+    return NextResponse.json({ ok: true, removed: r.removed });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 502 });
   }

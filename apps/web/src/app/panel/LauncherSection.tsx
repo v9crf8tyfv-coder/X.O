@@ -52,6 +52,8 @@ export default function LauncherSection() {
   const [srv, setSrv] = useState<{ on: boolean; pct: number }>({ on: false, pct: 0 });
   // Fin d'implémentation : 'success' = barre verte brève, 'restart' = encadré "tu peux redémarrer" (15 s)
   const [finish, setFinish] = useState<'idle' | 'success' | 'restart'>('idle');
+  // Message de confirmation après une suppression (d'où le mod a été retiré)
+  const [delMsg, setDelMsg] = useState('');
 
   // Sync Google Drive (dossier Mod(s), partagé avec Orion)
   const [gdrive, setGdrive] = useState<{ configured: boolean; connected: boolean }>({ configured: false, connected: false });
@@ -228,10 +230,33 @@ export default function LauncherSection() {
   }
 
   async function del(kind: Kind, name: string) {
-    if (!confirm(`Retirer ${name} du launcher ?`)) return;
-    const r = await fetch(`/api/launcher/mods?kind=${kind}&name=${encodeURIComponent(name)}`, { method: 'DELETE' });
-    if (r.ok) { setManifest((await r.json()).manifest); setImplemented(true); }
-    else setError((await r.json().catch(() => ({}))).error || 'Échec de la suppression.');
+    const extra = kind === 'mods' ? ' partout (launcher + serveur + Drive)' : ' du launcher';
+    if (!confirm(`Retirer ${name}${extra} ?`)) return;
+    setError('');
+    setDelMsg('');
+    const enc = encodeURIComponent(name);
+    // 1) Launcher (obligatoire)
+    const r = await fetch(`/api/launcher/mods?kind=${kind}&name=${enc}`, { method: 'DELETE' });
+    if (!r.ok) {
+      setError((await r.json().catch(() => ({} as { error?: string }))).error || 'Échec de la suppression du launcher.');
+      return;
+    }
+    setManifest((await r.json()).manifest);
+    setImplemented(true);
+    const where: string[] = ['launcher'];
+    // 2) Serveur + Drive (seulement pour les mods)
+    if (kind === 'mods') {
+      if (srvConfigured) {
+        const rs = await fetch(`/api/launcher/server-sync?name=${enc}`, { method: 'DELETE' });
+        where.push(rs.ok ? 'serveur' : 'serveur (échec)');
+      }
+      if (gdrive.connected) {
+        const rd = await fetch(`/api/gdrive?name=${enc}`, { method: 'DELETE' });
+        where.push(rd.ok ? 'Drive' : 'Drive (échec)');
+      }
+    }
+    setDelMsg(`« ${name} » retiré de : ${where.join(', ')}.`);
+    window.setTimeout(() => setDelMsg(''), 12000);
   }
 
   /** Ajoute un mod/RP depuis une URL directe (le serveur télécharge — pas de limite navigateur). */
@@ -344,6 +369,11 @@ export default function LauncherSection() {
       {error && (
         <div style={{ background: 'rgba(220,60,60,.14)', border: '1px solid rgba(220,60,60,.4)', color: '#ffb4b4', padding: '10px 14px', borderRadius: 10, marginBottom: 16 }}>
           {error}
+        </div>
+      )}
+      {delMsg && (
+        <div style={{ background: 'rgba(54,192,138,.14)', border: '1px solid rgba(54,192,138,.4)', color: '#8ff0c4', padding: '10px 14px', borderRadius: 10, marginBottom: 16 }}>
+          {delMsg}
         </div>
       )}
 

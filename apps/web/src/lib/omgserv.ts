@@ -102,6 +102,31 @@ export async function uploadToServer(
 }
 
 /**
+ * Supprime un mod du dossier mods/ du serveur (toutes ses versions : même base avant le numéro).
+ * Renvoie le nombre de fichiers retirés.
+ */
+export async function deleteFromServer(name: string): Promise<{ removed: number }> {
+  const c = cfg();
+  const client = new Client(30_000);
+  client.ftp.verbose = false;
+  try {
+    await client.access({ host: c.host, port: c.port, user: c.user, password: c.password, secure: c.secure });
+    await client.ensureDir(c.modsDir);
+    const base = name.match(/^(.*?)-v?\d/i)?.[1] || '';
+    const re = base ? new RegExp('^' + base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-v?\\d.*\\.jar$', 'i') : null;
+    let removed = 0;
+    for (const f of await client.list()) {
+      if (f.isFile && (f.name === name || (re && re.test(f.name)))) {
+        try { await client.remove(f.name); removed++; } catch { /* on continue */ }
+      }
+    }
+    return { removed };
+  } finally {
+    client.close();
+  }
+}
+
+/**
  * Redémarre le serveur. DÉSARMÉ par défaut : ne fait rien tant que OMGSERV_RESTART != "1"
  * (on ne coupe jamais la prod sans que ce soit explicitement autorisé).
  */

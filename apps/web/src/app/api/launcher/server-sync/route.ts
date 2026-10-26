@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { Readable } from 'stream';
 import { requireLevel, FOUNDER_LEVEL } from '@/lib/guard';
 import { getManifest, hasToken } from '@/lib/launcher';
-import { ftpConfigured, uploadToServer, restartServer, pingServer } from '@/lib/omgserv';
+import { ftpConfigured, uploadToServer, restartServer, pingServer, deleteFromServer } from '@/lib/omgserv';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -69,6 +69,21 @@ export async function POST(req: Request) {
       );
     }
     return NextResponse.json({ ok: true, size: up.size });
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 502 });
+  }
+}
+
+/** Retire un mod (toutes versions) du dossier mods/ du serveur. */
+export async function DELETE(req: Request) {
+  const g = await requireLevel(FOUNDER_LEVEL);
+  if (g instanceof NextResponse) return g;
+  if (!ftpConfigured()) return NextResponse.json({ error: 'ftp_non_configure' }, { status: 503 });
+  const name = new URL(req.url).searchParams.get('name') || '';
+  if (!/\.jar$/i.test(name)) return NextResponse.json({ error: 'nom_invalide' }, { status: 400 });
+  try {
+    const r = await deleteFromServer(name);
+    return NextResponse.json({ ok: true, removed: r.removed });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 502 });
   }
