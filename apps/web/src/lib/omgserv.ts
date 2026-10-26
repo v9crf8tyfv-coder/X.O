@@ -72,13 +72,16 @@ export async function uploadToServer(
     });
     await client.ensureDir(c.modsDir); // crée si besoin et se place dedans (on est maintenant DANS mods/)
 
-    // Supprime les ANCIENNES versions du même mod avant d'uploader (ex : emeriacore-*.jar),
-    // pour ne jamais laisser traîner un vieux jar à côté du neuf.
-    // base = nom sans le numéro de version ni .jar (ex "emeriacore-1.0.0.jar" -> "emeriacore").
-    const base = name.replace(/-v?\d[\d.]*\.jar$/i, '').replace(/\.jar$/i, '');
-    if (base && base !== name) {
+    // Supprime les ANCIENNES versions du MÊME mod avant d'uploader, pour TOUS les mods
+    // (pas que emeriacore), quel que soit le format de version :
+    //   emeriacore-1.0.0.jar, sodium-fabric-0.5.8+mc1.21.jar, Macaws-Bridges-1.21-3.0.jar, fabric-api-0.116+1.21.jar...
+    // base = nom jusqu'au premier "-<chiffre>" (ou "-v<chiffre>"). Ensuite on efface tout
+    // fichier "<base>-<version quelconque>.jar" sauf celui qu'on vient d'uploader.
+    const m = name.match(/^(.*?)-v?\d/i);
+    const base = m ? m[1] : '';
+    if (base) {
       const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const oldRe = new RegExp('^' + esc + '-v?\\d[\\d.]*\\.jar$', 'i');
+      const oldRe = new RegExp('^' + esc + '-v?\\d.*\\.jar$', 'i');
       try {
         for (const f of await client.list()) {
           if (f.isFile && f.name !== name && oldRe.test(f.name)) {
