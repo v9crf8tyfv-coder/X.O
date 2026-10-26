@@ -250,34 +250,37 @@ export default function LauncherSection() {
     setImpl({ on: false, pct: 0 });
     await refreshManifest();
 
-    // --- (2) Google Drive (dossier Mod(s)), si connecté — upload fait côté serveur (barre animée) ---
-    if (gdrive.connected && uploadedMods.length) {
-      for (let i = 0; i < uploadedMods.length; i++) {
+    // --- (2) Serveur + Drive + rappel de redémarrage (mutualisé avec l'ajout par lien) ---
+    await syncExtra(uploadedMods);
+  }
+
+  /** Pousse des mods DÉJÀ dans le launcher vers Google Drive + serveur OMGServ, puis affiche la fin. */
+  async function syncExtra(names: string[]) {
+    // Google Drive (si connecté)
+    if (gdrive.connected && names.length) {
+      for (let i = 0; i < names.length; i++) {
         const stop = startCreep(setDrv);
         const r = await fetch('/api/gdrive', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: uploadedMods[i] }),
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: names[i] }),
         });
         stop();
         if (!r.ok) {
           const j = await r.json().catch(() => ({} as { error?: string }));
           setDrv({ on: false, pct: 0 });
-          setError(`Google Drive (${uploadedMods[i]}) : ${j.error || 'échec'}`);
+          setError(`Google Drive (${names[i]}) : ${j.error || 'échec'}`);
           break;
         }
-        setDrv({ on: true, pct: Math.round(((i + 1) / uploadedMods.length) * 100) });
+        setDrv({ on: true, pct: Math.round(((i + 1) / names.length) * 100) });
       }
       setDrv({ on: false, pct: 0 });
     }
-
-    // --- (3) Serveur OMGServ (si la case est cochée) — upload FTP côté serveur (barre animée) ---
+    // Serveur OMGServ (si la case est cochée)
     let serverPushed = false;
-    if (toServer && uploadedMods.length) {
-      for (let i = 0; i < uploadedMods.length; i++) {
+    if (toServer && names.length) {
+      for (let i = 0; i < names.length; i++) {
         const stop = startCreep(setSrv);
         const r = await fetch('/api/launcher/server-sync', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: uploadedMods[i] }),
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: names[i] }),
         });
         stop();
         const j = await r.json().catch(() => ({} as { error?: string }));
@@ -286,17 +289,16 @@ export default function LauncherSection() {
           if (j.error === 'ftp_non_configure') {
             setError('Mods bien dans le launcher. Upload serveur non configuré : ajoute OMGSERV_FTP_USER + OMGSERV_FTP_PASSWORD dans Vercel.');
           } else {
-            setError(`Serveur (${uploadedMods[i]}) : ${j.error || 'échec de l\'upload'}`);
+            setError(`Serveur (${names[i]}) : ${j.error || 'échec de l\'upload'}`);
           }
           setImplemented(true);
           return;
         }
-        setSrv({ on: true, pct: Math.round(((i + 1) / uploadedMods.length) * 100) });
+        setSrv({ on: true, pct: Math.round(((i + 1) / names.length) * 100) });
       }
       setSrv({ on: false, pct: 0 });
       serverPushed = true;
     }
-
     setImplemented(true);
     finishFlow(serverPushed); // barre verte brève, puis rappel "tu peux redémarrer" 15 s si serveur poussé
   }
@@ -343,11 +345,20 @@ export default function LauncherSection() {
     const url = prompt(`Colle le LIEN DIRECT du ${kind === 'mods' ? 'mod (.jar)' : 'resourcepack (.zip)'} (Modrinth / CurseForge CDN / GitHub) :`);
     if (!url) return;
     setError('');
+    setFinish('idle');
     const r = await fetch('/api/launcher/mods', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind, url: url.trim() }),
     });
-    if (r.ok) { setManifest((await r.json()).manifest); setImplemented(true); }
-    else setError((await r.json().catch(() => ({}))).error || 'Échec de l’ajout par lien.');
+    const j = await r.json().catch(() => ({} as { error?: string; manifest?: Manifest }));
+    if (!r.ok) { setError(j.error || 'Échec de l’ajout par lien.'); return; }
+    if (j.manifest) setManifest(j.manifest);
+    setImplemented(true);
+    // Mod par lien -> on pousse AUSSI sur le serveur + Drive (comme un upload normal).
+    if (kind === 'mods') {
+      let name = '';
+      try { name = decodeURIComponent(new URL(url.trim()).pathname.split('/').pop() || ''); } catch { name = ''; }
+      if (/\.jar$/i.test(name)) await syncExtra([name]);
+    }
   }
 
   const [axiomInput, setAxiomInput] = useState('');
