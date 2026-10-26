@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import JSZip from 'jszip';
 
 interface Entry { name: string; url: string; sha256: string }
 interface Manifest { mods: Entry[]; resourcepacks: Entry[]; optional: (Entry & { id: string })[]; axiomAllowed: string[]; comAllowed: string[] }
@@ -34,6 +35,61 @@ function startCreep(set: (v: { on: boolean; pct: number }) => void, from = 8): (
   set({ on: true, pct: p });
   const id = window.setInterval(() => { p = Math.min(92, p + 4); set({ on: true, pct: p }); }, 250);
   return () => window.clearInterval(id);
+}
+
+// --- Vérification d'un .jar avant upload (version Minecraft, Fabric, dépendances, client/serveur) ---
+const MC_TARGET = [1, 21, 1];
+function parseV(s: string): number[] { return s.split('.').map((n) => parseInt(n, 10) || 0); }
+function vCmp(a: number[], b: number[]): number {
+  for (let i = 0; i < Math.max(a.length, b.length); i++) { const x = a[i] || 0, y = b[i] || 0; if (x !== y) return x < y ? -1 : 1; }
+  return 0;
+}
+/** Est-ce que 1.21.1 satisfait UNE condition de version Fabric (>=, >, <=, <, ~, ^, exact, x) ? */
+function condOk(p: string): boolean {
+  let m: RegExpMatchArray | null;
+  if ((m = p.match(/^>=\s*v?(\d+(?:\.\d+)*)/))) return vCmp(MC_TARGET, parseV(m[1])) >= 0;
+  if ((m = p.match(/^>\s*v?(\d+(?:\.\d+)*)/))) return vCmp(MC_TARGET, parseV(m[1])) > 0;
+  if ((m = p.match(/^<=\s*v?(\d+(?:\.\d+)*)/))) return vCmp(MC_TARGET, parseV(m[1])) <= 0;
+  if ((m = p.match(/^<\s*v?(\d+(?:\.\d+)*)/))) return vCmp(MC_TARGET, parseV(m[1])) < 0;
+  if ((m = p.match(/^[~^]\s*v?(\d+)\.(\d+)/))) return MC_TARGET[0] === +m[1] && MC_TARGET[1] === +m[2];
+  if ((m = p.match(/^=?\s*v?(\d+)\.(\d+)\.x$/i))) return MC_TARGET[0] === +m[1] && MC_TARGET[1] === +m[2];
+  if ((m = p.match(/^=?\s*v?(\d+(?:\.\d+)*)$/))) return parseV(m[1]).every((n, i) => MC_TARGET[i] === n);
+  return true; // forme inconnue -> on ne bloque pas
+}
+/** 1.21.1 est-il compatible avec une contrainte Minecraft (ET sur les espaces) ? */
+function mcAllows(range: string): boolean {
+  const r = range.trim();
+  if (!r || r === '*') return true;
+  return r.split(/\s+/).every(condOk);
+}
+interface JarCheck { fabric: boolean; mcOk: boolean; env: string; missingDeps: string[]; reason?: string }
+async function inspectJar(file: File, manifestMods: string[]): Promise<JarCheck> {
+  try {
+    const zip = await JSZip.loadAsync(await file.arrayBuffer());
+    const fmj = zip.file('fabric.mod.json');
+    if (!fmj) {
+      const forge = zip.file('META-INF/mods.toml') || zip.file('META-INF/neoforge.mods.toml');
+      return { fabric: false, mcOk: false, env: '*', missingDeps: [], reason: forge ? 'mod Forge/NeoForge (pas Fabric)' : 'pas un mod Fabric (fabric.mod.json absent)' };
+    }
+    const meta = JSON.parse(await fmj.async('string')) as { environment?: string; depends?: Record<string, unknown> };
+    const env = typeof meta.environment === 'string' ? meta.environment : '*';
+    const dep = meta.depends || {};
+    const mc = dep.minecraft;
+    const mcArr = Array.isArray(mc) ? mc.map(String) : (mc ? [String(mc)] : []);
+    const mcOk = mcArr.length === 0 || mcArr.some(mcAllows);
+    const nested = Object.keys(zip.files).filter((f) => /^META-INF\/jars\/.*\.jar$/i.test(f)).map((f) => (f.split('/').pop() || '').toLowerCase());
+    const man = manifestMods.map((m) => m.toLowerCase());
+    const missingDeps = Object.keys(dep).filter((id) => {
+      const k = id.toLowerCase();
+      if (['minecraft', 'java', 'fabricloader'].includes(k) || k.startsWith('fabric')) return false; // fournis par MC/Fabric
+      if (nested.some((n) => n.includes(k))) return false; // embarqué (jar imbriqué)
+      if (man.some((n) => n.includes(k))) return false; // déjà dans le launcher
+      return true;
+    });
+    return { fabric: true, mcOk, env, missingDeps, reason: mcOk ? undefined : `cible Minecraft ${mcArr.join(', ')} (pas 1.21.1)` };
+  } catch {
+    return { fabric: false, mcOk: false, env: '*', missingDeps: [], reason: 'fichier illisible (.jar invalide ?)' };
+  }
 }
 
 export default function LauncherSection() {
@@ -82,6 +138,13 @@ export default function LauncherSection() {
     } finally {
       setLoading(false);
     }
+  }
+  /** Rafraîchit la liste des mods SANS repasser par l'écran "Chargement…" (évite le saut de scroll). */
+  async function refreshManifest() {
+    try {
+      const r = await fetch('/api/launcher/mods');
+      if (r.ok) setManifest(await r.json());
+    } catch { /* ignore */ }
   }
   async function loadBackup() {
     try {
@@ -146,6 +209,22 @@ export default function LauncherSection() {
     const uploadedMods: string[] = [];
     for (let i = 0; i < total; i++) {
       const { file, kind } = staged[i];
+      // Vérification avant upload (seulement les mods) : version / Fabric / dépendances / client-serveur.
+      if (kind === 'mods') {
+        const chk = await inspectJar(file, manifest?.mods?.map((m) => m.name) ?? []);
+        const warns: string[] = [];
+        if (!chk.fabric) {
+          warns.push(chk.reason || 'pas un mod Fabric');
+        } else {
+          if (!chk.mcOk) warns.push(chk.reason || 'mauvaise version Minecraft');
+          if (chk.missingDeps.length) warns.push(`dépendance(s) manquante(s) : ${chk.missingDeps.join(', ')} (à installer aussi)`);
+          if (chk.env !== 'client' && !toServer) warns.push('mod de contenu/serveur : coche « pousser aussi sur le serveur », sinon il ne marchera pas en jeu');
+        }
+        if (warns.length) {
+          const go = window.confirm(`Attention — ${file.name} :\n\n- ${warns.join('\n- ')}\n\nUploader quand même ?`);
+          if (!go) continue; // on saute ce fichier
+        }
+      }
       const fd = new FormData();
       fd.append('kind', kind);
       fd.append('file', file);
@@ -169,7 +248,7 @@ export default function LauncherSection() {
     }
     setStaged([]);
     setImpl({ on: false, pct: 0 });
-    await load();
+    await refreshManifest();
 
     // --- (2) Google Drive (dossier Mod(s)), si connecté — upload fait côté serveur (barre animée) ---
     if (gdrive.connected && uploadedMods.length) {
