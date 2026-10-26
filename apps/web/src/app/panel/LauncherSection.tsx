@@ -284,9 +284,16 @@ export default function LauncherSection() {
   return (
     <div className="launcher-sec">
       <h2 style={{ marginBottom: 6 }}>Launcher</h2>
-      <p style={{ color: 'var(--muted, #8a8a94)', marginBottom: 18 }}>
+      <p style={{ color: 'var(--muted, #8a8a94)', marginBottom: 12 }}>
         Ajoute des mods / resourcepacks, implémente-les dans le launcher, puis mets à jour les 3 launchers.
       </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 18 }}>
+        <a href="https://panel.omgserv.com" target="_blank" rel="noopener" className="btn-accent"
+          style={{ display: 'inline-block', textDecoration: 'none' }}>
+          Redémarrer le serveur
+        </a>
+        <span className="lchr-hint">Ouvre OMGServ — clique "Redémarrer" pour appliquer les mods sur le serveur.</span>
+      </div>
 
       {error && (
         <div style={{ background: 'rgba(220,60,60,.14)', border: '1px solid rgba(220,60,60,.4)', color: '#ffb4b4', padding: '10px 14px', borderRadius: 10, marginBottom: 16 }}>
