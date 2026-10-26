@@ -23,6 +23,10 @@ export default function LauncherSection() {
   const [rst, setRst] = useState<{ phase: 'idle' | 'restarting' | 'waiting' | 'done' | 'skipped' | 'fail'; label: string; pct: number }>(
     { phase: 'idle', label: '', pct: 0 },
   );
+
+  // Sync Google Drive (dossier Mod(s), partagé avec Orion)
+  const [gdrive, setGdrive] = useState<{ configured: boolean; connected: boolean }>({ configured: false, connected: false });
+  const [drv, setDrv] = useState<{ on: boolean; done: number; total: number }>({ on: false, done: 0, total: 0 });
   const [backup, setBackup] = useState<{ available: boolean; counts?: { mods: number; resourcepacks: number; optional: number } } | null>(null);
   const [restoring, setRestoring] = useState(false);
 
@@ -64,7 +68,13 @@ export default function LauncherSection() {
       }
     } catch { /* ignore */ }
   }
-  useEffect(() => { load(); loadBackup(); loadServerCfg(); }, []);
+  async function loadGdrive() {
+    try {
+      const r = await fetch('/api/gdrive');
+      if (r.ok) setGdrive(await r.json());
+    } catch { /* ignore */ }
+  }
+  useEffect(() => { load(); loadBackup(); loadServerCfg(); loadGdrive(); }, []);
 
   /** Restaure le manifeste depuis la sauvegarde automatique (au cas où une manip a tout effacé). */
   async function restore() {
@@ -120,7 +130,26 @@ export default function LauncherSection() {
     setImpl({ on: false, done: 0, total: 0 });
     await load();
 
-    // --- (2) Serveur OMGServ (seulement les mods, si la case est cochée) ---
+    // --- (2) Google Drive (dossier Mod(s)), si connecté — indépendant du serveur ---
+    if (gdrive.connected && uploadedMods.length) {
+      setDrv({ on: true, done: 0, total: uploadedMods.length });
+      for (let i = 0; i < uploadedMods.length; i++) {
+        const r = await fetch('/api/gdrive', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: uploadedMods[i] }),
+        });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          setDrv({ on: false, done: i, total: uploadedMods.length });
+          setError(`Google Drive (${uploadedMods[i]}) : ${j.error || 'échec'}`);
+          break;
+        }
+        setDrv({ on: true, done: i + 1, total: uploadedMods.length });
+      }
+      setDrv({ on: false, done: 0, total: 0 });
+    }
+
+    // --- (3) Serveur OMGServ (seulement les mods, si la case est cochée) ---
     if (toServer && uploadedMods.length) {
       setSrv({ on: true, done: 0, total: uploadedMods.length });
       for (let i = 0; i < uploadedMods.length; i++) {
@@ -374,6 +403,29 @@ export default function LauncherSection() {
         </div>
       </div>
 
+      {/* Google Drive : sync des mods dans le dossier Mod(s) (partagé avec Orion) */}
+      <div className="lchr-card">
+        <h3>Google Drive <span className="lchr-count">{gdrive.connected ? 'connecté' : gdrive.configured ? 'à connecter' : 'off'}</span></h3>
+        {!gdrive.configured ? (
+          <p className="lchr-hint">
+            Pour copier automatiquement les mods dans ton Google Drive (dossier Mod(s)), ajoute dans Vercel :
+            <code>GDRIVE_CLIENT_ID</code>, <code>GDRIVE_CLIENT_SECRET</code>, <code>GDRIVE_MODS_FOLDER_ID</code>, puis reviens ici.
+          </p>
+        ) : gdrive.connected ? (
+          <p className="lchr-hint">
+            Connecté. À chaque implémentation, les mods sont aussi copiés dans ton Drive (l&apos;ancienne version est remplacée) — Orion les voit aussi.
+            {' '}<a href="/api/gdrive?action=connect" className="lchr-hint" style={{ textDecoration: 'underline' }}>Reconnecter</a>
+          </p>
+        ) : (
+          <>
+            <p className="lchr-hint">Clique pour autoriser l&apos;accès à ton Google Drive (une seule fois).</p>
+            <a href="/api/gdrive?action=connect" className="btn-accent" style={{ display: 'inline-block', marginTop: 10, textDecoration: 'none' }}>
+              Connecter Google Drive
+            </a>
+          </>
+        )}
+      </div>
+
       {/* Ajout */}
       <div className="lchr-card">
         <h3>Ajouter</h3>
@@ -404,7 +456,10 @@ export default function LauncherSection() {
           <Bar pct={Math.round((impl.done / Math.max(1, impl.total)) * 100)} label={`1/2 Launcher… ${impl.done}/${impl.total}`} />
         )}
         {srv.on && (
-          <Bar pct={Math.round((srv.done / Math.max(1, srv.total)) * 100)} label={`2/2 Serveur OMGServ… ${srv.done}/${srv.total}`} />
+          <Bar pct={Math.round((srv.done / Math.max(1, srv.total)) * 100)} label={`Serveur OMGServ… ${srv.done}/${srv.total}`} />
+        )}
+        {drv.on && (
+          <Bar pct={Math.round((drv.done / Math.max(1, drv.total)) * 100)} label={`Google Drive… ${drv.done}/${drv.total}`} />
         )}
         {rst.phase !== 'idle' && (
           <Bar pct={rst.pct} label={rst.label}
