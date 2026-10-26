@@ -53,6 +53,22 @@ function sendCommand(host: string, port: number, password: string, command: stri
   });
 }
 
+/**
+ * Envoie une commande RCON arbitraire (ex : "stop" pour redémarrer via le wrapper du host).
+ * Renvoie false si RCON n'est pas configuré (OMGSERV sans RCON) ou en cas d'échec — jamais d'exception.
+ */
+export async function rconCommand(command: string): Promise<boolean> {
+  const { RCON_HOST, RCON_PASSWORD } = process.env;
+  if (!RCON_HOST || !RCON_PASSWORD) return false;
+  const port = Number(process.env.RCON_PORT || 25575);
+  try {
+    await sendCommand(RCON_HOST, port, RCON_PASSWORD, command);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Force LuckPerms à relire la base immédiatement (no-op si RCON non configuré). */
 export async function luckpermsSyncNow(): Promise<void> {
   const { RCON_HOST, RCON_PASSWORD } = process.env;

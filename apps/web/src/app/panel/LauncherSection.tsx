@@ -15,6 +15,14 @@ export default function LauncherSection() {
   const [staged, setStaged] = useState<{ file: File; kind: Kind }[]>([]);
   const [impl, setImpl] = useState<{ on: boolean; done: number; total: number }>({ on: false, done: 0, total: 0 });
   const [implemented, setImplemented] = useState(false);
+
+  // Sync serveur OMGServ + redémarrage (une seule action : launcher + serveur + restart)
+  const [srvConfigured, setSrvConfigured] = useState(false);
+  const [toServer, setToServer] = useState(false);
+  const [srv, setSrv] = useState<{ on: boolean; done: number; total: number }>({ on: false, done: 0, total: 0 });
+  const [rst, setRst] = useState<{ phase: 'idle' | 'restarting' | 'waiting' | 'done' | 'skipped' | 'fail'; label: string; pct: number }>(
+    { phase: 'idle', label: '', pct: 0 },
+  );
   const [backup, setBackup] = useState<{ available: boolean; counts?: { mods: number; resourcepacks: number; optional: number } } | null>(null);
   const [restoring, setRestoring] = useState(false);
 
@@ -46,7 +54,17 @@ export default function LauncherSection() {
       if (r.ok) setBackup(await r.json());
     } catch { /* ignore */ }
   }
-  useEffect(() => { load(); loadBackup(); }, []);
+  async function loadServerCfg() {
+    try {
+      const r = await fetch('/api/launcher/server-sync');
+      if (r.ok) {
+        const j = await r.json();
+        setSrvConfigured(!!j.configured);
+        setToServer(!!j.configured); // coché par défaut seulement si le FTP serveur est prêt
+      }
+    } catch { /* ignore */ }
+  }
+  useEffect(() => { load(); loadBackup(); loadServerCfg(); }, []);
 
   /** Restaure le manifeste depuis la sauvegarde automatique (au cas où une manip a tout effacé). */
   async function restore() {
@@ -71,11 +89,18 @@ export default function LauncherSection() {
   }
   function unstage(i: number) { setStaged((s) => s.filter((_, k) => k !== i)); }
 
-  /** Implémente les fichiers en attente dans le launcher (upload + manifeste), avec barre. */
+  /**
+   * Implémente les fichiers en attente : (1) launcher, puis si demandé (2) serveur OMGServ,
+   * puis (3) redémarrage auto. Chaque étape a sa propre barre.
+   */
   async function implement() {
     if (!staged.length) return;
     setError('');
+    setRst({ phase: 'idle', label: '', pct: 0 });
+
+    // --- (1) Launcher ---
     setImpl({ on: true, done: 0, total: staged.length });
+    const uploadedMods: string[] = [];
     for (let i = 0; i < staged.length; i++) {
       const { file, kind } = staged[i];
       const fd = new FormData();
@@ -88,12 +113,72 @@ export default function LauncherSection() {
         setImpl({ on: false, done: i, total: staged.length });
         return;
       }
+      if (kind === 'mods') uploadedMods.push(file.name);
       setImpl({ on: true, done: i + 1, total: staged.length });
     }
     setStaged([]);
     setImpl({ on: false, done: 0, total: 0 });
-    setImplemented(true);
     await load();
+
+    // --- (2) Serveur OMGServ (seulement les mods, si la case est cochée) ---
+    if (toServer && uploadedMods.length) {
+      setSrv({ on: true, done: 0, total: uploadedMods.length });
+      for (let i = 0; i < uploadedMods.length; i++) {
+        const r = await fetch('/api/launcher/server-sync', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: uploadedMods[i] }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          setSrv({ on: false, done: i, total: uploadedMods.length });
+          if (j.error === 'ftp_non_configure') {
+            setError('Mods bien dans le launcher. Upload serveur non configuré : ajoute OMGSERV_FTP_USER + OMGSERV_FTP_PASSWORD dans Vercel.');
+          } else {
+            setError(`Serveur (${uploadedMods[i]}) : ${j.error || 'échec de l\'upload'}`);
+          }
+          setImplemented(true);
+          return;
+        }
+        setSrv({ on: true, done: i + 1, total: uploadedMods.length });
+      }
+      setSrv({ on: false, done: 0, total: 0 });
+
+      // --- (3) Redémarrage auto, une fois launcher + serveur OK ---
+      await doRestart();
+    }
+
+    setImplemented(true);
+  }
+
+  /** Déclenche le redémarrage puis suit l'état via ping (barre jusqu'à remise en ligne). */
+  async function doRestart() {
+    setRst({ phase: 'restarting', label: 'Tout est uploadé. Demande de redémarrage…', pct: 12 });
+    const r = await fetch('/api/launcher/server-sync', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'restart' }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (j.done === false) {
+      const msg = j.reason === 'restart_non_arme'
+        ? 'Launcher + serveur OK. Redémarrage non armé : mets OMGSERV_RESTART=1 dans Vercel (après avoir vérifié que /stop relance le serveur). Pour l\'instant, redémarre à la main.'
+        : 'Launcher + serveur OK. RCON indisponible : redémarre le serveur à la main.';
+      setRst({ phase: 'skipped', label: msg, pct: 100 });
+      return;
+    }
+    // Attend que le serveur tombe puis remonte.
+    setRst({ phase: 'waiting', label: 'Serveur en cours de redémarrage…', pct: 30 });
+    let sawDown = false;
+    let tries = 0;
+    const poll = async () => {
+      tries++;
+      let online = false;
+      try { online = (await (await fetch('/api/launcher/server-sync')).json()).online; } catch { /* retry */ }
+      if (!online) sawDown = true;
+      if (sawDown && online) { setRst({ phase: 'done', label: 'Serveur redémarré et de nouveau en ligne.', pct: 100 }); return; }
+      if (tries > 24) { setRst({ phase: 'done', label: 'Redémarrage lancé (vérification en ligne expirée, regarde en jeu).', pct: 100 }); return; }
+      setRst({ phase: 'waiting', label: sawDown ? 'Serveur redémarre, remise en ligne…' : 'Arrêt du serveur en cours…', pct: Math.min(92, 30 + tries * 4) });
+      setTimeout(poll, 5000);
+    };
+    setTimeout(poll, 5000);
   }
 
   async function del(kind: Kind, name: string) {
@@ -309,13 +394,32 @@ export default function LauncherSection() {
         )}
 
         {impl.on && (
-          <Bar pct={Math.round((impl.done / Math.max(1, impl.total)) * 100)} label={`Implémentation… ${impl.done}/${impl.total}`} />
+          <Bar pct={Math.round((impl.done / Math.max(1, impl.total)) * 100)} label={`1/2 Launcher… ${impl.done}/${impl.total}`} />
+        )}
+        {srv.on && (
+          <Bar pct={Math.round((srv.done / Math.max(1, srv.total)) * 100)} label={`2/2 Serveur OMGServ… ${srv.done}/${srv.total}`} />
+        )}
+        {rst.phase !== 'idle' && (
+          <Bar pct={rst.pct} label={rst.label}
+            ok={rst.phase === 'done'}
+            fail={rst.phase === 'fail'} />
         )}
 
-        {!!staged.length && !impl.on && (
-          <button className="btn-accent" onClick={implement} style={{ marginTop: 12 }}>
-            Implémenter dans le launcher ({staged.length})
-          </button>
+        {!!staged.length && !impl.on && !srv.on && (
+          <>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 13, color: 'var(--muted,#8a8a94)', cursor: srvConfigured ? 'pointer' : 'not-allowed', opacity: srvConfigured ? 1 : 0.55 }}>
+              <input type="checkbox" checked={toServer} disabled={!srvConfigured} onChange={(e) => setToServer(e.target.checked)} />
+              Pousser aussi les mods sur le serveur OMGServ et redémarrer automatiquement
+            </label>
+            {!srvConfigured && (
+              <p className="lchr-hint" style={{ marginTop: 4 }}>
+                Serveur non connecté : ajoute OMGSERV_FTP_USER + OMGSERV_FTP_PASSWORD dans Vercel pour activer l&apos;upload serveur + redémarrage.
+              </p>
+            )}
+            <button className="btn-accent" onClick={implement} style={{ marginTop: 10 }}>
+              {toServer ? `Implémenter (launcher + serveur) (${staged.length})` : `Implémenter dans le launcher (${staged.length})`}
+            </button>
+          </>
         )}
       </div>
 
