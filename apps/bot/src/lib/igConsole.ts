@@ -32,9 +32,11 @@ async function ensureTable(): Promise<void> {
 export async function handleConsoleMessage(message: Message): Promise<boolean> {
   if (message.channelId !== CM_IG_CHANNEL) return false;
   if (message.author.bot) return false;
-  const cmd = message.content.trim();
-  // Il FAUT un « / » devant pour exécuter une commande ; sinon c'est un message normal.
-  if (!cmd.startsWith('/')) return false;
+  const raw = message.content.trim();
+  // Il FAUT un « ! » devant pour exécuter une commande ; sinon c'est un message normal.
+  if (!raw.startsWith('!')) return false;
+  const cmd = raw.slice(1).trim(); // on retire le « ! » : on stocke la commande nue (le mod l'exécute telle quelle)
+  if (!cmd) return false;
 
   const member = message.member as GuildMember | null;
   const level = member ? highestGrade(member)?.level ?? 0 : 0;
