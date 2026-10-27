@@ -22,19 +22,21 @@ export async function GET() {
   const set = new Set<string>();
   const comSet = new Set<string>();
   const buildSet = new Set<string>();
-  // Auto : staff resp+ (Axiom uniquement ; Build/Com n'ont PAS d'auto, seulement les ajouts manuels).
+  // Auto : staff resp+ a accès à Axiom ET aux mods Build (l'Axiom legacy est devenu un mod Build).
+  // Com n'a PAS d'auto (seulement les ajouts manuels).
   try {
     for (const s of await listStaff()) {
       const top = Math.max(0, ...(s.grades ?? []).map((k) => getGrade(k).level));
-      if (top >= AXIOM_AUTO_LEVEL && s.pseudo) set.add(s.pseudo);
+      if (top >= AXIOM_AUTO_LEVEL && s.pseudo) { set.add(s.pseudo); buildSet.add(s.pseudo); }
     }
   } catch { /* base indispo -> on garde juste le manuel */ }
   // Manuel : axiomAllowed + buildAllowed + comAllowed du manifest public (même fetch).
+  // axiomAllowed (legacy) alimente aussi Build pour que les anciens autorisés gardent l'accès.
   try {
     const r = await fetch(MANIFEST_URL + '?t=' + Date.now(), { cache: 'no-store' });
     if (r.ok) {
       const m = await r.json();
-      for (const p of Array.isArray(m.axiomAllowed) ? m.axiomAllowed : []) if (typeof p === 'string' && p) set.add(p);
+      for (const p of Array.isArray(m.axiomAllowed) ? m.axiomAllowed : []) if (typeof p === 'string' && p) { set.add(p); buildSet.add(p); }
       for (const p of Array.isArray(m.buildAllowed) ? m.buildAllowed : []) if (typeof p === 'string' && p) buildSet.add(p);
       for (const p of Array.isArray(m.comAllowed) ? m.comAllowed : []) if (typeof p === 'string' && p) comSet.add(p);
     }

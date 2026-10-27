@@ -123,6 +123,8 @@ export default function LauncherSection() {
 
   const modRef = useRef<HTMLInputElement>(null);
   const rpRef = useRef<HTMLInputElement>(null);
+  const buildRef = useRef<HTMLInputElement>(null);
+  const comRef = useRef<HTMLInputElement>(null);
 
   async function load() {
     setLoading(true);
@@ -390,18 +392,6 @@ export default function LauncherSection() {
     const r = await fetch(`/api/launcher/datapacks?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
     if (r.ok) loadDatapacks(); else setError('Échec de la suppression du data pack.');
   }
-  /** Ajoute/remplace un mod OPTIONNEL (staff build, ex. Axiom) par lien direct (.jar). */
-  async function addOptionalByLink() {
-    const url = prompt('Colle le LIEN DIRECT du mod optionnel (.jar), ex. la nouvelle version d\'Axiom :');
-    if (!url) return;
-    const id = (prompt('Identifiant du mod optionnel (laisse « axiom » pour Axiom) :', 'axiom') || 'axiom').trim();
-    setError('');
-    const r = await fetch('/api/launcher/mods', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'optional', id, url: url.trim() }),
-    });
-    const j = await r.json().catch(() => ({}));
-    if (r.ok) { setManifest(j.manifest); setImplemented(true); } else setError(j.error || 'Échec de l\'ajout du mod optionnel.');
-  }
   async function delOptional(id: string, name: string) {
     if (!confirm(`Retirer ${name} (mod optionnel « ${id} ») ?`)) return;
     setError('');
@@ -421,6 +411,33 @@ export default function LauncherSection() {
     const j = await r.json().catch(() => ({}));
     if (r.ok) { setManifest(j.manifest); setImplemented(true); } else setError(j.error || `Échec de l'ajout du mod ${label}.`);
   }
+  /** Upload direct de fichiers .jar vers une catégorie (Build/Com). Limite ~4 Mo (Vercel) -> sinon par lien. */
+  async function uploadOptionalFiles(category: 'build' | 'com', files: FileList | null) {
+    if (!files || !files.length) return;
+    setError('');
+    setImpl({ on: true, pct: 0 });
+    const list = Array.from(files);
+    for (let i = 0; i < list.length; i++) {
+      const file = list[i];
+      const fd = new FormData();
+      fd.append('kind', 'optional');
+      fd.append('category', category);
+      fd.append('file', file);
+      try {
+        const r = await xhrUpload('/api/launcher/mods', fd, (frac) =>
+          setImpl({ on: true, pct: Math.round(((i + frac) / list.length) * 100) }));
+        if (!r.ok) {
+          const msg = (await r.json().catch(() => ({} as { error?: string }))).error || `Échec sur ${file.name}`;
+          setError(`${file.name} : ${msg}`); setImpl({ on: false, pct: 0 }); return;
+        }
+      } catch {
+        setError(`${file.name} : erreur réseau pendant l'upload`); setImpl({ on: false, pct: 0 }); return;
+      }
+    }
+    setImpl({ on: false, pct: 0 });
+    setImplemented(true);
+    await refreshManifest();
+  }
   /** Force une sauvegarde de l'état COURANT du manifest (point de restauration). */
   async function forceSave() {
     setError(''); setSaveMsg('Sauvegarde…');
@@ -430,23 +447,6 @@ export default function LauncherSection() {
     else { setSaveMsg(''); setError(j.error || 'Échec de la sauvegarde.'); }
   }
 
-  const [axiomInput, setAxiomInput] = useState('');
-  async function addAxiom() {
-    const pseudo = axiomInput.trim();
-    if (!pseudo) return;
-    setError('');
-    const r = await fetch('/api/launcher/axiom', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pseudo }),
-    });
-    if (r.ok) { setManifest((await r.json()).manifest); setAxiomInput(''); }
-    else setError((await r.json().catch(() => ({}))).error || 'Échec de l’ajout.');
-  }
-  async function delAxiom(pseudo: string) {
-    if (!confirm(`Retirer ${pseudo} du staff build (Axiom) ?`)) return;
-    const r = await fetch(`/api/launcher/axiom?pseudo=${encodeURIComponent(pseudo)}`, { method: 'DELETE' });
-    if (r.ok) setManifest((await r.json()).manifest);
-    else setError((await r.json().catch(() => ({}))).error || 'Échec de la suppression.');
-  }
 
   const [buildInput, setBuildInput] = useState('');
   async function addBuildStaff() {
@@ -575,32 +575,16 @@ export default function LauncherSection() {
       <PublishedList title="Resourcepacks dans le launcher" items={manifest?.resourcepacks ?? []} onDel={(n) => del('resourcepacks', n)} />
       {/* Mods optionnels Axiom (legacy) — gérables par lien */}
       {(() => {
-        const axiomMods = (manifest?.optional ?? []).filter((m) => (m.category ?? 'axiom') === 'axiom');
-        const buildMods = (manifest?.optional ?? []).filter((m) => m.category === 'build');
+        // L'Axiom "legacy" est devenu un mod Build : tout optionnel non-Com s'affiche sous Build.
+        const buildMods = (manifest?.optional ?? []).filter((m) => m.category !== 'com');
         const comMods = (manifest?.optional ?? []).filter((m) => m.category === 'com');
         return (
       <>
-      <div className="lchr-card">
-        <h3>Optionnels — Axiom (legacy) <span className="lchr-count">{axiomMods.length}</span></h3>
-        <p className="lchr-hint">Mod Axiom du staff build. Gros fichiers : utilise « par lien » (le serveur télécharge).</p>
-        {axiomMods.length ? (
-          <ul className="lchr-list">
-            {axiomMods.map((m) => (
-              <li key={m.id}><span>{m.name} <em>({m.id})</em></span><button className="lchr-x" onClick={() => delOptional(m.id, m.name)}>Retirer</button></li>
-            ))}
-          </ul>
-        ) : (
-          <p className="lchr-hint">Aucun pour l’instant.</p>
-        )}
-        <div className="lchr-add" style={{ marginTop: 10 }}>
-          <button className="btn-sec" onClick={addOptionalByLink}>+ Mod optionnel par lien (Axiom)</button>
-        </div>
-      </div>
-
       {/* === MODS BUILD : togglables (une case par mod dans le launcher) + staff Build === */}
       <div className="lchr-card">
+        <input ref={buildRef} type="file" accept=".jar" multiple hidden onChange={(e) => { uploadOptionalFiles('build', e.target.files); e.currentTarget.value = ''; }} />
         <h3>Upload mod Build <span className="lchr-count">{buildMods.length}</span></h3>
-        <p className="lchr-hint">Mods <b>Build</b> : chacun a sa propre case à cocher dans le launcher (le staff l’active ou non). Visibles uniquement pour le staff Build ci-dessous.</p>
+        <p className="lchr-hint">Mods <b>Build</b> (Axiom inclus) : chacun a sa propre case à cocher dans le launcher (le staff l’active ou non). Visibles uniquement pour le staff Build ci-dessous.</p>
         {buildMods.length ? (
           <ul className="lchr-list">
             {buildMods.map((m) => (
@@ -610,7 +594,8 @@ export default function LauncherSection() {
         ) : (
           <p className="lchr-hint">Aucun mod Build pour l’instant.</p>
         )}
-        <div className="lchr-add" style={{ marginTop: 10 }}>
+        <div className="lchr-add" style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn-sec" onClick={() => buildRef.current?.click()}>+ Mod Build (fichier .jar)</button>
           <button className="btn-sec" onClick={() => addModByLink('build')}>+ Mod Build par lien</button>
         </div>
         <h4 style={{ margin: '16px 0 4px' }}>Staff build <span className="lchr-count">{manifest?.buildAllowed?.length ?? 0}</span></h4>
@@ -639,6 +624,7 @@ export default function LauncherSection() {
 
       {/* === MODS COM : togglables (une case par mod) + staff Com === */}
       <div className="lchr-card">
+        <input ref={comRef} type="file" accept=".jar" multiple hidden onChange={(e) => { uploadOptionalFiles('com', e.target.files); e.currentTarget.value = ''; }} />
         <h3>Upload mod Com <span className="lchr-count">{comMods.length}</span></h3>
         <p className="lchr-hint">Mods <b>Com</b> : chacun a sa propre case à cocher dans le launcher (le staff l’active ou non). Visibles uniquement pour le staff Com ci-dessous.</p>
         {comMods.length ? (
@@ -650,7 +636,8 @@ export default function LauncherSection() {
         ) : (
           <p className="lchr-hint">Aucun mod Com pour l’instant.</p>
         )}
-        <div className="lchr-add" style={{ marginTop: 10 }}>
+        <div className="lchr-add" style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn-sec" onClick={() => comRef.current?.click()}>+ Mod Com (fichier .jar)</button>
           <button className="btn-sec" onClick={() => addModByLink('com')}>+ Mod Com par lien</button>
         </div>
         <h4 style={{ margin: '16px 0 4px' }}>Staff Com <span className="lchr-count">{manifest?.comAllowed?.length ?? 0}</span></h4>
@@ -700,33 +687,8 @@ export default function LauncherSection() {
         </div>
       </div>
 
-      {/* Staff build : liste des pseudos autorisés à Axiom */}
-      <div className="lchr-card">
-        <h3>Staff build — Axiom <span className="lchr-count">{manifest?.axiomAllowed?.length ?? 0}</span></h3>
-        <p className="lchr-hint">Ces pseudos Minecraft peuvent activer Axiom dans le launcher (build staff).</p>
-        {manifest?.axiomAllowed?.length ? (
-          <ul className="lchr-list">
-            {manifest.axiomAllowed.map((p) => (
-              <li key={p}><span>{p}</span><button className="lchr-x" onClick={() => delAxiom(p)}>Retirer</button></li>
-            ))}
-          </ul>
-        ) : (
-          <p className="lchr-hint">Aucun pour l’instant.</p>
-        )}
-        <div className="lchr-add" style={{ marginTop: 12 }}>
-          <input
-            className="btn-sec"
-            style={{ flex: 1, minWidth: 160 }}
-            placeholder="Pseudo Minecraft"
-            value={axiomInput}
-            onChange={(e) => setAxiomInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') addAxiom(); }}
-          />
-          <button className="btn-accent" onClick={addAxiom}>Ajouter</button>
-        </div>
-      </div>
-
-      {/* (La liste Staff Com + l'activation caméra sont gérées dans la carte « Upload mod Com » ci-dessus.) */}
+      {/* (Axiom est désormais un mod Build : géré dans la carte « Upload mod Build » ci-dessus.
+          Staff Com + caméra : dans la carte « Upload mod Com ». Les resp+ ont Build automatiquement.) */}
 
       {/* Google Drive : sync des mods dans le dossier Mod(s) (partagé avec Orion) */}
       <div className="lchr-card">
