@@ -794,20 +794,38 @@ export default function LauncherSection() {
 }
 
 function PublishedList({ title, items, onDel, readOnly }: { title: string; items: { name: string }[]; onDel?: (n: string) => void; readOnly?: boolean }) {
+  const [q, setQ] = useState('');
+  const query = q.trim().toLowerCase();
+  const shown = query ? items.filter((m) => m.name.toLowerCase().includes(query)) : items;
   return (
     <div className="lchr-card">
-      <h3>{title} <span className="lchr-count">{items.length}</span></h3>
+      <h3>{title} <span className="lchr-count">{query ? `${shown.length}/${items.length}` : items.length}</span></h3>
       {items.length === 0 ? (
         <p className="lchr-hint">Aucun pour l’instant.</p>
       ) : (
-        <ul className="lchr-list">
-          {items.map((m) => (
-            <li key={m.name}>
-              <span>{m.name}</span>
-              {!readOnly && onDel && <button className="lchr-x" onClick={() => onDel(m.name)}>Retirer</button>}
-            </li>
-          ))}
-        </ul>
+        <>
+          {items.length > 5 && (
+            <input
+              className="btn-sec"
+              style={{ width: '100%', marginBottom: 10 }}
+              placeholder="Rechercher un mod…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          )}
+          {shown.length === 0 ? (
+            <p className="lchr-hint">Aucun résultat pour « {q} ».</p>
+          ) : (
+            <ul className="lchr-list">
+              {shown.map((m) => (
+                <li key={m.name}>
+                  <span>{m.name}</span>
+                  {!readOnly && onDel && <button className="lchr-x" onClick={() => onDel(m.name)}>Retirer</button>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );
