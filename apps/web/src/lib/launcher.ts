@@ -16,13 +16,16 @@ const API = 'https://api.github.com';
 const UPLOADS = 'https://uploads.github.com';
 
 export type ManifestEntry = { name: string; url: string; sha256: string };
-export type OptionalEntry = ManifestEntry & { id: string };
+/** Catégorie d'un mod optionnel (togglable dans le launcher). 'axiom' = legacy staff build. */
+export type OptionalCategory = 'axiom' | 'build' | 'com';
+export type OptionalEntry = ManifestEntry & { id: string; category?: OptionalCategory };
 export interface Manifest {
   mods: ManifestEntry[];
   resourcepacks: ManifestEntry[];
   optional: OptionalEntry[];
   axiomAllowed: string[]; // pseudos autorisés à voir/activer Axiom (staff build)
-  comAllowed: string[]; // pseudos autorisés à la catégorie Com du launcher
+  buildAllowed: string[]; // pseudos autorisés aux mods Build (staff build)
+  comAllowed: string[]; // pseudos autorisés aux mods Com (staff com)
 }
 
 export function hasToken(): boolean {
@@ -73,7 +76,7 @@ export async function getModsRelease(): Promise<Release> {
   return (await r.json()) as Release;
 }
 
-const EMPTY: Manifest = { mods: [], resourcepacks: [], optional: [], axiomAllowed: [], comAllowed: [] };
+const EMPTY: Manifest = { mods: [], resourcepacks: [], optional: [], axiomAllowed: [], buildAllowed: [], comAllowed: [] };
 
 /**
  * Lit manifest.json depuis la release.
@@ -99,6 +102,7 @@ export async function getManifest(rel?: Release): Promise<Manifest> {
     resourcepacks: Array.isArray(j.resourcepacks) ? (j.resourcepacks as ManifestEntry[]) : [],
     optional: Array.isArray(j.optional) ? (j.optional as OptionalEntry[]) : [],
     axiomAllowed: Array.isArray(j.axiomAllowed) ? (j.axiomAllowed as string[]) : [],
+    buildAllowed: Array.isArray(j.buildAllowed) ? (j.buildAllowed as string[]) : [],
     comAllowed: Array.isArray(j.comAllowed) ? (j.comAllowed as string[]) : [],
   };
 }
@@ -124,6 +128,7 @@ export async function getBackup(rel?: Release): Promise<Manifest | null> {
       resourcepacks: Array.isArray(j.resourcepacks) ? j.resourcepacks : [],
       optional: Array.isArray(j.optional) ? j.optional : [],
       axiomAllowed: Array.isArray(j.axiomAllowed) ? j.axiomAllowed : [],
+      buildAllowed: Array.isArray(j.buildAllowed) ? j.buildAllowed : [],
       comAllowed: Array.isArray(j.comAllowed) ? j.comAllowed : [],
     };
   } catch {
@@ -316,6 +321,27 @@ export async function removeCom(pseudo: string): Promise<Manifest> {
   return manifest;
 }
 
+/** Ajoute un pseudo à la liste Build (staff build autorisé aux mods Build). */
+export async function addBuild(pseudo: string): Promise<Manifest> {
+  const release = await getModsRelease();
+  const manifest = await getManifest(release);
+  const p = pseudo.trim();
+  if (p && !manifest.buildAllowed.some((x) => x.toLowerCase() === p.toLowerCase())) {
+    manifest.buildAllowed.push(p);
+    await putManifest(release, manifest);
+  }
+  return manifest;
+}
+
+/** Retire un pseudo de la liste Build. */
+export async function removeBuild(pseudo: string): Promise<Manifest> {
+  const release = await getModsRelease();
+  const manifest = await getManifest(release);
+  manifest.buildAllowed = manifest.buildAllowed.filter((x) => x.toLowerCase() !== pseudo.toLowerCase());
+  await putManifest(release, manifest);
+  return manifest;
+}
+
 export async function removeFile(kind: 'mods' | 'resourcepacks', filename: string): Promise<Manifest> {
   const release = await getModsRelease();
   const manifest = await getManifest(release);
@@ -325,13 +351,22 @@ export async function removeFile(kind: 'mods' | 'resourcepacks', filename: strin
   return manifest;
 }
 
-/** Ajoute/remplace un mod OPTIONNEL (staff build, ex. Axiom), identifié par `id` (ex. "axiom"). */
-export async function addOptional(id: string, filename: string, data: Buffer): Promise<Manifest> {
+/**
+ * Ajoute/remplace un mod OPTIONNEL (togglable dans le launcher), identifié par `id`.
+ * `category` = 'axiom' (legacy staff build), 'build' ou 'com'. Chaque mod optionnel reçoit
+ * sa propre case à cocher dans le launcher, visible selon la liste de staff de sa catégorie.
+ */
+export async function addOptional(
+  id: string,
+  filename: string,
+  data: Buffer,
+  category: OptionalCategory = 'axiom',
+): Promise<Manifest> {
   const release = await getModsRelease();
   const url = await uploadAsset(release, filename, data);
   const hash = sha256(data);
   const manifest = await getManifest(release);
-  const entry: OptionalEntry = { id, name: filename, url, sha256: hash };
+  const entry: OptionalEntry = { id, name: filename, url, sha256: hash, category };
   const idx = manifest.optional.findIndex((e) => e.id === id);
   if (idx >= 0) {
     if (manifest.optional[idx].name !== filename) await deleteAssetByName(release, manifest.optional[idx].name);

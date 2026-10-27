@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import JSZip from 'jszip';
 
 interface Entry { name: string; url: string; sha256: string }
-interface Manifest { mods: Entry[]; resourcepacks: Entry[]; optional: (Entry & { id: string })[]; axiomAllowed: string[]; comAllowed: string[] }
+interface Manifest { mods: Entry[]; resourcepacks: Entry[]; optional: (Entry & { id: string; category?: 'axiom' | 'build' | 'com' })[]; axiomAllowed: string[]; buildAllowed: string[]; comAllowed: string[] }
 type Kind = 'mods' | 'resourcepacks';
 
 /** POST multipart avec progression RÉELLE de l'upload (navigateur -> serveur), via XHR. */
@@ -409,6 +409,18 @@ export default function LauncherSection() {
     const j = await r.json().catch(() => ({}));
     if (r.ok) { setManifest(j.manifest); setImplemented(true); } else setError(j.error || 'Échec de la suppression.');
   }
+  /** Ajoute un mod togglable d'une catégorie (Build ou Com) par lien direct (.jar). */
+  async function addModByLink(category: 'build' | 'com') {
+    const label = category === 'build' ? 'Build' : 'Com';
+    const url = prompt(`Colle le LIEN DIRECT du mod ${label} (.jar) :`);
+    if (!url || !url.trim()) return;
+    setError('');
+    const r = await fetch('/api/launcher/mods', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'optional', category, url: url.trim() }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) { setManifest(j.manifest); setImplemented(true); } else setError(j.error || `Échec de l'ajout du mod ${label}.`);
+  }
   /** Force une sauvegarde de l'état COURANT du manifest (point de restauration). */
   async function forceSave() {
     setError(''); setSaveMsg('Sauvegarde…');
@@ -432,6 +444,24 @@ export default function LauncherSection() {
   async function delAxiom(pseudo: string) {
     if (!confirm(`Retirer ${pseudo} du staff build (Axiom) ?`)) return;
     const r = await fetch(`/api/launcher/axiom?pseudo=${encodeURIComponent(pseudo)}`, { method: 'DELETE' });
+    if (r.ok) setManifest((await r.json()).manifest);
+    else setError((await r.json().catch(() => ({}))).error || 'Échec de la suppression.');
+  }
+
+  const [buildInput, setBuildInput] = useState('');
+  async function addBuildStaff() {
+    const pseudo = buildInput.trim();
+    if (!pseudo) return;
+    setError('');
+    const r = await fetch('/api/launcher/axiom', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pseudo, type: 'build' }),
+    });
+    if (r.ok) { setManifest((await r.json()).manifest); setBuildInput(''); }
+    else setError((await r.json().catch(() => ({}))).error || 'Échec de l’ajout.');
+  }
+  async function delBuildStaff(pseudo: string) {
+    if (!confirm(`Retirer ${pseudo} du staff Build ?`)) return;
+    const r = await fetch(`/api/launcher/axiom?pseudo=${encodeURIComponent(pseudo)}&type=build`, { method: 'DELETE' });
     if (r.ok) setManifest((await r.json()).manifest);
     else setError((await r.json().catch(() => ({}))).error || 'Échec de la suppression.');
   }
@@ -543,13 +573,19 @@ export default function LauncherSection() {
       {/* Publiés actuellement */}
       <PublishedList title="Mods dans le launcher" items={manifest?.mods ?? []} onDel={(n) => del('mods', n)} />
       <PublishedList title="Resourcepacks dans le launcher" items={manifest?.resourcepacks ?? []} onDel={(n) => del('resourcepacks', n)} />
-      {/* Mods optionnels (staff build : Axiom) — gérables par lien */}
+      {/* Mods optionnels Axiom (legacy) — gérables par lien */}
+      {(() => {
+        const axiomMods = (manifest?.optional ?? []).filter((m) => (m.category ?? 'axiom') === 'axiom');
+        const buildMods = (manifest?.optional ?? []).filter((m) => m.category === 'build');
+        const comMods = (manifest?.optional ?? []).filter((m) => m.category === 'com');
+        return (
+      <>
       <div className="lchr-card">
-        <h3>Optionnels — staff build (Axiom) <span className="lchr-count">{manifest?.optional?.length ?? 0}</span></h3>
-        <p className="lchr-hint">Mods réservés au staff build (ex. Axiom). Gros fichiers : utilise « par lien » (le serveur télécharge).</p>
-        {manifest?.optional?.length ? (
+        <h3>Optionnels — Axiom (legacy) <span className="lchr-count">{axiomMods.length}</span></h3>
+        <p className="lchr-hint">Mod Axiom du staff build. Gros fichiers : utilise « par lien » (le serveur télécharge).</p>
+        {axiomMods.length ? (
           <ul className="lchr-list">
-            {manifest.optional.map((m) => (
+            {axiomMods.map((m) => (
               <li key={m.id}><span>{m.name} <em>({m.id})</em></span><button className="lchr-x" onClick={() => delOptional(m.id, m.name)}>Retirer</button></li>
             ))}
           </ul>
@@ -560,6 +596,89 @@ export default function LauncherSection() {
           <button className="btn-sec" onClick={addOptionalByLink}>+ Mod optionnel par lien (Axiom)</button>
         </div>
       </div>
+
+      {/* === MODS BUILD : togglables (une case par mod dans le launcher) + staff Build === */}
+      <div className="lchr-card">
+        <h3>Upload mod Build <span className="lchr-count">{buildMods.length}</span></h3>
+        <p className="lchr-hint">Mods <b>Build</b> : chacun a sa propre case à cocher dans le launcher (le staff l’active ou non). Visibles uniquement pour le staff Build ci-dessous.</p>
+        {buildMods.length ? (
+          <ul className="lchr-list">
+            {buildMods.map((m) => (
+              <li key={m.id}><span>{m.name}</span><button className="lchr-x" onClick={() => delOptional(m.id, m.name)}>Retirer</button></li>
+            ))}
+          </ul>
+        ) : (
+          <p className="lchr-hint">Aucun mod Build pour l’instant.</p>
+        )}
+        <div className="lchr-add" style={{ marginTop: 10 }}>
+          <button className="btn-sec" onClick={() => addModByLink('build')}>+ Mod Build par lien</button>
+        </div>
+        <h4 style={{ margin: '16px 0 4px' }}>Staff build <span className="lchr-count">{manifest?.buildAllowed?.length ?? 0}</span></h4>
+        <p className="lchr-hint">Ces pseudos Minecraft voient les mods Build dans le launcher.</p>
+        {manifest?.buildAllowed?.length ? (
+          <ul className="lchr-list">
+            {manifest.buildAllowed.map((p) => (
+              <li key={p}><span>{p}</span><button className="lchr-x" onClick={() => delBuildStaff(p)}>Retirer</button></li>
+            ))}
+          </ul>
+        ) : (
+          <p className="lchr-hint">Aucun pour l’instant.</p>
+        )}
+        <div className="lchr-add" style={{ marginTop: 10 }}>
+          <input
+            className="btn-sec"
+            style={{ flex: 1, minWidth: 160 }}
+            placeholder="Pseudo Minecraft"
+            value={buildInput}
+            onChange={(e) => setBuildInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') addBuildStaff(); }}
+          />
+          <button className="btn-accent" onClick={addBuildStaff}>Ajouter</button>
+        </div>
+      </div>
+
+      {/* === MODS COM : togglables (une case par mod) + staff Com === */}
+      <div className="lchr-card">
+        <h3>Upload mod Com <span className="lchr-count">{comMods.length}</span></h3>
+        <p className="lchr-hint">Mods <b>Com</b> : chacun a sa propre case à cocher dans le launcher (le staff l’active ou non). Visibles uniquement pour le staff Com ci-dessous.</p>
+        {comMods.length ? (
+          <ul className="lchr-list">
+            {comMods.map((m) => (
+              <li key={m.id}><span>{m.name}</span><button className="lchr-x" onClick={() => delOptional(m.id, m.name)}>Retirer</button></li>
+            ))}
+          </ul>
+        ) : (
+          <p className="lchr-hint">Aucun mod Com pour l’instant.</p>
+        )}
+        <div className="lchr-add" style={{ marginTop: 10 }}>
+          <button className="btn-sec" onClick={() => addModByLink('com')}>+ Mod Com par lien</button>
+        </div>
+        <h4 style={{ margin: '16px 0 4px' }}>Staff Com <span className="lchr-count">{manifest?.comAllowed?.length ?? 0}</span></h4>
+        <p className="lchr-hint">Ces pseudos Minecraft voient les mods Com dans le launcher (Xtazzking et Orionyx84 par défaut).</p>
+        {manifest?.comAllowed?.length ? (
+          <ul className="lchr-list">
+            {manifest.comAllowed.map((p) => (
+              <li key={p}><span>{p}</span><button className="lchr-x" onClick={() => delCom(p)}>Retirer</button></li>
+            ))}
+          </ul>
+        ) : (
+          <p className="lchr-hint">Aucun pour l’instant.</p>
+        )}
+        <div className="lchr-add" style={{ marginTop: 10 }}>
+          <input
+            className="btn-sec"
+            style={{ flex: 1, minWidth: 160 }}
+            placeholder="Pseudo Minecraft"
+            value={comInput}
+            onChange={(e) => setComInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') addCom(); }}
+          />
+          <button className="btn-accent" onClick={addCom}>Ajouter</button>
+        </div>
+      </div>
+      </>
+        );
+      })()}
 
       {/* Data packs : vont UNIQUEMENT sur le SERVEUR (world/datapacks), jamais sur le launcher */}
       <div className="lchr-card">
@@ -607,31 +726,7 @@ export default function LauncherSection() {
         </div>
       </div>
 
-      {/* Com : liste des pseudos autorisés à la catégorie Com du launcher */}
-      <div className="lchr-card">
-        <h3>Équipe Com — catégorie launcher <span className="lchr-count">{manifest?.comAllowed?.length ?? 0}</span></h3>
-        <p className="lchr-hint">Ces pseudos Minecraft ont la catégorie Équipe Com dans le launcher (Xtazzking et Orionyx84 l’ont déjà par défaut, inutile de les ajouter).</p>
-        {manifest?.comAllowed?.length ? (
-          <ul className="lchr-list">
-            {manifest.comAllowed.map((p) => (
-              <li key={p}><span>{p}</span><button className="lchr-x" onClick={() => delCom(p)}>Retirer</button></li>
-            ))}
-          </ul>
-        ) : (
-          <p className="lchr-hint">Aucun pour l’instant.</p>
-        )}
-        <div className="lchr-add" style={{ marginTop: 12 }}>
-          <input
-            className="btn-sec"
-            style={{ flex: 1, minWidth: 160 }}
-            placeholder="Pseudo Minecraft"
-            value={comInput}
-            onChange={(e) => setComInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') addCom(); }}
-          />
-          <button className="btn-accent" onClick={addCom}>Ajouter</button>
-        </div>
-      </div>
+      {/* (La liste Staff Com + l'activation caméra sont gérées dans la carte « Upload mod Com » ci-dessus.) */}
 
       {/* Google Drive : sync des mods dans le dossier Mod(s) (partagé avec Orion) */}
       <div className="lchr-card">

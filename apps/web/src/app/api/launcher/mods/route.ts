@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
   // --- Ajout PAR LIEN : le serveur va chercher le fichier (pas de limite navigateur) ---
   if ((req.headers.get('content-type') || '').includes('application/json')) {
-    const { kind, url, name, id } = await req.json().catch(() => ({}));
+    const { kind, url, name, id, category } = await req.json().catch(() => ({}));
     if (kind !== 'mods' && kind !== 'resourcepacks' && kind !== 'optional') {
       return NextResponse.json({ error: 'Type invalide.' }, { status: 400 });
     }
@@ -53,8 +53,17 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: `Fichier trop lourd (${(data.length / 1048576).toFixed(1)} Mo, max ${MAX_URL / 1048576} Mo).` }, { status: 413 });
       }
       if (kind === 'optional') {
-        const oid = (String(id || 'axiom').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')) || 'axiom';
-        return NextResponse.json({ ok: true, manifest: await addOptional(oid, filename, data) });
+        // Catégorie : 'build' / 'com' (chaque mod = 1 case à cocher) ou 'axiom' (legacy, 1 seul).
+        const cat = category === 'build' ? 'build' : category === 'com' ? 'com' : 'axiom';
+        const slug = (s: string) =>
+          s.toLowerCase().replace(/\.(jar|zip)$/i, '').replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+        // Axiom = id fixe 'axiom' (un seul). Build/Com = id unique par mod (slug du fichier) ->
+        // plusieurs mods togglables coexistent ; ré-uploader le même fichier le remplace.
+        const oid =
+          cat === 'axiom'
+            ? 'axiom'
+            : (String(id || '').trim() ? slug(String(id)) : `${cat}-${slug(filename)}`) || `${cat}-mod`;
+        return NextResponse.json({ ok: true, manifest: await addOptional(oid, filename, data, cat) });
       }
       return NextResponse.json({ ok: true, manifest: await addFile(kind, filename, data) });
     } catch (e) {
