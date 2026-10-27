@@ -136,6 +136,7 @@ export default function CustomItemsSection() {
   const [enchList, setEnchList] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [packMsg, setPackMsg] = useState('');
 
   const [item, setItem] = useState('minecraft:netherite_pickaxe');
   const [name, setName] = useState('&#FFAA00PIOCHE DES MINES');
@@ -194,6 +195,15 @@ export default function CustomItemsSection() {
     });
     setSaving(false);
     if (r.ok) { setError(''); } else setError((await r.json().catch(() => ({}))).error || 'Échec.');
+  }
+
+  /** (Re)construit le resource pack EmeriaItems depuis toutes les textures pixel + le publie au launcher. */
+  async function rebuildPack() {
+    setPackMsg('Construction du pack…'); setError('');
+    const r = await fetch('/api/custom-items/pack', { method: 'POST' });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) setPackMsg(`Pack publié (${j.count} item(s) pixel). Les joueurs le reçoivent au prochain lancement du launcher.`);
+    else { setPackMsg(''); setError(j.error || 'Échec de la construction du pack.'); }
   }
 
   const muted = 'var(--muted, #8a8a94)';
@@ -347,7 +357,12 @@ export default function CustomItemsSection() {
                   ))}
                   <button type="button" className="btn-sec" style={{ padding: '4px 10px' }} onClick={() => setPixels(Array(PX_GRID * PX_GRID).fill(''))}>Effacer</button>
                 </div>
-                <p style={{ fontSize: 12, color: muted, marginTop: 6 }}>L&apos;item donné sera une carte affichant ton dessin. Le nom, la description et les enchantements s&apos;appliquent quand même.</p>
+                <p style={{ fontSize: 12, color: muted, marginTop: 6 }}>L&apos;item donné affichera ton dessin (via le resource pack EmeriaItems). Le nom, la description et les enchantements s&apos;appliquent quand même.</p>
+                <div style={{ marginTop: 8, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button type="button" className="btn-sec" onClick={rebuildPack}>Reconstruire le pack d&apos;items</button>
+                  {packMsg && <span style={{ fontSize: 12, color: muted }}>{packMsg}</span>}
+                </div>
+                <p style={{ fontSize: 12, color: muted, marginTop: 4 }}>Après avoir créé des items pixel, clique ici pour (re)publier le pack. Les joueurs le reçoivent au prochain lancement du launcher.</p>
               </div>
             )}
           </div>

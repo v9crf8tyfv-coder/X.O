@@ -26,6 +26,11 @@ async function ensure(): Promise<void> {
   await db()`alter table custom_items add column if not exists glint boolean default false`.catch(() => {});
   await db()`alter table custom_items add column if not exists rarity text`.catch(() => {});
   await db()`alter table custom_items add column if not exists texture text`.catch(() => {});
+  await db()`alter table custom_items add column if not exists cmd int`.catch(() => {});
+  // Bibliothèque PERSISTANTE des textures pixel (non purgée) : cmd stable = custom_model_data.
+  await db()`create table if not exists custom_textures (
+    cmd serial primary key, texture text not null, label text, created_at timestamptz not null default now()
+  )`.catch(() => {});
   // Purge unique : on vide tout l'historique accumulé (items déjà livrés). Ne garde que l'attente réelle.
   await db()`delete from custom_items where status <> 'pending'`.catch(() => {});
 }
@@ -44,8 +49,8 @@ export async function GET(req: Request) {
   await ensure();
   const url = new URL(req.url);
   if (url.searchParams.get('for') === 'game') {
-    const rows = await db()<{ id: number; item: string; name: string | null; lore: unknown; enchants: unknown; target: string; head: string | null; glint: boolean | null; rarity: string | null; texture: string | null }[]>`
-      select id, item, name, lore, enchants, target, head, glint, rarity, texture from custom_items where status = 'pending' order by id limit 50`;
+    const rows = await db()<{ id: number; item: string; name: string | null; lore: unknown; enchants: unknown; target: string; head: string | null; glint: boolean | null; rarity: string | null; texture: string | null; cmd: number | null }[]>`
+      select id, item, name, lore, enchants, target, head, glint, rarity, texture, cmd from custom_items where status = 'pending' order by id limit 50`;
     const gives = rows.map((r) => ({
       id: r.id,
       item: r.item,
@@ -57,6 +62,7 @@ export async function GET(req: Request) {
       glint: !!r.glint,
       rarity: r.rarity ?? '',
       texture: r.texture ?? '',
+      cmd: r.cmd ?? 0,
     }));
     const res = NextResponse.json({ gives });
     res.headers.set('Cache-Control', 'no-store');
@@ -114,9 +120,18 @@ export async function POST(req: Request) {
   const rawTex = typeof b.texture === 'string' ? b.texture : '';
   const texture = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(rawTex) && rawTex.length <= 200000 ? rawTex : null;
 
+  // Item PIXEL : on enregistre la texture dans la bibliothèque persistante et on récupère son
+  // custom_model_data (cmd) stable. Le mod donne alors un papier + ce cmd, et le resource pack
+  // EmeriaItems (reconstruit depuis custom_textures) affiche le dessin.
+  let cmd: number | null = null;
+  if (texture) {
+    const tr = await db()<{ cmd: number }[]>`insert into custom_textures (texture, label) values (${texture}, ${name}) returning cmd`.catch(() => [] as { cmd: number }[]);
+    cmd = tr[0]?.cmd ?? null;
+  }
+
   await db()`
-    insert into custom_items (item, name, lore, enchants, target, head, glint, rarity, texture)
-    values (${item}, ${name}, ${JSON.stringify(lore)}::jsonb, ${JSON.stringify(enchants)}::jsonb, ${target}, ${head}, ${glint}, ${rarity}, ${texture})`;
+    insert into custom_items (item, name, lore, enchants, target, head, glint, rarity, texture, cmd)
+    values (${item}, ${name}, ${JSON.stringify(lore)}::jsonb, ${JSON.stringify(enchants)}::jsonb, ${target}, ${head}, ${glint}, ${rarity}, ${texture}, ${cmd})`;
   return NextResponse.json({ ok: true });
 }
 
