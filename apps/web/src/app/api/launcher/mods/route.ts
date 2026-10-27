@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireLevel, FOUNDER_LEVEL } from '@/lib/guard';
-import { getManifest, addFile, removeFile, hasToken, downloadRemote } from '@/lib/launcher';
+import { getManifest, addFile, removeFile, addOptional, removeOptional, hasToken, downloadRemote } from '@/lib/launcher';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -29,14 +29,14 @@ export async function POST(req: Request) {
 
   // --- Ajout PAR LIEN : le serveur va chercher le fichier (pas de limite navigateur) ---
   if ((req.headers.get('content-type') || '').includes('application/json')) {
-    const { kind, url, name } = await req.json().catch(() => ({}));
-    if (kind !== 'mods' && kind !== 'resourcepacks') {
+    const { kind, url, name, id } = await req.json().catch(() => ({}));
+    if (kind !== 'mods' && kind !== 'resourcepacks' && kind !== 'optional') {
       return NextResponse.json({ error: 'Type invalide.' }, { status: 400 });
     }
     if (!/^https?:\/\/.+/i.test(String(url || ''))) {
       return NextResponse.json({ error: 'Lien invalide (http/https).' }, { status: 400 });
     }
-    const ext = kind === 'mods' ? '.jar' : '.zip';
+    const ext = kind === 'resourcepacks' ? '.zip' : '.jar';
     let filename = String(name || '').trim();
     if (!filename) {
       try { filename = decodeURIComponent(new URL(url).pathname.split('/').pop() || ''); } catch { filename = ''; }
@@ -51,6 +51,10 @@ export async function POST(req: Request) {
       }
       if (data.length > MAX_URL) {
         return NextResponse.json({ error: `Fichier trop lourd (${(data.length / 1048576).toFixed(1)} Mo, max ${MAX_URL / 1048576} Mo).` }, { status: 413 });
+      }
+      if (kind === 'optional') {
+        const oid = (String(id || 'axiom').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')) || 'axiom';
+        return NextResponse.json({ ok: true, manifest: await addOptional(oid, filename, data) });
       }
       return NextResponse.json({ ok: true, manifest: await addFile(kind, filename, data) });
     } catch (e) {
@@ -108,6 +112,12 @@ export async function DELETE(req: Request) {
   const url = new URL(req.url);
   const kind = url.searchParams.get('kind');
   const name = url.searchParams.get('name');
+  const id = url.searchParams.get('id');
+  if (kind === 'optional') {
+    if (!id) return NextResponse.json({ error: 'id manquant.' }, { status: 400 });
+    try { return NextResponse.json({ ok: true, manifest: await removeOptional(id) }); }
+    catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 502 }); }
+  }
   if ((kind !== 'mods' && kind !== 'resourcepacks') || !name) {
     return NextResponse.json({ error: 'Paramètres invalides.' }, { status: 400 });
   }

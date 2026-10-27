@@ -361,6 +361,35 @@ export default function LauncherSection() {
     }
   }
 
+  const [saveMsg, setSaveMsg] = useState('');
+  /** Ajoute/remplace un mod OPTIONNEL (staff build, ex. Axiom) par lien direct (.jar). */
+  async function addOptionalByLink() {
+    const url = prompt('Colle le LIEN DIRECT du mod optionnel (.jar), ex. la nouvelle version d\'Axiom :');
+    if (!url) return;
+    const id = (prompt('Identifiant du mod optionnel (laisse « axiom » pour Axiom) :', 'axiom') || 'axiom').trim();
+    setError('');
+    const r = await fetch('/api/launcher/mods', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'optional', id, url: url.trim() }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) { setManifest(j.manifest); setImplemented(true); } else setError(j.error || 'Échec de l\'ajout du mod optionnel.');
+  }
+  async function delOptional(id: string, name: string) {
+    if (!confirm(`Retirer ${name} (mod optionnel « ${id} ») ?`)) return;
+    setError('');
+    const r = await fetch(`/api/launcher/mods?kind=optional&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) { setManifest(j.manifest); setImplemented(true); } else setError(j.error || 'Échec de la suppression.');
+  }
+  /** Force une sauvegarde de l'état COURANT du manifest (point de restauration). */
+  async function forceSave() {
+    setError(''); setSaveMsg('Sauvegarde…');
+    const r = await fetch('/api/launcher/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ save: true }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) { setSaveMsg('Sauvegarde forcée. Tu pourras restaurer cet état si besoin.'); loadBackup(); }
+    else { setSaveMsg(''); setError(j.error || 'Échec de la sauvegarde.'); }
+  }
+
   const [axiomInput, setAxiomInput] = useState('');
   async function addAxiom() {
     const pseudo = axiomInput.trim();
@@ -453,6 +482,8 @@ export default function LauncherSection() {
           style={{ display: 'inline-block', textDecoration: 'none' }}>
           Redémarrer le serveur
         </a>
+        <button className="btn-sec" onClick={forceSave}>Forcer la sauvegarde des mods</button>
+        {saveMsg && <span className="lchr-hint">{saveMsg}</span>}
         <span className="lchr-hint">Ouvre OMGServ — clique "Redémarrer" pour appliquer les mods sur le serveur.</span>
       </div>
 
@@ -484,9 +515,23 @@ export default function LauncherSection() {
       {/* Publiés actuellement */}
       <PublishedList title="Mods dans le launcher" items={manifest?.mods ?? []} onDel={(n) => del('mods', n)} />
       <PublishedList title="Resourcepacks dans le launcher" items={manifest?.resourcepacks ?? []} onDel={(n) => del('resourcepacks', n)} />
-      {!!manifest?.optional?.length && (
-        <PublishedList title="Optionnels (Axiom — staff build)" items={manifest.optional} readOnly />
-      )}
+      {/* Mods optionnels (staff build : Axiom) — gérables par lien */}
+      <div className="lchr-card">
+        <h3>Optionnels — staff build (Axiom) <span className="lchr-count">{manifest?.optional?.length ?? 0}</span></h3>
+        <p className="lchr-hint">Mods réservés au staff build (ex. Axiom). Gros fichiers : utilise « par lien » (le serveur télécharge).</p>
+        {manifest?.optional?.length ? (
+          <ul className="lchr-list">
+            {manifest.optional.map((m) => (
+              <li key={m.id}><span>{m.name} <em>({m.id})</em></span><button className="lchr-x" onClick={() => delOptional(m.id, m.name)}>Retirer</button></li>
+            ))}
+          </ul>
+        ) : (
+          <p className="lchr-hint">Aucun pour l’instant.</p>
+        )}
+        <div className="lchr-add" style={{ marginTop: 10 }}>
+          <button className="btn-sec" onClick={addOptionalByLink}>+ Mod optionnel par lien (Axiom)</button>
+        </div>
+      </div>
 
       {/* Staff build : liste des pseudos autorisés à Axiom */}
       <div className="lchr-card">

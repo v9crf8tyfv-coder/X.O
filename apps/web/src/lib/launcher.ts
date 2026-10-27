@@ -325,6 +325,42 @@ export async function removeFile(kind: 'mods' | 'resourcepacks', filename: strin
   return manifest;
 }
 
+/** Ajoute/remplace un mod OPTIONNEL (staff build, ex. Axiom), identifié par `id` (ex. "axiom"). */
+export async function addOptional(id: string, filename: string, data: Buffer): Promise<Manifest> {
+  const release = await getModsRelease();
+  const url = await uploadAsset(release, filename, data);
+  const hash = sha256(data);
+  const manifest = await getManifest(release);
+  const entry: OptionalEntry = { id, name: filename, url, sha256: hash };
+  const idx = manifest.optional.findIndex((e) => e.id === id);
+  if (idx >= 0) {
+    if (manifest.optional[idx].name !== filename) await deleteAssetByName(release, manifest.optional[idx].name);
+    manifest.optional[idx] = entry;
+  } else {
+    manifest.optional.push(entry);
+  }
+  await putManifest(release, manifest);
+  return manifest;
+}
+
+/** Retire un mod optionnel par son id (ex. "axiom"). */
+export async function removeOptional(id: string): Promise<Manifest> {
+  const release = await getModsRelease();
+  const manifest = await getManifest(release);
+  const e = manifest.optional.find((o) => o.id === id);
+  manifest.optional = manifest.optional.filter((o) => o.id !== id);
+  if (e) await deleteAssetByName(release, e.name);
+  await putManifest(release, manifest);
+  return manifest;
+}
+
+/** Force une sauvegarde de l'état COURANT du manifeste (fixe le point de restauration). */
+export async function saveBackupNow(): Promise<void> {
+  const release = await getModsRelease();
+  const current = await getManifest(release);
+  await uploadAsset(release, BACKUP_NAME, Buffer.from(JSON.stringify(current, null, 2)), 'application/json');
+}
+
 // ------------------------------------------------------------ Build 3 OS
 
 interface ContentFile {
