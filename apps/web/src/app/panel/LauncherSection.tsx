@@ -168,7 +168,13 @@ export default function LauncherSection() {
       if (r.ok) setGdrive(await r.json());
     } catch { /* ignore */ }
   }
-  useEffect(() => { load(); loadBackup(); loadServerCfg(); loadGdrive(); }, []);
+  async function loadDatapacks() {
+    try {
+      const r = await fetch('/api/launcher/datapacks');
+      if (r.ok) { const j = await r.json(); setDpConfigured(!!j.configured); setDatapacks(Array.isArray(j.datapacks) ? j.datapacks : []); }
+    } catch { /* ignore */ }
+  }
+  useEffect(() => { load(); loadBackup(); loadServerCfg(); loadGdrive(); loadDatapacks(); }, []);
 
   /** Restaure le manifeste depuis la sauvegarde automatique (au cas où une manip a tout effacé). */
   async function restore() {
@@ -362,6 +368,28 @@ export default function LauncherSection() {
   }
 
   const [saveMsg, setSaveMsg] = useState('');
+  const [datapacks, setDatapacks] = useState<string[]>([]);
+  const [dpConfigured, setDpConfigured] = useState(false);
+  const [dpBusy, setDpBusy] = useState(false);
+  /** Ajoute un data pack (.zip) sur le SERVEUR (world/datapacks) par lien direct. */
+  async function addDatapackByLink() {
+    const url = prompt('Colle le LIEN DIRECT du data pack (.zip) (Modrinth / GitHub) :');
+    if (!url) return;
+    setError(''); setDpBusy(true);
+    const r = await fetch('/api/launcher/datapacks', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: url.trim() }),
+    });
+    const j = await r.json().catch(() => ({}));
+    setDpBusy(false);
+    if (r.ok) loadDatapacks();
+    else setError(j.error === 'ftp_non_configure' ? 'FTP serveur non configuré (OMGSERV_FTP_*).' : (j.error || 'Échec de l\'ajout du data pack.'));
+  }
+  async function delDatapack(name: string) {
+    if (!confirm(`Retirer le data pack ${name} du serveur ?`)) return;
+    setError('');
+    const r = await fetch(`/api/launcher/datapacks?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
+    if (r.ok) loadDatapacks(); else setError('Échec de la suppression du data pack.');
+  }
   /** Ajoute/remplace un mod OPTIONNEL (staff build, ex. Axiom) par lien direct (.jar). */
   async function addOptionalByLink() {
     const url = prompt('Colle le LIEN DIRECT du mod optionnel (.jar), ex. la nouvelle version d\'Axiom :');
@@ -530,6 +558,26 @@ export default function LauncherSection() {
         )}
         <div className="lchr-add" style={{ marginTop: 10 }}>
           <button className="btn-sec" onClick={addOptionalByLink}>+ Mod optionnel par lien (Axiom)</button>
+        </div>
+      </div>
+
+      {/* Data packs : vont UNIQUEMENT sur le SERVEUR (world/datapacks), jamais sur le launcher */}
+      <div className="lchr-card">
+        <h3>Data packs — serveur <span className="lchr-count">{datapacks.length}</span></h3>
+        <p className="lchr-hint">Les data packs vont <b>uniquement</b> dans le dossier datapacks du serveur OMGServ (jamais le launcher). Après ajout : /reload ou redémarre.</p>
+        {!dpConfigured ? (
+          <p className="lchr-hint">Serveur non connecté : ajoute <code>OMGSERV_FTP_USER</code> + <code>OMGSERV_FTP_PASSWORD</code> dans Vercel (et <code>OMGSERV_DATAPACKS_DIR</code> si ton monde ne s&apos;appelle pas « world »).</p>
+        ) : datapacks.length ? (
+          <ul className="lchr-list">
+            {datapacks.map((n) => (
+              <li key={n}><span>{n}</span><button className="lchr-x" onClick={() => delDatapack(n)}>Retirer</button></li>
+            ))}
+          </ul>
+        ) : (
+          <p className="lchr-hint">Aucun data pack sur le serveur.</p>
+        )}
+        <div className="lchr-add" style={{ marginTop: 10 }}>
+          <button className="btn-sec" onClick={addDatapackByLink} disabled={dpBusy || !dpConfigured}>{dpBusy ? 'Envoi…' : '+ Data pack par lien'}</button>
         </div>
       </div>
 

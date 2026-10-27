@@ -101,6 +101,54 @@ export async function uploadToServer(
   }
 }
 
+// --- DATA PACKS : vont dans le dossier datapacks du MONDE (serveur), PAS dans mods/ ni le launcher.
+function datapacksDir() { return process.env.OMGSERV_DATAPACKS_DIR || 'world/datapacks'; }
+
+/** Upload (ou écrase) un data pack (.zip) dans le dossier datapacks du monde. */
+export async function uploadDatapack(name: string, source: Readable, expectedSize?: number): Promise<UploadResult> {
+  const c = cfg();
+  const client = new Client(45_000);
+  client.ftp.verbose = false;
+  try {
+    await client.access({ host: c.host, port: c.port, user: c.user, password: c.password, secure: c.secure });
+    await client.ensureDir(datapacksDir());
+    await client.uploadFrom(source, name);
+    let size = -1;
+    try { size = await client.size(name); } catch { /* ignore */ }
+    return { ok: expectedSize && expectedSize > 0 ? size === expectedSize : size > 0, size };
+  } finally {
+    client.close();
+  }
+}
+
+/** Liste les data packs présents dans le dossier datapacks du serveur. */
+export async function listDatapacks(): Promise<string[]> {
+  const c = cfg();
+  const client = new Client(30_000);
+  try {
+    await client.access({ host: c.host, port: c.port, user: c.user, password: c.password, secure: c.secure });
+    await client.ensureDir(datapacksDir());
+    return (await client.list()).filter((f) => f.isFile).map((f) => f.name);
+  } catch {
+    return [];
+  } finally {
+    client.close();
+  }
+}
+
+/** Retire un data pack du serveur. */
+export async function deleteDatapack(name: string): Promise<boolean> {
+  const c = cfg();
+  const client = new Client(30_000);
+  try {
+    await client.access({ host: c.host, port: c.port, user: c.user, password: c.password, secure: c.secure });
+    await client.ensureDir(datapacksDir());
+    try { await client.remove(name); return true; } catch { return false; }
+  } finally {
+    client.close();
+  }
+}
+
 /**
  * Supprime un mod du dossier mods/ du serveur (toutes ses versions : même base avant le numéro).
  * Renvoie le nombre de fichiers retirés.
