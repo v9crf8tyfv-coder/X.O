@@ -32,6 +32,12 @@ async function ping(): Promise<boolean> {
 }
 
 async function check(client: Client): Promise<void> {
+  // Maintenance manuelle en cours (/maintenance on) : on gèle l'auto-statut. Le statut orange
+  // reste affiché tant que /maintenance off n'a pas été fait (sinon l'auto le réécraserait).
+  if (hasDatabase()) {
+    const mrows = await db()<{ value: string }[]>`select value from bot_state where key = 'maintenance'`;
+    if (mrows.length && mrows[0]!.value === '1') return;
+  }
   const up = await ping();
   if (up) {
     consecutiveFails = 0;

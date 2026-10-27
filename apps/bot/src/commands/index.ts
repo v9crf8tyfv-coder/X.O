@@ -17,6 +17,7 @@ import { setupLancerJeu } from './setup/setup-lancer-jeu.js';
 import { blockfull, unblockfull } from './setup/blockfull.js';
 import { annonceStart, annonceStop } from './setup/annonce.js';
 import { statut } from './setup/statut.js';
+import { maintenance } from './setup/maintenance.js';
 import { playerlist } from './setup/playerlist.js';
 import { setupVoice } from './setup/setup-voice.js';
 import { setupRoles } from './setup/setup-roles.js';
@@ -54,6 +55,7 @@ export const commands: SlashCommand[] = [
   annonceStart,
   annonceStop,
   statut,
+  maintenance,
   playerlist,
   setupVoice,
   setupRoles,

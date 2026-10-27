@@ -63,3 +63,13 @@ export async function handleConsoleMessage(message: Message): Promise<boolean> {
   }
   return true;
 }
+
+/**
+ * Met une commande console en file pour qu'EmeriaCore l'exécute en jeu (même pont que CM-IG).
+ * Utilisé par les features internes (ex. /maintenance -> whitelist on/off). No-op si pas de DB.
+ */
+export async function queueConsole(cmd: string, actor = 'system', doLog = false): Promise<void> {
+  if (!hasDatabase()) return;
+  await ensureTable();
+  await db()`insert into ig_console (cmd, actor, do_log) values (${cmd}, ${actor}, ${doLog})`;
+}

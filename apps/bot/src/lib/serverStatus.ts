@@ -14,8 +14,13 @@ const MSG_KEY = 'status_message';
 /** Logo EmeriaMC (comme les annonces de reset). */
 const EMERIA = '<:EmeriaMC:1541095551511298139>';
 
+/** État du statut posté dans le salon : ouvert, fermé, ou maintenance planifiée (manuelle). */
+export type StatusMode = 'open' | 'close' | 'maintenance';
+
 /** Poste le message de statut (embed) + ping, et le garde AU-DESSUS des resets. */
-export async function postStatus(client: Client, isOpen: boolean): Promise<void> {
+export async function postStatus(client: Client, mode: StatusMode | boolean): Promise<void> {
+  // Rétro-compat : certains appels passent encore un booléen (true = open).
+  const m: StatusMode = typeof mode === 'boolean' ? (mode ? 'open' : 'close') : mode;
   const channel = await client.channels.fetch(STATUS_CHANNEL_ID).catch(() => null);
   if (!channel?.isTextBased()) return;
   const ch = channel as TextChannel;
@@ -26,17 +31,22 @@ export async function postStatus(client: Client, isOpen: boolean): Promise<void>
   }
 
   const pings = PING_ROLES.map((r) => `<@&${r}>`).join(' ');
-  const img = resolve(__dirname, `../../assets/status-${isOpen ? 'open' : 'close'}.png`);
+  // Image par état : status-open.png (vert) / status-close.png (rouge) / status-maintenance.png (orange).
+  const imgName = m === 'open' ? 'status-open' : m === 'maintenance' ? 'status-maintenance' : 'status-close';
+  const img = resolve(__dirname, `../../assets/${imgName}.png`);
   const hasImg = existsSync(img);
   const files = hasImg ? [new AttachmentBuilder(img, { name: 'statut.png' })] : [];
 
-  // Embed aux couleurs de l'image (rouge maintenance / vert ouvert) + logo + flèche + citation.
-  const desc = isOpen
-    ? `-# ➡️ ${pings}\n\nL'équipe d'EmeriaMC vous souhaite un **bon jeu** ! 🎮\n\n> ${EMERIA}  **L'équipe d'EmeriaMC.**`
-    : `-# ➡️ ${pings}\n\n**Maintenance en cours** — les **Hauts Staff** sont sur le coup. Merci de votre patience. 🔧\n\n> ${EMERIA}  **L'équipe d'EmeriaMC.**`;
+  // Embed aux couleurs de l'image (vert ouvert / rouge fermé / orange maintenance) + logo + citation.
+  const desc =
+    m === 'open'
+      ? `-# ➡️ ${pings}\n\nL'équipe d'EmeriaMC vous souhaite un **bon jeu** ! 🎮\n\n> ${EMERIA}  **L'équipe d'EmeriaMC.**`
+      : m === 'maintenance'
+        ? `-# ➡️ ${pings}\n\n**Maintenance en cours** — le serveur est momentanément indisponible. Les **Hauts Staff** s'en occupent, merci de votre patience. 🔧\n\n> ${EMERIA}  **L'équipe d'EmeriaMC.**`
+        : `-# ➡️ ${pings}\n\n**Serveur fermé** — les **Hauts Staff** sont sur le coup. Merci de votre patience. 🔧\n\n> ${EMERIA}  **L'équipe d'EmeriaMC.**`;
   const embed = new EmbedBuilder()
-    .setColor(isOpen ? 0x2e7d32 : 0x8d1b11)
-    .setTitle(isOpen ? '✅  Serveur OPEN' : '🆑  Serveur Close')
+    .setColor(m === 'open' ? 0x2e7d32 : m === 'maintenance' ? 0xe8740c : 0x8d1b11)
+    .setTitle(m === 'open' ? '✅  Serveur OPEN' : m === 'maintenance' ? '🔧  Maintenance en cours' : '🆑  Serveur Close')
     .setDescription(desc)
     .setTimestamp();
   if (hasImg) embed.setImage('attachment://statut.png');
@@ -50,7 +60,7 @@ export async function postStatus(client: Client, isOpen: boolean): Promise<void>
   });
   await msg.pin().catch(() => {}); // le statut reste épinglé en haut
   await msg.react('💜').catch(() => {});
-  await msg.react(isOpen ? '✅' : '🆑').catch(() => {});
+  await msg.react(m === 'open' ? '✅' : m === 'maintenance' ? '🔧' : '🆑').catch(() => {});
 
   // Nettoyage : désépingle les anciens statuts + supprime les notices "X.O a épinglé un message".
   try {
