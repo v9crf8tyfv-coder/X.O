@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getGrade, ALL_GRADES } from '@xo/shared';
 import { requireLevel, FOUNDER_LEVEL, ADMIN_LEVEL } from '@/lib/guard';
 import { listLinks, addLink, removeLink } from '@/lib/links';
+import { igSurveil } from '@/lib/igSurveil';
 
 export const runtime = 'nodejs';
 
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Tu ne peux pas cibler un grade au-dessus du tien.' }, { status: 403 });
   }
   await addLink(String(title), String(url), String(grade), g.account.username);
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : ajout de lien utile', String(title), 'grade cible ' + String(grade));
   return NextResponse.json({ ok: true });
 }
 

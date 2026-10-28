@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@xo/db';
 import { requireLevel, ADMIN_LEVEL } from '@/lib/guard';
+import { igSurveil } from '@/lib/igSurveil';
 
 export const runtime = 'nodejs';
 
@@ -132,6 +133,7 @@ export async function POST(req: Request) {
   await db()`
     insert into custom_items (item, name, lore, enchants, target, head, glint, rarity, texture, cmd)
     values (${item}, ${name}, ${JSON.stringify(lore)}::jsonb, ${JSON.stringify(enchants)}::jsonb, ${target}, ${head}, ${glint}, ${rarity}, ${texture}, ${cmd})`;
+  await igSurveil(guard.account.minecraft_pseudo ?? guard.account.username, 'Panel : item custom donné', target, (name || item));
   return NextResponse.json({ ok: true });
 }
 
@@ -143,5 +145,6 @@ export async function DELETE(req: Request) {
   if (!id) return NextResponse.json({ error: 'id manquant' }, { status: 400 });
   await ensure();
   await db()`delete from custom_items where id = ${id}`;
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : item custom retiré de la file', String(id));
   return NextResponse.json({ ok: true });
 }

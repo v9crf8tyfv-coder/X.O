@@ -3,6 +3,7 @@ import { db, hasDatabase } from '@xo/db';
 import { getCurrentAccount } from '@/lib/auth';
 import { getGrade, DISPATCH } from '@xo/shared';
 import { ADMIN_LEVEL } from '@/lib/guard';
+import { igSurveil } from '@/lib/igSurveil';
 
 export const runtime = 'nodejs';
 
@@ -32,5 +33,6 @@ export async function POST(req: Request) {
     insert into pending_actions (type, discord_tag, minecraft_pseudo, grades, actor, actor_grade)
     values (${'dispatch.' + side + '.' + (on ? 'add' : 'remove')}, ${tag}, ${''}, ${'[]'}::jsonb, ${account.username}, ${account.site_grade})
   `;
+  await igSurveil(account.minecraft_pseudo ?? account.username, 'Panel : dispatch ' + side + ' ' + (on ? 'ajouté' : 'retiré'), tag);
   return NextResponse.json({ ok: true });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@xo/db';
 import { ALL_GRADES } from '@xo/shared';
 import { requireLevel, RESP_LEVEL } from '@/lib/guard';
+import { igSurveil } from '@/lib/igSurveil';
 
 export const runtime = 'nodejs';
 
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
   }
   await ensureTable();
   await db()`insert into playerlist_entries (pseudo, grade) values (${String(pseudo)}, ${String(grade)})`;
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : ajout à la playerlist', String(pseudo), String(grade));
   return NextResponse.json({ ok: true });
 }
 
@@ -44,5 +46,6 @@ export async function DELETE(req: Request) {
   const id = new URL(req.url).searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'id requis.' }, { status: 400 });
   await db()`delete from playerlist_entries where id = ${Number(id)}`;
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : retrait de la playerlist', 'entrée #' + id);
   return NextResponse.json({ ok: true });
 }

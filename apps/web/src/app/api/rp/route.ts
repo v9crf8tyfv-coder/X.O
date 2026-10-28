@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireRp } from '@/lib/guard';
 import { listRp, createRp, findActiveRp, setRpGrades, queueRpAction, cleanRpGrades } from '@/lib/rp';
+import { igSurveil } from '@/lib/igSurveil';
 
 export const runtime = 'nodejs';
 
@@ -27,9 +28,11 @@ export async function POST(req: Request) {
     const merged = cleanRpGrades([...existing.grades, ...clean]);
     await setRpGrades(existing.id, merged);
     await queueRpAction({ type: 'rp.apply', discordTag: existing.discord_tag ?? (discordTag || null), pseudo: existing.pseudo, grades: merged });
+    await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : grades RP mis à jour', existing.pseudo, merged.join(', '));
     return NextResponse.json({ ok: true, id: existing.id });
   }
   const m = await createRp({ pseudo, discordTag: discordTag || null, grades: clean });
   await queueRpAction({ type: 'rp.apply', discordTag: m.discord_tag, pseudo: m.pseudo, grades: m.grades });
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : membre RP ajouté', m.pseudo, m.grades.join(', '));
   return NextResponse.json({ ok: true, id: m.id });
 }

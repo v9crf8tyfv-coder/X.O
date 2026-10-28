@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireLevel, ADMIN_LEVEL } from '@/lib/guard';
 import { addRecord } from '@/lib/staff';
+import { igSurveil } from '@/lib/igSurveil';
 
 export const runtime = 'nodejs';
 
@@ -23,5 +24,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     reason: reason.trim(),
     issuedBy: g.account.username,
   });
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : ' + type + ' ajouté au dossier staff', 'staff #' + params.id, reason.trim());
   return NextResponse.json({ ok: true });
 }

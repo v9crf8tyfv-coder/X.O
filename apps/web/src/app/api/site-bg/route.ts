@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, hasDatabase } from '@xo/db';
 import { requireLevel, RESP_LEVEL } from '@/lib/guard';
+import { igSurveil } from '@/lib/igSurveil';
 
 export const runtime = 'nodejs';
 
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
   const data = (body.data ?? '').trim();
   if (!data) {
     await db()`delete from app_config where k in ('site_bg', 'site_bg_type', 'site_bg_ver')`;
+    await igSurveil(g.account.minecraft_pseudo ?? g.account.username, "Panel : image de fond du site retirée");
     return NextResponse.json({ ok: true, hasImage: false, ver: 0 });
   }
 
@@ -62,5 +64,6 @@ export async function POST(req: Request) {
     on conflict (k) do update set v = ${mime}`;
   await db()`insert into app_config (k, v) values ('site_bg_ver', ${String(ver)})
     on conflict (k) do update set v = ${String(ver)}`;
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username, "Panel : image de fond du site changée");
   return NextResponse.json({ ok: true, hasImage: true, ver });
 }

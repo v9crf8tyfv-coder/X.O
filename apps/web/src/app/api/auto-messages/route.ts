@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@xo/db';
 import { getGrade } from '@xo/shared';
 import { requireLevel, FOUNDER_LEVEL, ADMIN_LEVEL, SUPERMODO_LEVEL } from '@/lib/guard';
+import { igSurveil } from '@/lib/igSurveil';
 
 /** Canal en jeu d'un message auto : chat global, ou un salon staff (fa/fs/fc). */
 const GAME_CHANNELS = ['global', 'fa', 'fs', 'fc'] as const;
@@ -151,6 +152,7 @@ export async function POST(req: Request) {
   await db()`
     insert into auto_messages (channel_id, content, image_url, mode, every_hours, at_hhmm, days, prefix_color, game_channel)
     values (${channelId}, ${content}, ${imageUrl}, ${mode}, ${everyHours}, ${atHHMM}, ${days}, ${color}, ${gameChannel})`;
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : création de message auto', target === 'discord' ? ('salon ' + channelId) : 'en jeu');
   return NextResponse.json({ ok: true });
 }
 
@@ -164,6 +166,7 @@ export async function PATCH(req: Request) {
   // Sans `edit` : simple bascule actif/pause (comportement historique).
   if (!b.edit) {
     await db()`update auto_messages set enabled = ${!!b.enabled} where id = ${id}`;
+    await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : message auto ' + (b.enabled ? 'activé' : 'mis en pause'), '#' + id);
     return NextResponse.json({ ok: true });
   }
 
@@ -201,6 +204,7 @@ export async function PATCH(req: Request) {
       mode = ${mode}, every_hours = ${everyHours}, at_hhmm = ${atHHMM}, days = ${days},
       prefix_color = ${color}
     where id = ${id}`;
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : message auto modifié', '#' + id);
   return NextResponse.json({ ok: true });
 }
 
@@ -210,5 +214,6 @@ export async function DELETE(req: Request) {
   const id = Number(new URL(req.url).searchParams.get('id'));
   if (!id) return NextResponse.json({ error: 'id manquant' }, { status: 400 });
   await db()`delete from auto_messages where id = ${id}`;
+  await igSurveil(g.account.minecraft_pseudo ?? g.account.username, 'Panel : suppression de message auto', '#' + id);
   return NextResponse.json({ ok: true });
 }
