@@ -179,4 +179,17 @@ export async function queueAction(params: {
   } catch (e) {
     console.error('[IG sync]', params.minecraftPseudo, e instanceof Error ? e.message : e);
   }
+
+  // Whitelist IG : les grades à partir de Super-Modo (SM / Admin / Dev / Resp / Fonda / Cofonda)
+  // sont TOUJOURS whitelistés -> ils peuvent jouer pendant une maintenance. Les autres (ou un
+  // retrait total du staff) sont retirés de la whitelist. Best-effort (RCON), n'échoue jamais.
+  try {
+    const { rconCommand } = await import('./rcon');
+    const WL = new Set(['supermodo', 'admin', 'dev', 'responsable', 'fondateur', 'cofondateur']);
+    const keep = params.type !== 'staff.remove'
+      && (params.grades || []).some((g) => WL.has(g) || String(g).startsWith('resp_'));
+    await rconCommand(`whitelist ${keep ? 'add' : 'remove'} ${params.minecraftPseudo}`);
+  } catch (e) {
+    console.error('[whitelist sync]', params.minecraftPseudo, e instanceof Error ? e.message : e);
+  }
 }
