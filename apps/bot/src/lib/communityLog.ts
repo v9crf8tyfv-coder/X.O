@@ -22,8 +22,8 @@ export async function announceMember(
     if (member.guild.id !== ch.guild.id) return; // uniquement le serveur de ce salon
     const name = member.user?.username ?? 'inconnu';
     const msg = joined
-      ? `<@${member.id}> (${name}) a rejoint le Discord.`
-      : `<@${member.id}> (${name}) a quitté le Discord.`;
+      ? `🟢 <@${member.id}> (${name}) a rejoint le Discord.`
+      : `🔴 <@${member.id}> (${name}) a quitté le Discord.`;
     await ch.send({ content: msg, allowedMentions: { users: [member.id] } });
   } catch {
     /* non bloquant */
