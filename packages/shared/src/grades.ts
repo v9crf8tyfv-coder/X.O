@@ -62,7 +62,7 @@ export const GRADES = {
   responsable: {
     key: 'responsable',
     label: 'Responsable',
-    abbrev: 'Resp',
+    abbrev: 'R',
     color: '811010',
     roleId: '1535321330075828306',
     level: 70,

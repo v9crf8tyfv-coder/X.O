@@ -7,6 +7,7 @@ import { handleInteraction } from './events/interactionCreate.js';
 import { onReady } from './events/ready.js';
 import { onGuildMemberAdd } from './events/guildMemberAdd.js';
 import { onGuildMemberUpdate } from './events/guildMemberUpdate.js';
+import { announceMember } from './lib/communityLog.js';
 import { onMessageCreate } from './events/messageCreate.js';
 import { onVoiceStateUpdate } from './events/voiceStateUpdate.js';
 import { onAuditLog } from './events/auditLog.js';
@@ -108,7 +109,9 @@ client.on('error', (err) => void logToDiscord(fmtError('client.error', err)));
 client.on('interactionCreate', (i) => handleInteraction(client, i));
 client.on('guildMemberAdd', (m) => onGuildMemberAdd(client, m));
 client.on('guildMemberAdd', (m) => void onMemberJoin(m)); // parrainage : crédite le parrain
+client.on('guildMemberAdd', (m) => void announceMember(client, m, true)); // annonce arrivée (serveur commu)
 client.on('guildMemberRemove', (m) => void onMemberLeave(m.id)); // parrainage : invalide l'invitation
+client.on('guildMemberRemove', (m) => void announceMember(client, m, false)); // annonce départ (serveur commu)
 client.on('inviteCreate', (inv) => onInviteCreate(inv)); // maj cache des invitations
 client.on('guildMemberUpdate', (oldM, newM) => onGuildMemberUpdate(client, oldM, newM));
 client.on('messageCreate', (m) => onMessageCreate(client, m));
