@@ -134,6 +134,12 @@ export async function POST(req: Request) {
     insert into custom_items (item, name, lore, enchants, target, head, glint, rarity, texture, cmd)
     values (${item}, ${name}, ${JSON.stringify(lore)}::jsonb, ${JSON.stringify(enchants)}::jsonb, ${target}, ${head}, ${glint}, ${rarity}, ${texture}, ${cmd})`;
   await igSurveil(guard.account.minecraft_pseudo ?? guard.account.username, 'Panel : item custom donné', target, (name || item));
+  // Item PIXEL : on reconstruit + republie EmeriaItems.zip pour que la texture soit dispo
+  // immédiatement (sinon le joueur reçoit un papier nu tant que le pack n'est pas à jour).
+  if (texture) {
+    try { const { buildItemsPack } = await import('@/lib/itemsPack'); await buildItemsPack(); }
+    catch (e) { console.error('[items pack]', e instanceof Error ? e.message : e); }
+  }
   return NextResponse.json({ ok: true });
 }
 
