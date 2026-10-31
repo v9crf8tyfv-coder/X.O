@@ -217,7 +217,7 @@ export default function CustomItemsSection() {
       clearInterval(timer);
       if (r.ok) {
         setProgress(100); setPackReady(true);
-        setPackMsg(`Pack prêt (${j.count} item(s) pixel). Relance le launcher pour le recevoir — tu peux give.`);
+        setPackMsg(`Pack prêt (${j.count} item(s) pixel). Tu peux donner l’item. IMPORTANT : le joueur doit RELANCER le launcher pour recevoir la nouvelle texture (sinon l’item s’affiche avec l’ancienne).`);
       } else { setProgress(0); setPackMsg(''); setError(j.error || 'Échec de la construction du pack.'); }
     } catch {
       clearInterval(timer); setProgress(0); setPackMsg(''); setError('Échec réseau pendant la construction du pack.');
@@ -414,13 +414,21 @@ export default function CustomItemsSection() {
           </div>
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <input className="btn-sec" value={target} onChange={(e) => setTarget(e.target.value)}
-              placeholder="Pseudo du joueur" style={{ padding: '10px 12px', minWidth: 200 }} />
-            <button className="btn-accent" onClick={give} disabled={saving || (pixelMode && !packReady)}>
-              {saving ? '…' : 'Donner l’item'}
-            </button>
-            {pixelMode && !packReady && (
-              <span style={{ fontSize: 12, color: muted }}>Reconstruis d’abord le pack (bouton en haut) pour donner la texture actuelle.</span>
+            {pixelMode && !packReady ? (
+              // En mode pixel, le pseudo + "Donner" n'APPARAISSENT qu'après avoir reconstruit le pack
+              // (barre à 100 %). Sinon on donnerait l'item avant que sa texture existe dans le pack.
+              <span style={{ fontSize: 13, color: muted }}>
+                Clique d’abord sur <b>« Reconstruire le pack d’items »</b> (en haut). Quand la barre est à 100 %,
+                le champ pseudo et le bouton <b>« Donner l’item »</b> apparaîtront.
+              </span>
+            ) : (
+              <>
+                <input className="btn-sec" value={target} onChange={(e) => setTarget(e.target.value)}
+                  placeholder="Pseudo du joueur" style={{ padding: '10px 12px', minWidth: 200 }} />
+                <button className="btn-accent" onClick={give} disabled={saving}>
+                  {saving ? '…' : 'Donner l’item'}
+                </button>
+              </>
             )}
           </div>
         </div>
