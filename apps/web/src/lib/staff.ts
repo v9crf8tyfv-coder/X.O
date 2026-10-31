@@ -195,4 +195,16 @@ export async function queueAction(params: {
   } catch (e) {
     console.error('[whitelist sync]', params.minecraftPseudo, e instanceof Error ? e.message : e);
   }
+
+  // Google Sheet "listes staff" : à chaque RANK (pas de retrait), on ajoute le pseudo dans la
+  // colonne de chaque grade qu'il a, avec la DATE du jour (le script ignore ce qui y est déjà).
+  // Best-effort, n'échoue jamais le rank.
+  if (params.type !== 'staff.remove') {
+    try {
+      const { pushRankToSheet } = await import('./sheetSync');
+      await pushRankToSheet(params.minecraftPseudo, params.grades, true);
+    } catch (e) {
+      console.error('[sheet sync]', params.minecraftPseudo, e instanceof Error ? e.message : e);
+    }
+  }
 }
