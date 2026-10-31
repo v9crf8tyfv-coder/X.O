@@ -139,6 +139,9 @@ export default function CustomItemsSection() {
   const [packMsg, setPackMsg] = useState('');
   const [building, setBuilding] = useState(false);
   const [progress, setProgress] = useState(0);
+  // En mode pixel, on ne peut donner l'item qu'APRÈS avoir (re)construit le pack : ainsi le joueur
+  // reçoit la texture actuelle, pas l'ancienne. Redevient false dès qu'on redessine.
+  const [packReady, setPackReady] = useState(false);
 
   const [item, setItem] = useState('minecraft:netherite_pickaxe');
   const [name, setName] = useState('&#FFAA00PIOCHE DES MINES');
@@ -182,6 +185,9 @@ export default function CustomItemsSection() {
     try { const d = await (await fetch('/api/registry')).json(); setItems(d.items ?? []); setEnchList(d.enchants ?? []); } catch { /* saisie libre */ }
   }
   useEffect(() => { loadRegistry(); }, []);
+  // Dès qu'on redessine (ou qu'on (dé)coche le mode pixel), le pack ne reflète plus l'item -> on
+  // reverrouille le bouton "Donner" tant qu'on n'a pas reconstruit.
+  useEffect(() => { setPackReady(false); }, [pixels, pixelMode]);
 
   function insertCode(code: string) {
     if (focusRef.current === 'name') setName((s) => s + code); else setLore((s) => s + code);
@@ -210,7 +216,7 @@ export default function CustomItemsSection() {
       const j = await r.json().catch(() => ({}));
       clearInterval(timer);
       if (r.ok) {
-        setProgress(100);
+        setProgress(100); setPackReady(true);
         setPackMsg(`Pack prêt (${j.count} item(s) pixel). Relance le launcher pour le recevoir — tu peux give.`);
       } else { setProgress(0); setPackMsg(''); setError(j.error || 'Échec de la construction du pack.'); }
     } catch {
@@ -410,7 +416,12 @@ export default function CustomItemsSection() {
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <input className="btn-sec" value={target} onChange={(e) => setTarget(e.target.value)}
               placeholder="Pseudo du joueur" style={{ padding: '10px 12px', minWidth: 200 }} />
-            <button className="btn-accent" onClick={give} disabled={saving}>{saving ? '…' : 'Donner l’item'}</button>
+            <button className="btn-accent" onClick={give} disabled={saving || (pixelMode && !packReady)}>
+              {saving ? '…' : 'Donner l’item'}
+            </button>
+            {pixelMode && !packReady && (
+              <span style={{ fontSize: 12, color: muted }}>Reconstruis d’abord le pack (bouton en haut) pour donner la texture actuelle.</span>
+            )}
           </div>
         </div>
       </div>
