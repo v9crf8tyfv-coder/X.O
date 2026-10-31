@@ -137,6 +137,8 @@ export default function CustomItemsSection() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [packMsg, setPackMsg] = useState('');
+  const [building, setBuilding] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const [item, setItem] = useState('minecraft:netherite_pickaxe');
   const [name, setName] = useState('&#FFAA00PIOCHE DES MINES');
@@ -199,11 +201,23 @@ export default function CustomItemsSection() {
 
   /** (Re)construit le resource pack EmeriaItems depuis toutes les textures pixel + le publie au launcher. */
   async function rebuildPack() {
-    setPackMsg('Construction du pack…'); setError('');
-    const r = await fetch('/api/custom-items/pack', { method: 'POST' });
-    const j = await r.json().catch(() => ({}));
-    if (r.ok) setPackMsg(`Pack publié (${j.count} item(s) pixel). Les joueurs le reçoivent au prochain lancement du launcher.`);
-    else { setPackMsg(''); setError(j.error || 'Échec de la construction du pack.'); }
+    if (building) return;
+    setBuilding(true); setProgress(6); setPackMsg('Construction du pack en cours…'); setError('');
+    // Pas de progression réelle (1 seul appel serveur) : on anime jusqu'à ~92 %, puis 100 % à la fin.
+    const timer = setInterval(() => setProgress((p) => (p < 92 ? p + Math.max(1, (92 - p) * 0.07) : p)), 300);
+    try {
+      const r = await fetch('/api/custom-items/pack', { method: 'POST' });
+      const j = await r.json().catch(() => ({}));
+      clearInterval(timer);
+      if (r.ok) {
+        setProgress(100);
+        setPackMsg(`Pack prêt (${j.count} item(s) pixel). Relance le launcher pour le recevoir — tu peux give.`);
+      } else { setProgress(0); setPackMsg(''); setError(j.error || 'Échec de la construction du pack.'); }
+    } catch {
+      clearInterval(timer); setProgress(0); setPackMsg(''); setError('Échec réseau pendant la construction du pack.');
+    } finally {
+      setTimeout(() => setBuilding(false), 800);
+    }
   }
 
   const muted = 'var(--muted, #8a8a94)';
@@ -226,11 +240,27 @@ export default function CustomItemsSection() {
         couleurs que tu veux (HEX), puis donne-le. L’item arrive en jeu dès que le joueur est en ligne.
       </p>
 
-      <div className="lchr-card" style={{ marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <button type="button" className="btn" onClick={rebuildPack}>Reconstruire le pack d&apos;items</button>
-        <span style={{ fontSize: 12, color: muted }}>
-          {packMsg || 'Republie le resource pack EmeriaItems (dessins pixel + pancartes). À faire après avoir créé/modifié un item pixel. Les joueurs le reçoivent au prochain lancement du launcher.'}
-        </span>
+      <div className="lchr-card" style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button type="button" className="btn" onClick={rebuildPack} disabled={building}
+            style={building ? { opacity: 0.7, cursor: 'wait' } : undefined}>
+            {building ? 'Construction…' : "Reconstruire le pack d'items"}
+          </button>
+          <span style={{ fontSize: 12, color: muted }}>
+            {packMsg || 'Republie le resource pack EmeriaItems (dessins pixel + pancartes). À faire après avoir créé/modifié un item pixel. Les joueurs le reçoivent au prochain lancement du launcher.'}
+          </span>
+        </div>
+        {(building || progress === 100) && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ height: 8, borderRadius: 999, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999,
+                background: progress === 100 ? '#43A047' : '#FFAA00', transition: 'width .3s ease' }} />
+            </div>
+            <div style={{ fontSize: 11, color: muted, marginTop: 4 }}>
+              {progress === 100 ? 'Terminé' : `Construction du pack… ${Math.round(progress)}%`}
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (
