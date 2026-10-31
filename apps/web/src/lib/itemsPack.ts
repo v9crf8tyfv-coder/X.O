@@ -27,37 +27,36 @@ export async function buildItemsPack(): Promise<{ count: number }> {
     { predicate: { custom_model_data: 4210 }, model: 'emeria:item/pancarte_white' },
     { predicate: { custom_model_data: 4211 }, model: 'emeria:item/pancarte_black' },
   ];
+  // CRITIQUE : Minecraft applique un override de custom_model_data si CMD_item >= seuil, et
+  // retient le DERNIER de la liste qui matche. Il FAUT donc trier les overrides par seuil CROISSANT,
+  // sinon une pancarte (CMD 4210) matche aussi les items (1..7, tous <= 4210) et prend le dernier
+  // listé -> la pancarte affiche un item ! Trié, 4210 prend bien le plus haut seuil <= 4210 = 4210.
   const overrides = [
     ...PANCARTE_OVERRIDES,
     ...items.map((r) => ({ predicate: { custom_model_data: r.cmd }, model: `emeria:item/i${r.cmd}` })),
-  ];
+  ].sort((a, b) => a.predicate.custom_model_data - b.predicate.custom_model_data);
   zip.file('assets/minecraft/models/item/paper.json', JSON.stringify({
     parent: 'minecraft:item/generated',
     textures: { layer0: 'minecraft:item/paper' },
     overrides,
   }, null, 2));
 
-  // On embarque AUSSI les modèles + textures de pancarte DANS ce pack, pour qu'EmeriaItems
-  // soit autonome : placé en haut, il résout 4210/4211 tout seul sans dépendre de la position
-  // (ni même de la présence) d'EmeriaPancarte. Sinon les pancartes cassent dès que l'ordre bouge.
+  // On FUSIONNE tout EmeriaPancarte DANS ce pack : EmeriaItems devient un sur-ensemble complet
+  // (modèles + textures de pancarte, GUI sanctions, etc.). Ainsi, placé en haut, EmeriaItems
+  // résout TOUT seul (items ET pancartes) sans dépendre de la position ni de la présence
+  // d'EmeriaPancarte. On n'embarque PAS son paper.json (celui d'EmeriaItems, déjà fusionné ci-dessus,
+  // contient les overrides des deux) ni son pack.mcmeta (EmeriaItems a le sien).
   try {
     const url = 'https://github.com/v9crf8tyfv-coder/EmeriaLauncher/releases/download/mods/EmeriaPancarte.zip';
     const res = await fetch(url, { cache: 'no-store' });
     if (res.ok) {
       const src = await JSZip.loadAsync(Buffer.from(await res.arrayBuffer()));
-      const WANT = [
-        'assets/emeria/models/item/pancarte_white.json',
-        'assets/emeria/models/item/pancarte_black.json',
-        'assets/emeria/textures/item/pancarte_white.png',
-        'assets/emeria/textures/item/pancarte_black.png',
-      ];
-      for (const path of WANT) {
-        const f = src.file(path);
-        if (f) zip.file(path, await f.async('nodebuffer'));
-      }
+      const SKIP = new Set(['assets/minecraft/models/item/paper.json', 'pack.mcmeta']);
+      const entries = Object.values(src.files).filter((f) => !f.dir && !SKIP.has(f.name));
+      for (const f of entries) zip.file(f.name, await f.async('nodebuffer'));
     }
   } catch (e) {
-    console.error('[itemsPack] embed pancarte', e instanceof Error ? e.message : e);
+    console.error('[itemsPack] fusion EmeriaPancarte', e instanceof Error ? e.message : e);
   }
 
   for (const r of items) {
