@@ -20,7 +20,17 @@ export async function buildItemsPack(): Promise<{ count: number }> {
   const zip = new JSZip();
   zip.file('pack.mcmeta', JSON.stringify({ pack: { pack_format: PACK_FORMAT, description: 'Emeria Items (pixel)' } }, null, 2));
 
-  const overrides = items.map((r) => ({ predicate: { custom_model_data: r.cmd }, model: `emeria:item/i${r.cmd}` }));
+  // IMPORTANT : EmeriaPancarte a AUSSI un paper.json (CMD 4210/4211). Comme un seul paper.json
+  // « gagne » (le pack le + haut), on fusionne les overrides Pancarte DANS celui d'EmeriaItems,
+  // sinon l'un casse l'autre. Les modèles pancarte_white/black restent fournis par EmeriaPancarte.
+  const PANCARTE_OVERRIDES = [
+    { predicate: { custom_model_data: 4210 }, model: 'emeria:item/pancarte_white' },
+    { predicate: { custom_model_data: 4211 }, model: 'emeria:item/pancarte_black' },
+  ];
+  const overrides = [
+    ...PANCARTE_OVERRIDES,
+    ...items.map((r) => ({ predicate: { custom_model_data: r.cmd }, model: `emeria:item/i${r.cmd}` })),
+  ];
   zip.file('assets/minecraft/models/item/paper.json', JSON.stringify({
     parent: 'minecraft:item/generated',
     textures: { layer0: 'minecraft:item/paper' },
