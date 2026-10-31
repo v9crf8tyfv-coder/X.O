@@ -182,13 +182,16 @@ export async function queueAction(params: {
 
   // Whitelist IG : les grades à partir de Super-Modo (SM / Admin / Dev / Resp / Fonda / Cofonda)
   // sont TOUJOURS whitelistés -> ils peuvent jouer pendant une maintenance. Les autres (ou un
-  // retrait total du staff) sont retirés de la whitelist. Best-effort (RCON), n'échoue jamais.
+  // retrait total du staff) sont retirés de la whitelist.
+  // On passe par le PONT CONSOLE IN-GAME (table ig_console, exécutée par EmeriaCore) et PAS par
+  // RCON (souvent non configuré sur Vercel). Best-effort, n'échoue jamais l'action.
   try {
-    const { rconCommand } = await import('./rcon');
     const WL = new Set(['supermodo', 'admin', 'dev', 'responsable', 'fondateur', 'cofondateur']);
     const keep = params.type !== 'staff.remove'
       && (params.grades || []).some((g) => WL.has(g) || String(g).startsWith('resp_'));
-    await rconCommand(`whitelist ${keep ? 'add' : 'remove'} ${params.minecraftPseudo}`);
+    const cmd = `whitelist ${keep ? 'add' : 'remove'} ${params.minecraftPseudo}`;
+    await db()`create table if not exists ig_console (id bigserial primary key, cmd text not null, actor text, do_log boolean not null default false, processed boolean not null default false, created_at timestamptz not null default now())`;
+    await db()`insert into ig_console (cmd, actor, do_log) values (${cmd}, ${'panel'}, false)`;
   } catch (e) {
     console.error('[whitelist sync]', params.minecraftPseudo, e instanceof Error ? e.message : e);
   }
