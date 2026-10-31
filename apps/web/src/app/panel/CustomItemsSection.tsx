@@ -226,6 +226,13 @@ export default function CustomItemsSection() {
         couleurs que tu veux (HEX), puis donne-le. L’item arrive en jeu dès que le joueur est en ligne.
       </p>
 
+      <div className="lchr-card" style={{ marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button type="button" className="btn" onClick={rebuildPack}>Reconstruire le pack d&apos;items</button>
+        <span style={{ fontSize: 12, color: muted }}>
+          {packMsg || 'Republie le resource pack EmeriaItems (dessins pixel + pancartes). À faire après avoir créé/modifié un item pixel. Les joueurs le reçoivent au prochain lancement du launcher.'}
+        </span>
+      </div>
+
       {error && (
         <div style={{ background: 'rgba(220,60,60,.14)', border: '1px solid rgba(220,60,60,.4)', color: '#ffb4b4', padding: '10px 14px', borderRadius: 10, marginBottom: 16 }}>{error}</div>
       )}
