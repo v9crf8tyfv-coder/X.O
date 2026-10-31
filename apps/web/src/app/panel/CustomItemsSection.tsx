@@ -320,6 +320,9 @@ export default function CustomItemsSection() {
                 <option value="uncommon">Peu commun (jaune)</option>
                 <option value="rare">Rare (aqua)</option>
                 <option value="epic">Épique (violet)</option>
+                <option value="legendary">Légendaire (or)</option>
+                <option value="mythic">Mythique (rose)</option>
+                <option value="collector">Collector (turquoise)</option>
               </select>
             </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, height: 38 }}>

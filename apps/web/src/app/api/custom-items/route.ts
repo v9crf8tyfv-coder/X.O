@@ -115,7 +115,7 @@ export async function POST(req: Request) {
 
   const head = String(b.head || '').trim().replace(/[^A-Za-z0-9_]/g, '').slice(0, 16) || null;
   const glint = !!b.glint;
-  const rarities = ['common', 'uncommon', 'rare', 'epic'];
+  const rarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'collector'];
   const rarity = rarities.includes(String(b.rarity)) ? String(b.rarity) : null;
   // Texture pixel (data URL PNG) : item donné en carte. Cap de taille (16x16 reste minuscule).
   const rawTex = typeof b.texture === 'string' ? b.texture : '';
