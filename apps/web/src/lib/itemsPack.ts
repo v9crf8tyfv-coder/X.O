@@ -37,6 +37,29 @@ export async function buildItemsPack(): Promise<{ count: number }> {
     overrides,
   }, null, 2));
 
+  // On embarque AUSSI les modèles + textures de pancarte DANS ce pack, pour qu'EmeriaItems
+  // soit autonome : placé en haut, il résout 4210/4211 tout seul sans dépendre de la position
+  // (ni même de la présence) d'EmeriaPancarte. Sinon les pancartes cassent dès que l'ordre bouge.
+  try {
+    const url = 'https://github.com/v9crf8tyfv-coder/EmeriaLauncher/releases/download/mods/EmeriaPancarte.zip';
+    const res = await fetch(url, { cache: 'no-store' });
+    if (res.ok) {
+      const src = await JSZip.loadAsync(Buffer.from(await res.arrayBuffer()));
+      const WANT = [
+        'assets/emeria/models/item/pancarte_white.json',
+        'assets/emeria/models/item/pancarte_black.json',
+        'assets/emeria/textures/item/pancarte_white.png',
+        'assets/emeria/textures/item/pancarte_black.png',
+      ];
+      for (const path of WANT) {
+        const f = src.file(path);
+        if (f) zip.file(path, await f.async('nodebuffer'));
+      }
+    }
+  } catch (e) {
+    console.error('[itemsPack] embed pancarte', e instanceof Error ? e.message : e);
+  }
+
   for (const r of items) {
     zip.file(`assets/emeria/models/item/i${r.cmd}.json`, JSON.stringify({
       parent: 'minecraft:item/generated',
