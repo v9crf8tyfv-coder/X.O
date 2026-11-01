@@ -6,6 +6,7 @@ import {
   AttachmentBuilder,
   ContainerBuilder,
   TextDisplayBuilder,
+  SeparatorBuilder,
   MediaGalleryBuilder,
   MediaGalleryItemBuilder,
   PermissionFlagsBits,
@@ -48,31 +49,24 @@ export const setupLancerJeu: SlashCommand = {
       return;
     }
 
-    const descText =
+    const intro =
+      '🚀 **Launcher EmeriaMC**\n\n' +
       'Chaque launcher te permettra d’installer et de lancer facilement le serveur avec la configuration nécessaire.\n\n' +
-      '**Téléchargements :**\n' +
-      '1. Launcher Windows 🪟\n' +
-      '2. Launcher macOS 🍎\n' +
-      '3. Launcher Linux 🐧\n\n' +
-      'Si tu rencontres un problème lors de l’installation ou du lancement, n’hésite pas à contacter notre équipe afin que nous puissions t’aider.\n\n' +
+      '> Si tu rencontres un problème lors de **l’installation ou du lancement**, n’hésite pas à contacter notre équipe sur le **Support**.\n\n' +
       'Bon jeu et bienvenue sur Emeria !\n\n' +
       '> **<:EmeriaMC:1541095551511298139> L’équipe d\'EmeriaMC.**';
 
-    // 3 boutons de téléchargement (lien si l'URL existe, sinon « à venir »)
-    const makeBtn = (label: string, emoji: string, url: string, id: string) =>
+    // Bouton de téléchargement d'UN OS (lien si l'URL existe, sinon « à venir »).
+    const dlBtn = (emoji: string, url: string, id: string) =>
       url
-        ? new ButtonBuilder().setLabel(label).setEmoji(emoji).setStyle(ButtonStyle.Link).setURL(url)
-        : new ButtonBuilder()
-            .setLabel(label)
-            .setEmoji(emoji)
-            .setStyle(ButtonStyle.Secondary)
-            .setCustomId(id);
+        ? new ButtonBuilder().setLabel('Télécharger').setEmoji(emoji).setStyle(ButtonStyle.Link).setURL(url)
+        : new ButtonBuilder().setLabel('À venir').setEmoji(emoji).setStyle(ButtonStyle.Secondary).setCustomId(id).setDisabled(true);
 
-    // Container Components V2 : les boutons de téléchargement sont DANS le cadre (comme NG).
+    // Container Components V2 : UNE section par OS (titre + son bouton), séparées par une barre.
     const files: AttachmentBuilder[] = [];
     const container = new ContainerBuilder()
       .setAccentColor(BRAND_COLOR)
-      .addTextDisplayComponents(new TextDisplayBuilder().setContent('🚀 **Launcher EmeriaMC**\n\n' + descText));
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(intro));
     if (existsSync(BANNER_FILE)) {
       files.push(new AttachmentBuilder(BANNER_FILE, { name: 'banner.png' }));
       container.addMediaGalleryComponents(
@@ -83,13 +77,15 @@ export const setupLancerJeu: SlashCommand = {
         new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(BANNER_URL)),
       );
     }
-    container.addActionRowComponents(
-      new ActionRowBuilder<ButtonBuilder>().addComponents(
-        makeBtn('Launcher Windows', '🪟', LAUNCHER_WIN_URL, 'launcher:soon:win'),
-        makeBtn('Launcher MacBook', '🍎', LAUNCHER_MAC_URL, 'launcher:soon:mac'),
-        makeBtn('Launcher Linux', '🐧', LAUNCHER_LINUX_URL, 'launcher:soon:linux'),
-      ),
-    );
+    const osSection = (label: string, emoji: string, url: string, id: string) => {
+      container
+        .addSeparatorComponents(new SeparatorBuilder())
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${label}** ${emoji}`))
+        .addActionRowComponents(new ActionRowBuilder<ButtonBuilder>().addComponents(dlBtn(emoji, url, id)));
+    };
+    osSection('Launcher Windows', '🪟', LAUNCHER_WIN_URL, 'launcher:soon:win');
+    osSection('Launcher macOS', '🍎', LAUNCHER_MAC_URL, 'launcher:soon:mac');
+    osSection('Launcher Linux', '🐧', LAUNCHER_LINUX_URL, 'launcher:soon:linux');
 
     await publishOrUpdatePanel(channel as TextChannel, 'panel_lancer_jeu', { components: [container], files, flags: MessageFlags.IsComponentsV2 });
     await interaction.editReply({
