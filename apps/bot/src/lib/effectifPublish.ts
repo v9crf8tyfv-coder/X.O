@@ -163,9 +163,9 @@ export async function publishEffectif(client: Client): Promise<void> {
   };
   const components = [
     new ActionRowBuilder<ButtonBuilder>().addComponents(
-      recruitBtn('Recrutement Modérateur', 'LogoModo', 'recrutement-moderateur'),
-      recruitBtn('Recrutement Buildeur', 'LogoBuildeur', 'recrutement-buildeur'),
-      recruitBtn('Recrutement Communication', 'LogoCom', 'recrutement-communication'),
+      recruitBtn('Recrutement Modérateur', 'LogoModo', 'sub=2'),
+      recruitBtn('Recrutement Buildeur', 'LogoBuildeur', 'sub=4'),
+      recruitBtn('Recrutement Communication', 'LogoCom', 'sub=5'),
     ),
   ];
 
