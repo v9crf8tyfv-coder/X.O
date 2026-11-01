@@ -1,4 +1,7 @@
-import { EmbedBuilder, type Client, type Guild, type TextChannel } from 'discord.js';
+import {
+  EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle,
+  type Client, type Guild, type TextChannel,
+} from 'discord.js';
 import { CHANNELS } from '@xo/shared';
 import { db, hasDatabase } from '@xo/db';
 import { EFFECTIF_SECTIONS, sectionForGrades, type EffectifRow } from './effectif.js';
@@ -150,6 +153,22 @@ export async function publishEffectif(client: Client): Promise<void> {
 
   const embeds: EmbedBuilder[] = [embed];
 
+  // Boutons de recrutement (comme NationsGlory) : liens vers le forum, avec les logos de grade.
+  const FORUM = 'https://emeria-site.com/forum';
+  const recruitBtn = (label: string, emojiName: string, frag: string): ButtonBuilder => {
+    const b = new ButtonBuilder().setLabel(label).setStyle(ButtonStyle.Link).setURL(FORUM + '#' + frag);
+    const e = guild?.emojis.cache.find((em) => em.name === emojiName);
+    if (e) b.setEmoji({ id: e.id, name: e.name ?? undefined });
+    return b;
+  };
+  const components = [
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      recruitBtn('Recrutement Modérateur', 'LogoModo', 'recrutement-moderateur'),
+      recruitBtn('Recrutement Guide', 'LogoGuide', 'recrutement-guide'),
+      recruitBtn('Recrutement Builder', 'LogoBuildeur', 'recrutement-builder'),
+    ),
+  ];
+
   // ID du message d'effectif : cache RAM d'abord (survit aux erreurs DB), puis DB
   // (partagée entre instances → converge vers UN seul message au lieu de spammer).
   let id = _cachedEffId;
@@ -161,10 +180,10 @@ export async function publishEffectif(client: Client): Promise<void> {
   }
   if (id) {
     const msg = await text.messages.fetch(id).catch(() => null);
-    if (msg) { _cachedEffId = id; await msg.edit({ embeds }); return; }
+    if (msg) { _cachedEffId = id; await msg.edit({ embeds, components }); return; }
   }
   // Aucun message existant → on en poste UN SEUL et on le mémorise (RAM + DB).
-  const posted = await text.send({ embeds });
+  const posted = await text.send({ embeds, components });
   _cachedEffId = posted.id;
   try {
     await db()`insert into bot_state (key, value) values ('effectif_message_id', ${posted.id}) on conflict (key) do update set value = ${posted.id}, updated_at = now()`;

@@ -15,6 +15,7 @@ import { dirname, resolve } from 'node:path';
 import type { SlashCommand } from '../../types.js';
 import { CHANNELS, BRAND_COLOR, GRADES } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
+import { publishOrUpdatePanel } from '../../lib/panelMessage.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Dépose l'image ici : apps/bot/assets/game-banner.png (elle s'affichera sous l'embed)
@@ -85,9 +86,9 @@ export const setupLancerJeu: SlashCommand = {
       ),
     ];
 
-    await (channel as TextChannel).send({ embeds: [embed], files, components });
+    await publishOrUpdatePanel(channel as TextChannel, 'panel_lancer_jeu', { embeds: [embed], files, components });
     await interaction.editReply({
-      embeds: [successEmbed('Publié', 'L’embed « Lancer le jeu » a été posté.')],
+      embeds: [successEmbed('À jour', 'L’embed « Lancer le jeu » a été mis à jour (ou posté).')],
     });
   },
 };

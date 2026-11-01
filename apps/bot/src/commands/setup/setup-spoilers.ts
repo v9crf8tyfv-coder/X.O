@@ -2,6 +2,7 @@ import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, type TextChanne
 import type { SlashCommand } from '../../types.js';
 import { GRADES } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
+import { publishOrUpdatePanel } from '../../lib/panelMessage.js';
 import { spoilerPanelEmbed, spoilerButtons } from '../../lib/spoilers.js';
 
 /** Poste le panneau "Centre des spoilers" dans le salon courant (admin+). */
@@ -17,7 +18,7 @@ export const setupSpoilers: SlashCommand = {
       await interaction.reply({ embeds: [errorEmbed('Erreur', 'Salon invalide.')], flags: MessageFlags.Ephemeral });
       return;
     }
-    await channel.send({ embeds: [spoilerPanelEmbed()], components: [spoilerButtons()] });
+    await publishOrUpdatePanel(channel, 'panel_spoilers', { embeds: [spoilerPanelEmbed()], components: [spoilerButtons()] });
     await interaction.reply({ embeds: [successEmbed('Panneau posté', 'Le Centre des spoilers a été affiché.')], flags: MessageFlags.Ephemeral });
   },
 };

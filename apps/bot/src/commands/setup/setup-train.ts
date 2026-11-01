@@ -7,6 +7,7 @@ import {
 import type { SlashCommand } from '../../types.js';
 import { CHANNELS, GRADES } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
+import { publishOrUpdatePanel } from '../../lib/panelMessage.js';
 import { controlPanel } from '../../lib/train.js';
 
 export const setupTrain: SlashCommand = {
@@ -30,7 +31,7 @@ export const setupTrain: SlashCommand = {
     }
 
     const { embeds, components } = controlPanel(false);
-    await (channel as TextChannel).send({ embeds, components });
+    await publishOrUpdatePanel(channel as TextChannel, 'panel_train', { embeds, components });
     await interaction.editReply({
       embeds: [successEmbed('Publié', 'Le panneau d’entraînement a été posté.')],
     });

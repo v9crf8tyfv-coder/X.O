@@ -11,6 +11,7 @@ import {
 import type { SlashCommand } from '../../types.js';
 import { GRADES } from '@xo/shared';
 import { successEmbed } from '../../lib/embeds.js';
+import { publishOrUpdatePanel } from '../../lib/panelMessage.js';
 
 const STATUT_ROLE = '1540339127784968293';
 const RESET_MONDE_ROLE = '1549077052089442365';
@@ -60,9 +61,9 @@ export const setupRoles: SlashCommand = {
         .setStyle(ButtonStyle.Secondary),
     );
 
-    await (interaction.channel as TextChannel)?.send({ embeds: [embed], components: [row] });
+    await publishOrUpdatePanel(interaction.channel as TextChannel, 'panel_roles', { embeds: [embed], components: [row] });
     await interaction.reply({
-      embeds: [successEmbed('Menu de rôles posté', 'Les membres peuvent maintenant cliquer pour obtenir leurs rôles.')],
+      embeds: [successEmbed('Menu de rôles à jour', 'Le menu de rôles a été mis à jour (ou posté). Les réactions/boutons sont conservés.')],
       flags: MessageFlags.Ephemeral,
     });
   },

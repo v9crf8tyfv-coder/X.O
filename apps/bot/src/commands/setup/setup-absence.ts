@@ -11,6 +11,7 @@ import {
 import type { SlashCommand } from '../../types.js';
 import { CHANNELS, BRAND_COLOR, GRADES } from '@xo/shared';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
+import { publishOrUpdatePanel } from '../../lib/panelMessage.js';
 
 export const setupAbsence: SlashCommand = {
   minLevel: GRADES.responsable.level,
@@ -50,7 +51,7 @@ export const setupAbsence: SlashCommand = {
         .setStyle(ButtonStyle.Primary),
     );
 
-    await (channel as TextChannel).send({ embeds: [embed], components: [row] });
+    await publishOrUpdatePanel(channel as TextChannel, 'panel_absence', { embeds: [embed], components: [row] });
     await interaction.editReply({
       embeds: [successEmbed('Panneau posté', 'Le panneau des absences a été affiché.')],
     });

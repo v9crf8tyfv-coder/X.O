@@ -7,6 +7,7 @@ import {
 import { GRADES } from '@xo/shared';
 import type { SlashCommand } from '../../types.js';
 import { successEmbed, errorEmbed } from '../../lib/embeds.js';
+import { publishOrUpdatePanel } from '../../lib/panelMessage.js';
 import { buildEntreeMessage } from '../../lib/entree.js';
 
 /** Publie le panneau "Comment as-tu connu EmeriaMC ?" dans le salon courant (fondateurs). */
@@ -23,7 +24,7 @@ export const setupEntree: SlashCommand = {
       await interaction.reply({ embeds: [errorEmbed('Erreur', 'Salon introuvable.')], flags: MessageFlags.Ephemeral });
       return;
     }
-    await channel.send(buildEntreeMessage());
+    await publishOrUpdatePanel(channel, 'panel_entree', buildEntreeMessage());
     await interaction.reply({
       embeds: [successEmbed('Publié', "Le panneau d'entrée a été publié dans ce salon.")],
       flags: MessageFlags.Ephemeral,
