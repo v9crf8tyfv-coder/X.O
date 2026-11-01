@@ -50,7 +50,7 @@ export const setupLancerJeu: SlashCommand = {
     }
 
     const intro =
-      '🚀 **Launcher EmeriaMC**\n\n' +
+      '# 🚀 Launcher EmeriaMC\n\n' +
       'Chaque launcher te permettra d’installer et de lancer facilement le serveur avec la configuration nécessaire.\n\n' +
       '> 👉 Si tu rencontres un problème lors de **l’installation ou du lancement**, n’hésite pas à contacter notre équipe sur le **Support**.\n\n' +
       'Bon jeu et bienvenue sur EmeriaMC !';
@@ -64,7 +64,7 @@ export const setupLancerJeu: SlashCommand = {
     // Container Components V2 : UNE section par OS (titre + son bouton), séparées par une barre.
     const files: AttachmentBuilder[] = [];
     const container = new ContainerBuilder()
-      .setAccentColor(BRAND_COLOR)
+      .setAccentColor(0x4c1d95) // mauve foncé
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(intro));
     if (existsSync(BANNER_FILE)) {
       files.push(new AttachmentBuilder(BANNER_FILE, { name: 'banner.png' }));
