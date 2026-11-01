@@ -2,10 +2,11 @@ import {
   SlashCommandBuilder,
   PermissionFlagsBits,
   MessageFlags,
-  EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
+  ContainerBuilder,
+  TextDisplayBuilder,
   type TextChannel,
 } from 'discord.js';
 import type { SlashCommand } from '../../types.js';
@@ -27,17 +28,6 @@ export const setupRoles: SlashCommand = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction) {
-    const embed = new EmbedBuilder()
-      .setTitle('🎭 Choisis tes rôles')
-      .setColor(0x8b5cf6)
-      .setDescription(
-        'Clique sur un bouton pour **prendre** ou **retirer** un rôle.\n\n' +
-          '🛠️ **Statut** — Être notifié quand le serveur ouvre/ferme\n' +
-          '🌍 **Reset Monde** — Être notifié quand la Mine / le Nether / l’End sont reset\n' +
-          '📢 **Réseaux** — Être notifié des posts sur les réseaux sociaux\n' +
-          '📝 **Changelogs** — Être notifié des mises à jour et nouveautés du serveur',
-      );
-
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
         .setCustomId(`rolebtn:${STATUT_ROLE}`)
@@ -61,7 +51,19 @@ export const setupRoles: SlashCommand = {
         .setStyle(ButtonStyle.Secondary),
     );
 
-    await publishOrUpdatePanel(interaction.channel as TextChannel, 'panel_roles', { embeds: [embed], components: [row] });
+    // Container Components V2 : les boutons sont DANS le cadre (comme NG), pas en dessous.
+    const container = new ContainerBuilder()
+      .setAccentColor(0x8b5cf6)
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(
+        '🎭 **Choisis tes rôles**\n\n' +
+          'Clique sur un bouton pour **prendre** ou **retirer** un rôle.\n\n' +
+          '🛠️ **Statut** — Être notifié quand le serveur ouvre/ferme\n' +
+          '🌍 **Reset Monde** — Être notifié quand la Mine / le Nether / l’End sont reset\n' +
+          '📢 **Réseaux** — Être notifié des posts sur les réseaux sociaux\n' +
+          '📝 **Changelogs** — Être notifié des mises à jour et nouveautés du serveur',
+      ))
+      .addActionRowComponents(row);
+    await publishOrUpdatePanel(interaction.channel as TextChannel, 'panel_roles', { components: [container], flags: MessageFlags.IsComponentsV2 });
     await interaction.reply({
       embeds: [successEmbed('Menu de rôles à jour', 'Le menu de rôles a été mis à jour (ou posté). Les réactions/boutons sont conservés.')],
       flags: MessageFlags.Ephemeral,

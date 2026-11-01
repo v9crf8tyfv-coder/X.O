@@ -1,5 +1,6 @@
 import {
-  EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle,
+  ActionRowBuilder, ButtonBuilder, ButtonStyle,
+  ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, MessageFlags,
   type Client, type Guild, type TextChannel,
 } from 'discord.js';
 import { CHANNELS } from '@xo/shared';
@@ -146,14 +147,7 @@ export async function publishEffectif(client: Client): Promise<void> {
     fondateurBlock + '\n\n' +
     sections.filter((s): s is string => !!s).join('\n\n');
 
-  const embed = new EmbedBuilder()
-    .setColor(0x4c1d95) // violet foncé
-    .setAuthor({ name: 'Effectif du Staff — EmeriaMC', iconURL: emojiUrl(guild, EMERIA_EMOJI) })
-    .setDescription(description);
-
-  const embeds: EmbedBuilder[] = [embed];
-
-  // Boutons de recrutement (comme NationsGlory) : liens vers le forum, avec les logos de grade.
+  // Boutons de recrutement (liens forum + logos de grade), placés À L'INTÉRIEUR du container V2.
   const FORUM = 'https://emeria-site.com/forum';
   const recruitBtn = (label: string, emojiName: string, frag: string): ButtonBuilder => {
     const b = new ButtonBuilder().setLabel(label).setStyle(ButtonStyle.Link).setURL(FORUM + '#' + frag);
@@ -161,16 +155,24 @@ export async function publishEffectif(client: Client): Promise<void> {
     if (e) b.setEmoji({ id: e.id, name: e.name ?? undefined });
     return b;
   };
-  const components = [
-    new ActionRowBuilder<ButtonBuilder>().addComponents(
-      recruitBtn('Recrutement Modérateur', 'LogoModo', 'sub=2'),
-      recruitBtn('Recrutement Buildeur', 'LogoBuildeur', 'sub=4'),
-      recruitBtn('Recrutement Communication', 'LogoCom', 'sub=5'),
-    ),
-  ];
+  const recruitRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    recruitBtn('Recrutement Modérateur', 'LogoModo', 'sub=2'),
+    recruitBtn('Recrutement Buildeur', 'LogoBuildeur', 'sub=4'),
+    recruitBtn('Recrutement Communication', 'LogoCom', 'sub=5'),
+  );
 
-  // ID du message d'effectif : cache RAM d'abord (survit aux erreurs DB), puis DB
-  // (partagée entre instances → converge vers UN seul message au lieu de spammer).
+  // Container Components V2 : rend comme un embed (barre d'accent) mais contient les BOUTONS
+  // DEDANS (façon NationsGlory), contrairement à un embed classique où ils sont en dessous.
+  const header = `${emojiTag(guild, EMERIA_EMOJI)} **Effectif du Staff — EmeriaMC**`;
+  const container = new ContainerBuilder()
+    .setAccentColor(0x4c1d95)
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(description))
+    .addSeparatorComponents(new SeparatorBuilder())
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent("__**Envie de rejoindre l'équipe ?**__\nLes candidatures se font sur le forum :"))
+    .addActionRowComponents(recruitRow);
+
+  // ID du message d'effectif : cache RAM d'abord (survit aux erreurs DB), puis DB.
   let id = _cachedEffId;
   if (!id) {
     try {
@@ -180,10 +182,13 @@ export async function publishEffectif(client: Client): Promise<void> {
   }
   if (id) {
     const msg = await text.messages.fetch(id).catch(() => null);
-    if (msg) { _cachedEffId = id; await msg.edit({ embeds, components }); return; }
+    if (msg) {
+      try { await msg.edit({ components: [container], flags: MessageFlags.IsComponentsV2 }); _cachedEffId = id; return; }
+      catch { await msg.delete().catch(() => {}); } // ancien message (embed V1) -> on le remplace par le V2
+    }
   }
-  // Aucun message existant → on en poste UN SEUL et on le mémorise (RAM + DB).
-  const posted = await text.send({ embeds, components });
+  // Aucun message existant (ou remplacement V1->V2) → on poste UN message et on le mémorise.
+  const posted = await text.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
   _cachedEffId = posted.id;
   try {
     await db()`insert into bot_state (key, value) values ('effectif_message_id', ${posted.id}) on conflict (key) do update set value = ${posted.id}, updated_at = now()`;

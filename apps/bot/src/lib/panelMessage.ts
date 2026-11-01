@@ -26,8 +26,14 @@ export async function publishOrUpdatePanel(
       // En édition avec des fichiers (image/bannière), on remplace les pièces jointes.
       const editPayload: MessageEditOptions = { ...(payload as MessageEditOptions) };
       if (payload.files && payload.files.length) editPayload.attachments = [];
-      await msg.edit(editPayload);
-      return;
+      try {
+        await msg.edit(editPayload);
+        return;
+      } catch {
+        // Ex : passage d'un embed classique à Components V2 -> l'édition est refusée.
+        // On supprime l'ancien et on reposte (une seule fois, à la transition).
+        await msg.delete().catch(() => {});
+      }
     }
   }
 

@@ -1,10 +1,13 @@
 import {
   SlashCommandBuilder,
-  EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
   AttachmentBuilder,
+  ContainerBuilder,
+  TextDisplayBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
   PermissionFlagsBits,
   MessageFlags,
   type TextChannel,
@@ -45,30 +48,17 @@ export const setupLancerJeu: SlashCommand = {
       return;
     }
 
-    const embed = new EmbedBuilder()
-      .setColor(BRAND_COLOR)
-      .setTitle('🚀 Launcher EmeriaMC')
-      .setDescription(
-        'Chaque launcher te permettra d’installer et de lancer facilement le serveur avec la configuration nécessaire.\n\n' +
-          '**Téléchargements :**\n' +
-          '1. Launcher Windows 🪟\n' +
-          '2. Launcher macOS 🍎\n' +
-          '3. Launcher Linux 🐧\n\n' +
-          'Si tu rencontres un problème lors de l’installation ou du lancement, n’hésite pas à contacter notre équipe afin que nous puissions t’aider.\n\n' +
-          'Bon jeu et bienvenue sur Emeria !\n\n' +
-          '> **<:EmeriaMC:1541095551511298139> L’équipe d\'EmeriaMC.**',
-      );
+    const descText =
+      'Chaque launcher te permettra d’installer et de lancer facilement le serveur avec la configuration nécessaire.\n\n' +
+      '**Téléchargements :**\n' +
+      '1. Launcher Windows 🪟\n' +
+      '2. Launcher macOS 🍎\n' +
+      '3. Launcher Linux 🐧\n\n' +
+      'Si tu rencontres un problème lors de l’installation ou du lancement, n’hésite pas à contacter notre équipe afin que nous puissions t’aider.\n\n' +
+      'Bon jeu et bienvenue sur Emeria !\n\n' +
+      '> **<:EmeriaMC:1541095551511298139> L’équipe d\'EmeriaMC.**';
 
-    // Image : fichier local prioritaire, sinon URL, sinon rien
-    const files: AttachmentBuilder[] = [];
-    if (existsSync(BANNER_FILE)) {
-      files.push(new AttachmentBuilder(BANNER_FILE, { name: 'banner.png' }));
-      embed.setImage('attachment://banner.png');
-    } else if (BANNER_URL) {
-      embed.setImage(BANNER_URL);
-    }
-
-    // 3 boutons de téléchargement du launcher (lien si l'URL existe, sinon « à venir »)
+    // 3 boutons de téléchargement (lien si l'URL existe, sinon « à venir »)
     const makeBtn = (label: string, emoji: string, url: string, id: string) =>
       url
         ? new ButtonBuilder().setLabel(label).setEmoji(emoji).setStyle(ButtonStyle.Link).setURL(url)
@@ -78,15 +68,30 @@ export const setupLancerJeu: SlashCommand = {
             .setStyle(ButtonStyle.Secondary)
             .setCustomId(id);
 
-    const components = [
+    // Container Components V2 : les boutons de téléchargement sont DANS le cadre (comme NG).
+    const files: AttachmentBuilder[] = [];
+    const container = new ContainerBuilder()
+      .setAccentColor(BRAND_COLOR)
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent('🚀 **Launcher EmeriaMC**\n\n' + descText));
+    if (existsSync(BANNER_FILE)) {
+      files.push(new AttachmentBuilder(BANNER_FILE, { name: 'banner.png' }));
+      container.addMediaGalleryComponents(
+        new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL('attachment://banner.png')),
+      );
+    } else if (BANNER_URL) {
+      container.addMediaGalleryComponents(
+        new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(BANNER_URL)),
+      );
+    }
+    container.addActionRowComponents(
       new ActionRowBuilder<ButtonBuilder>().addComponents(
         makeBtn('Launcher Windows', '🪟', LAUNCHER_WIN_URL, 'launcher:soon:win'),
         makeBtn('Launcher MacBook', '🍎', LAUNCHER_MAC_URL, 'launcher:soon:mac'),
         makeBtn('Launcher Linux', '🐧', LAUNCHER_LINUX_URL, 'launcher:soon:linux'),
       ),
-    ];
+    );
 
-    await publishOrUpdatePanel(channel as TextChannel, 'panel_lancer_jeu', { embeds: [embed], files, components });
+    await publishOrUpdatePanel(channel as TextChannel, 'panel_lancer_jeu', { components: [container], files, flags: MessageFlags.IsComponentsV2 });
     await interaction.editReply({
       embeds: [successEmbed('À jour', 'L’embed « Lancer le jeu » a été mis à jour (ou posté).')],
     });
