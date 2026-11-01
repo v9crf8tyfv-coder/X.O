@@ -183,12 +183,13 @@ export async function publishEffectif(client: Client): Promise<void> {
   if (id) {
     const msg = await text.messages.fetch(id).catch(() => null);
     if (msg) {
-      try { await msg.edit({ components: [container], flags: MessageFlags.IsComponentsV2 }); _cachedEffId = id; return; }
+      // allowedMentions parse:[] -> les mentions s'affichent mais ne PINGENT personne.
+      try { await msg.edit({ components: [container], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: [] } }); _cachedEffId = id; return; }
       catch { await msg.delete().catch(() => {}); } // ancien message (embed V1) -> on le remplace par le V2
     }
   }
   // Aucun message existant (ou remplacement V1->V2) → on poste UN message et on le mémorise.
-  const posted = await text.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
+  const posted = await text.send({ components: [container], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: [] } });
   _cachedEffId = posted.id;
   try {
     await db()`insert into bot_state (key, value) values ('effectif_message_id', ${posted.id}) on conflict (key) do update set value = ${posted.id}, updated_at = now()`;
