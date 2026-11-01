@@ -52,9 +52,8 @@ export const setupLancerJeu: SlashCommand = {
     const intro =
       '🚀 **Launcher EmeriaMC**\n\n' +
       'Chaque launcher te permettra d’installer et de lancer facilement le serveur avec la configuration nécessaire.\n\n' +
-      '> Si tu rencontres un problème lors de **l’installation ou du lancement**, n’hésite pas à contacter notre équipe sur le **Support**.\n\n' +
-      'Bon jeu et bienvenue sur Emeria !\n\n' +
-      '> **<:EmeriaMC:1541095551511298139> L’équipe d\'EmeriaMC.**';
+      '> 👉 Si tu rencontres un problème lors de **l’installation ou du lancement**, n’hésite pas à contacter notre équipe sur le **Support**.\n\n' +
+      'Bon jeu et bienvenue sur EmeriaMC !';
 
     // Bouton de téléchargement d'UN OS (lien si l'URL existe, sinon « à venir »).
     const dlBtn = (emoji: string, url: string, id: string) =>
@@ -77,15 +76,27 @@ export const setupLancerJeu: SlashCommand = {
         new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(BANNER_URL)),
       );
     }
-    const osSection = (label: string, emoji: string, url: string, id: string) => {
+    const osSection = (label: string, emoji: string, desc: string, url: string, id: string) => {
       container
         .addSeparatorComponents(new SeparatorBuilder())
-        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${label}** ${emoji}`))
+        .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${label}** ${emoji}\n${desc}`))
         .addActionRowComponents(new ActionRowBuilder<ButtonBuilder>().addComponents(dlBtn(emoji, url, id)));
     };
-    osSection('Launcher Windows', '🪟', LAUNCHER_WIN_URL, 'launcher:soon:win');
-    osSection('Launcher macOS', '🍎', LAUNCHER_MAC_URL, 'launcher:soon:mac');
-    osSection('Launcher Linux', '🐧', LAUNCHER_LINUX_URL, 'launcher:soon:linux');
+    osSection(
+      'Launcher Windows', '🪟',
+      'Fichier `.exe` : double-clique dessus, laisse l’installation se faire, puis lance Emeria en un clic.',
+      LAUNCHER_WIN_URL, 'launcher:soon:win',
+    );
+    osSection(
+      'Launcher macOS', '🍎',
+      'Fichier `.dmg` (Intel et Apple Silicon) : ouvre-le, glisse l’app dans **Applications**, puis lance-la pour jouer.',
+      LAUNCHER_MAC_URL, 'launcher:soon:mac',
+    );
+    osSection(
+      'Launcher Linux', '🐧',
+      'AppImage prête à l’emploi : rends le fichier exécutable, lance-le, et c’est parti.',
+      LAUNCHER_LINUX_URL, 'launcher:soon:linux',
+    );
 
     await publishOrUpdatePanel(channel as TextChannel, 'panel_lancer_jeu', { components: [container], files, flags: MessageFlags.IsComponentsV2 });
     await interaction.editReply({
