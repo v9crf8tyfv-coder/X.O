@@ -17,16 +17,20 @@ export const ENTRY_SELECT_ID = 'entry:source';
  * menu déroulant "Comment as-tu connu EmeriaMC ?" — le tout DANS le cadre (comme l'effectif).
  */
 export function buildEntreeMessage() {
+  const title = '# 👋 Bienvenue sur EmeriaMC';
+
   const fr =
-    '**Français**\n\n' +
-    'Bienvenue sur EmeriaMC ! Nations, Vanilla, mini-jeux et events hebdomadaires t’attendent.\n\n' +
-    'Avant de continuer, indique-nous **comment tu as découvert le serveur** via le menu ci-dessous. ' +
-    'Une réponse suffit pour débloquer l’accès.';
+    '🇫🇷 **Français**\n\n' +
+    'Un monde **Nations** 🏰 pour bâtir ton empire, un **Vanilla** 🌍 authentique, des ' +
+    '**mini-jeux** 🎮 et des **events** 🎉 chaque semaine.\n\n' +
+    'Avant de continuer, indique-nous **comment tu as découvert le serveur** via le menu ci-dessous. 👇\n' +
+    'Une seule réponse suffit pour débloquer l’accès.';
 
   const en =
-    '**English**\n\n' +
-    'Welcome to EmeriaMC! Nations, Vanilla, minigames and weekly events await you.\n\n' +
-    'Before continuing, tell us **how you discovered the server** using the menu below. ' +
+    '🇬🇧 **English**\n\n' +
+    'A **Nations** 🏰 world to build your empire, an authentic **Vanilla** 🌍, ' +
+    '**minigames** 🎮 and weekly **events** 🎉.\n\n' +
+    'Before continuing, tell us **how you discovered the server** using the menu below. 👇\n' +
     'One answer is enough to unlock full access.';
 
   const menu = new StringSelectMenuBuilder()
@@ -41,6 +45,7 @@ export function buildEntreeMessage() {
 
   const container = new ContainerBuilder()
     .setAccentColor(0x7c5cff)
+    .addTextDisplayComponents(new TextDisplayBuilder().setContent(title))
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(fr))
     .addSeparatorComponents(new SeparatorBuilder()) // la barre entre FR et EN
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(en))
