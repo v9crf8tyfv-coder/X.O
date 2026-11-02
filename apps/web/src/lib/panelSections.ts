@@ -63,6 +63,7 @@ export const ACCESS_GRADES: { key: string; label: string }[] = [
   { key: 'modo', label: 'Modérateur' },
   { key: 'modo_test', label: 'Modérateur Test' },
   { key: 'modo_x', label: 'Modérateur X' },
+  { key: 'supermodo', label: 'Super-Modérateur' },
   { key: 'admin', label: 'Admin' },
   { key: 'responsable', label: 'Responsable' },
   { key: 'cofondateur', label: 'Co-fondateur' },
