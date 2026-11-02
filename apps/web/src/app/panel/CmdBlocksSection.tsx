@@ -24,6 +24,7 @@ export default function CmdBlocksSection() {
   const [backup, setBackup] = useState<{ count: number; savedAt: string | null }>({ count: 0, savedAt: null });
   const [restoring, setRestoring] = useState(false);
   const [action, setAction] = useState<'save' | 'restore' | null>(null);
+  const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -68,6 +69,15 @@ export default function CmdBlocksSection() {
     } finally { setBusy(null); }
   }
 
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? (blocks ?? []).filter((b) =>
+        (b.cmd ?? '').toLowerCase().includes(q)
+        || `${b.x} ${b.y} ${b.z}`.includes(q)
+        || (DIM[b.world] ?? b.world).toLowerCase().includes(q)
+        || (TYPE[b.type]?.label ?? '').toLowerCase().includes(q))
+    : (blocks ?? []);
+
   return (
     <div className="launcher-sec">
       <h2>Command blocks</h2>
@@ -93,19 +103,47 @@ export default function CmdBlocksSection() {
 
       <div className="lchr-card">
         <h3>
-          Détectés <span className="lchr-count">{blocks?.length ?? 0}</span>
+          Détectés <span className="lchr-count">{q ? `${filtered.length}/${blocks?.length ?? 0}` : (blocks?.length ?? 0)}</span>
           <button className="btn-sec" style={{ marginLeft: 'auto', padding: '6px 12px' }} onClick={load}>
             Rafraîchir
           </button>
         </h3>
 
+        <div style={{ position: 'relative', margin: '0 0 12px' }}>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Rechercher (commande, coordonnées, dimension, type)…"
+            style={{
+              width: '100%', boxSizing: 'border-box', padding: '9px 32px 9px 12px',
+              borderRadius: 8, border: '1px solid var(--line, rgba(255,255,255,.12))',
+              background: 'var(--bg, #0e0e12)', color: 'var(--txt, #e8e8ec)', fontSize: 14,
+            }}
+          />
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              title="Effacer"
+              style={{
+                position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 0, color: 'var(--muted, #9a97a8)', cursor: 'pointer', fontSize: 18, lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
+
         {blocks === null ? (
           <p className="lchr-hint">Chargement…</p>
         ) : blocks.length === 0 ? (
           <p className="lchr-hint">Aucun command block chargé détecté pour l’instant.</p>
+        ) : filtered.length === 0 ? (
+          <p className="lchr-hint">Aucun résultat pour « {query} ».</p>
         ) : (
           <ul className="lchr-list">
-            {blocks.map((b) => {
+            {filtered.map((b) => {
               const t = TYPE[b.type] ?? TYPE.impulse;
               return (
                 <li key={b.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
