@@ -67,6 +67,7 @@ export async function POST(req: Request) {
       discordTag: existing.discord_tag,
       minecraftPseudo: existing.pseudo,
       grades: merged,
+      prevGrades: existing.grades,
       actor: g.account.username,
       actorGrade: g.account.site_grade,
       announce: false,
@@ -91,6 +92,7 @@ export async function POST(req: Request) {
     discordTag,
     minecraftPseudo,
     grades,
+    prevGrades: [],
     actor: g.account.username,
     actorGrade: g.account.site_grade,
     announce: true, // nouveau staff → félicitations

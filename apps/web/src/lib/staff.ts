@@ -159,6 +159,7 @@ export async function queueAction(params: {
   discordTag: string;
   minecraftPseudo: string;
   grades: string[];
+  prevGrades?: string[]; // grades AVANT l'action -> whitelist touchée seulement si le statut change
   actor: string; // pseudo SITE de celui qui fait l'action (surveillance)
   actorGrade: string; // son grade site (détermine le salon de surveillance)
   announce?: boolean; // true = poste le message de félicitations (promotion/création)
@@ -185,13 +186,19 @@ export async function queueAction(params: {
   // retrait total du staff) sont retirés de la whitelist.
   // On passe par le PONT CONSOLE IN-GAME (table ig_console, exécutée par EmeriaCore) et PAS par
   // RCON (souvent non configuré sur Vercel). Best-effort, n'échoue jamais l'action.
+  // SEULS les vrais grades (SM / Admin / Dev / Resp / Fonda / Cofonda) comptent pour la whitelist.
+  // Les grades INTERNES de dispatching (World Edit, Resp Com/RP…) n'y touchent PAS : on n'émet la
+  // commande QUE si le statut whitelist CHANGE réellement (sinon ré-émission inutile à chaque grade).
   try {
     const WL = new Set(['supermodo', 'admin', 'dev', 'responsable', 'fondateur', 'cofondateur']);
-    const keep = params.type !== 'staff.remove'
-      && (params.grades || []).some((g) => WL.has(g) || String(g).startsWith('resp_'));
-    const cmd = `whitelist ${keep ? 'add' : 'remove'} ${params.minecraftPseudo}`;
-    await db()`create table if not exists ig_console (id bigserial primary key, cmd text not null, actor text, do_log boolean not null default false, processed boolean not null default false, created_at timestamptz not null default now())`;
-    await db()`insert into ig_console (cmd, actor, do_log) values (${cmd}, ${'panel'}, false)`;
+    const realWl = (gs: string[]) => (gs || []).some((g) => WL.has(g));
+    const keepNew = params.type !== 'staff.remove' && realWl(params.grades);
+    const keepOld = realWl(params.prevGrades || []);
+    if (keepNew !== keepOld) {
+      const cmd = `whitelist ${keepNew ? 'add' : 'remove'} ${params.minecraftPseudo}`;
+      await db()`create table if not exists ig_console (id bigserial primary key, cmd text not null, actor text, do_log boolean not null default false, processed boolean not null default false, created_at timestamptz not null default now())`;
+      await db()`insert into ig_console (cmd, actor, do_log) values (${cmd}, ${'panel'}, false)`;
+    }
   } catch (e) {
     console.error('[whitelist sync]', params.minecraftPseudo, e instanceof Error ? e.message : e);
   }
