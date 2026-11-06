@@ -1,0 +1,30 @@
+# Blueprint Render pour le panel web (X.O / Emeria) — remplace Vercel.
+# Monorepo npm : on installe + build DEPUIS LA RACINE pour résoudre @xo/db et @xo/shared
+# (consommés en TS via transpilePackages, aucun pre-build nécessaire).
+#
+# Les variables d'environnement NE sont PAS dans ce fichier (secrets).
+# -> après création du service : onglet "Environment" > "Add from .env" > coller
+#    le contenu du fichier obtenu via `vercel env pull .env` (zéro re-saisie).
+#
+# Plan "free" : le service s'endort après 15 min sans requête, et se réveille
+# tout seul à la 1re requête (cold start ~30-60 s). Le mod ne sonde que quand
+# il y a des joueurs, donc hors-ligne le service dort = quota préservé.
+services:
+  - type: web
+    name: xo-panel-web
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    # rootDir laissé à la racine du repo (indispensable pour les workspaces npm)
+    buildCommand: npm install && npm run build -w @xo/web
+    startCommand: npm run start -w @xo/web
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NODE_ENV
+        value: production
+      # Les secrets (DATABASE_URL, tokens, clés OAuth, x-ig-secret, etc.)
+      # s'ajoutent dans le dashboard via "Add from .env" — PAS ici.
