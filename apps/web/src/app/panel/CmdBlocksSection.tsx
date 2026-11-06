@@ -52,7 +52,7 @@ export default function CmdBlocksSection() {
 
   useEffect(() => {
     load();
-    const t = setInterval(() => { if (document.visibilityState === 'visible') load(); }, 15000); // auto-refresh, mais STOP si onglet caché (quota Vercel)
+    const t = setInterval(() => { if (document.visibilityState === 'visible') load(); }, 30000); // auto-refresh 30s, STOP si onglet caché (quota Vercel)
     return () => clearInterval(t);
   }, [load]);
 
