@@ -17,14 +17,17 @@ services:
     region: frankfurt
     branch: main
     # rootDir laissé à la racine du repo (indispensable pour les workspaces npm)
-    buildCommand: npm install && npm run build -w @xo/web
+    # --include=dev : indispensable. Render met NODE_ENV=production au runtime,
+    # et sans --include=dev le `npm install` sauterait les devDependencies
+    # (typescript) -> Next perd l'alias "@/*" -> "Can't resolve '@/lib/...'".
+    buildCommand: npm install --include=dev && npm run build -w @xo/web
     startCommand: npm run start -w @xo/web
     healthCheckPath: /
     autoDeploy: true
     envVars:
       - key: NODE_VERSION
         value: "20"
-      - key: NODE_ENV
-        value: production
+      # NE PAS définir NODE_ENV ici : Render le met déjà à production au runtime.
+      # Le fixer casserait l'install des devDependencies au build (cf. ci-dessus).
       # Les secrets (DATABASE_URL, tokens, clés OAuth, x-ig-secret, etc.)
       # s'ajoutent dans le dashboard via "Add from .env" — PAS ici.
