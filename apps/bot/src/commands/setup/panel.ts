@@ -10,8 +10,8 @@ import {
 import type { SlashCommand } from '../../types.js';
 import { BRAND_COLOR, GRADES } from '@xo/shared';
 
-// URL du site (Vercel). Configurable via .env → SITE_URL
-const SITE_URL = process.env.SITE_URL ?? 'https://x-o-web.vercel.app';
+// URL du panel (Render). Configurable via .env → SITE_URL
+const SITE_URL = process.env.SITE_URL ?? 'https://xo-panel-web.onrender.com';
 
 export const panel: SlashCommand = {
   minLevel: GRADES.supermodo.level,
