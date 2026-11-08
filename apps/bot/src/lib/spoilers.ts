@@ -41,7 +41,7 @@ export const SPOILERS: Spoiler[] = [
   { need: 30, title: 'Spoiler 10 — La révélation finale', description: 'Le dernier secret avant l’ouverture.' },
 ];
 
-const ACCENT = 0x7c5cff;
+const ACCENT = 0x2b2d31;
 export const BTN_VIEW = 'spoiler:view';
 export const BTN_INVITES = 'spoiler:invites';
 

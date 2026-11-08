@@ -44,7 +44,7 @@ export function buildEntreeMessage() {
   const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu);
 
   const container = new ContainerBuilder()
-    .setAccentColor(0x7c5cff)
+    .setAccentColor(0x2b2d31)
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(title))
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(fr))
     .addSeparatorComponents(new SeparatorBuilder()) // la barre entre FR et EN

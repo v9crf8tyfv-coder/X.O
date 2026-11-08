@@ -148,7 +148,7 @@ export const RESP_PLUS_ROLE_ID = '1535324397768806500';
 export const OWNER_DISCORD_ID = '1098211189059756115';
 
 /** Couleur de marque du bot X.O (embeds génériques) */
-export const BRAND_COLOR = 0x5865f2; // violet Discord — TODO: couleur finale du serveur
+export const BRAND_COLOR = 0x2b2d31; // gris Discord (bord d'embed discret, style EmeriaMC)
 
 /** Rôle donné à l'arrivée (accès à un seul salon, tant que la source n'est pas choisie). */
 export const ROLE_INCONNU = '1538983147473993778';

@@ -64,7 +64,7 @@ export const setupLancerJeu: SlashCommand = {
     // Container Components V2 : UNE section par OS (titre + son bouton), séparées par une barre.
     const files: AttachmentBuilder[] = [];
     const container = new ContainerBuilder()
-      .setAccentColor(0x4c1d95) // mauve foncé
+      .setAccentColor(0x2b2d31) // gris Discord
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(intro));
     if (existsSync(BANNER_FILE)) {
       files.push(new AttachmentBuilder(BANNER_FILE, { name: 'banner.png' }));

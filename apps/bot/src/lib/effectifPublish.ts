@@ -165,7 +165,7 @@ export async function publishEffectif(client: Client): Promise<void> {
   // DEDANS (façon NationsGlory), contrairement à un embed classique où ils sont en dessous.
   const header = `${emojiTag(guild, EMERIA_EMOJI)} **Effectif du Staff — EmeriaMC**`;
   const container = new ContainerBuilder()
-    .setAccentColor(0x4c1d95)
+    .setAccentColor(0x2b2d31)
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(header))
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(description))
     .addSeparatorComponents(new SeparatorBuilder())

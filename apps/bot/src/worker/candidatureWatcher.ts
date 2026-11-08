@@ -38,7 +38,7 @@ function colorFor(grade: string): number {
   if (g.startsWith('bêta') || g.startsWith('beta')) return 0x7e8c9c;
   if (g.startsWith('guide')) return 0x22c55e;
   if (g.startsWith('dev')) return 0xe0a82b;
-  return 0x7c5cff;
+  return 0x2b2d31;
 }
 
 let running = false;

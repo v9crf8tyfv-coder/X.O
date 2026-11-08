@@ -53,7 +53,7 @@ export const setupRoles: SlashCommand = {
 
     // Container Components V2 : les boutons sont DANS le cadre (comme NG), pas en dessous.
     const container = new ContainerBuilder()
-      .setAccentColor(0x8b5cf6)
+      .setAccentColor(0x2b2d31)
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
         '🎭 **Choisis tes rôles**\n\n' +
           'Clique sur un bouton pour **prendre** ou **retirer** un rôle.\n\n' +
