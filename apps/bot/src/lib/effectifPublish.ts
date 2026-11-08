@@ -129,20 +129,20 @@ export async function publishEffectif(client: Client): Promise<void> {
     fmtFounder(orionHead, 'Orionyx84', orionMention);
 
   const description =
-    '__**🔗 Liens utiles**__\n' +
-    '> 🌐 [Site officiel](https://emeria-site.com)\n' +
-    '> 💬 [Discord Communauté](https://discord.gg/mhmKc8dasx)\n' +
-    '> 📣 [Discord Communication](https://discord.gg/DUa3QDyDB)\n\n' +
-    '__**🎬 Réseaux**__\n' +
-    '> ▶️ [YouTube](https://youtube.com/@emeriamc)\n' +
-    '> 🟣 [Twitch](https://www.twitch.tv/emeriamc)\n' +
-    '> 🎵 [TikTok](https://www.tiktok.com/@emeriamc)\n' +
-    '> 📸 [Instagram](https://www.instagram.com/emeriamc)\n\n' +
-    '__**🗳️ Vote**__\n' +
-    '> ⭐ [Serveur Minecraft Vote](https://serveur-minecraft-vote.fr/serveur/2803/voter)\n' +
-    '> ⭐ [Liste Serveurs Minecraft](https://www.liste-serveurs-minecraft.org/serveur-minecraft/emeriamc/)\n' +
-    '> ⭐ [Serveur Privé](https://serveur-prive.net/minecraft/emeriamc/vote)\n' +
-    '> ⭐ [Top Serveurs](https://top-serveurs.net/minecraft/vote/emeriamc/success)\n\n' +
+    '__**Liens utiles**__\n' +
+    '> [Site officiel](https://emeria-site.com)\n' +
+    '> [Discord Communauté](https://discord.gg/mhmKc8dasx)\n' +
+    '> [Discord Communication](https://discord.gg/DUa3QDyDB)\n\n' +
+    '__**Réseaux**__\n' +
+    '> [YouTube](https://youtube.com/@emeriamc)\n' +
+    '> [Twitch](https://www.twitch.tv/emeriamc)\n' +
+    '> [TikTok](https://www.tiktok.com/@emeriamc)\n' +
+    '> [Instagram](https://www.instagram.com/emeriamc)\n\n' +
+    '__**Vote**__\n' +
+    '> [Serveur Minecraft Vote](https://serveur-minecraft-vote.fr/serveur/2803/voter)\n' +
+    '> [Liste Serveurs Minecraft](https://www.liste-serveurs-minecraft.org/serveur-minecraft/emeriamc/)\n' +
+    '> [Serveur Privé](https://serveur-prive.net/minecraft/emeriamc/vote)\n' +
+    '> [Top Serveurs](https://top-serveurs.net/minecraft/vote/emeriamc/success)\n\n' +
     '__**Hiérarchie du staff**__\n\n' +
     fondateurBlock + '\n\n' +
     sections.filter((s): s is string => !!s).join('\n\n');

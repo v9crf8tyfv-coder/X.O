@@ -50,9 +50,9 @@ export const setupLancerJeu: SlashCommand = {
     }
 
     const intro =
-      '# 🚀 Launcher EmeriaMC\n\n' +
+      '# Launcher EmeriaMC\n\n' +
       'Chaque launcher te permettra d’installer et de lancer facilement le serveur avec la configuration nécessaire.\n\n' +
-      '> 👉 Si tu rencontres un problème lors de **l’installation ou du lancement**, n’hésite pas à contacter notre équipe sur le **Support**.\n\n' +
+      '> Si tu rencontres un problème lors de **l’installation ou du lancement**, n’hésite pas à contacter notre équipe sur le **Support**.\n\n' +
       'Bon jeu et bienvenue sur EmeriaMC !';
 
     // Bouton de téléchargement d'UN OS (lien si l'URL existe, sinon « à venir »).
