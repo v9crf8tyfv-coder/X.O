@@ -32,18 +32,22 @@ export const setupRoles: SlashCommand = {
       new ButtonBuilder()
         .setCustomId(`rolebtn:${STATUT_ROLE}`)
         .setLabel('Statut')
+        .setEmoji('🛠️')
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
         .setCustomId(`rolebtn:${RESET_MONDE_ROLE}`)
         .setLabel('Reset Monde')
+        .setEmoji('🌍')
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
         .setCustomId(`rolebtn:${RESEAUX_ROLE}`)
         .setLabel('Réseaux')
+        .setEmoji('📢')
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
         .setCustomId(`rolebtn:${CHANGELOGS_ROLE}`)
         .setLabel('Changelogs')
+        .setEmoji('📝')
         .setStyle(ButtonStyle.Secondary),
     );
 
@@ -53,10 +57,10 @@ export const setupRoles: SlashCommand = {
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
         '**Choisis tes rôles**\n\n' +
           'Clique sur un bouton pour **prendre** ou **retirer** un rôle.\n\n' +
-          '**Statut** — Être notifié quand le serveur ouvre/ferme\n' +
-          '**Reset Monde** — Être notifié quand la Mine / le Nether / l’End sont reset\n' +
-          '**Réseaux** — Être notifié des posts sur les réseaux sociaux\n' +
-          '**Changelogs** — Être notifié des mises à jour et nouveautés du serveur',
+          '🛠️ **Statut** — Être notifié quand le serveur ouvre/ferme\n' +
+          '🌍 **Reset Monde** — Être notifié quand la Mine / le Nether / l’End sont reset\n' +
+          '📢 **Réseaux** — Être notifié des posts sur les réseaux sociaux\n' +
+          '📝 **Changelogs** — Être notifié des mises à jour et nouveautés du serveur',
       ))
       .addActionRowComponents(row);
     await publishOrUpdatePanel(interaction.channel as TextChannel, 'panel_roles', { components: [container], flags: MessageFlags.IsComponentsV2 });
