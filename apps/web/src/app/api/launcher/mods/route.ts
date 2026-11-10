@@ -5,7 +5,7 @@ import { getManifest, addFile, removeFile, addOptional, removeOptional, hasToken
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const MAX = 4 * 1024 * 1024; // ~4 Mo : limite d'upload Vercel
+const MAX = 200 * 1024 * 1024; // 200 Mo : on est sur Render (plus la limite ~4 Mo de Vercel)
 
 /** Liste des mods / resourcepacks / optionnels du launcher (fonda/co-fonda). */
 export async function GET() {
