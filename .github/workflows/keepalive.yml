@@ -1,0 +1,19 @@
+name: Keep panel awake
+
+# Garde le service Render (xo-panel-web, plan free) EVEILLE pendant les heures
+# actives pour eviter l'ecran "Application loading" (cold start ~30-60 s).
+# Repo PUBLIC -> minutes GitHub Actions illimitees (zero cout).
+# Render free = 750 h/mois : fenetre 9h-1h (Paris) -> ~500 h/mois, large sous le quota.
+
+on:
+  schedule:
+    # cron en UTC ; Paris = UTC+1 (hiver). UTC {0,8..23} = Paris {1,9..0h}.
+    - cron: '*/10 0,8-23 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reveiller le panel
+        run: curl -fsS --max-time 90 https://xo-panel-web.onrender.com/ > /dev/null || true
