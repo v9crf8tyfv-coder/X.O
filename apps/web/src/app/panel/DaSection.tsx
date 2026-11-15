@@ -128,22 +128,42 @@ export default function DaSection() {
   const [pseudo, setPseudo] = useState('');
   const [showSkin, setShowSkin] = useState(true);
   const [bustData, setBustData] = useState(''); // buste en data URL (embarqué → présent dans l'export)
+  const [skinStatus, setSkinStatus] = useState<'idle' | 'loading' | 'ok' | 'notfound'>('idle');
   const pageRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
 
-  // Récupère le buste NMSR et le convertit en data URL (débounce). Ainsi html-to-image
+  // Récupère le buste du joueur et le convertit en data URL (débounce). Ainsi html-to-image
   // n'a rien à télécharger au moment de l'export : l'image est déjà dans la page.
+  // NMSR (buste transparent) échoue en 400 sur un pseudo non résolu (compte non-premium, faute
+  // de frappe, ou coup de mou temporaire). On réessaie une fois, puis on retombe sur mc-heads
+  // (qui renvoie toujours une image) pour qu'il y ait toujours un skin, et sinon on le DIT.
   useEffect(() => {
     const p = pseudo.trim();
     setBustData('');
-    if (p.length < 2) return;
+    if (p.length < 2) { setSkinStatus('idle'); return; }
     let cancel = false;
-    const t = setTimeout(() => {
-      fetch(`https://nmsr.nickac.dev/bust/${encodeURIComponent(p)}?width=800`, { mode: 'cors' })
-        .then((r) => (r.ok ? r.blob() : Promise.reject(new Error('nmsr'))))
-        .then((b) => new Promise<string>((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.onerror = rej; fr.readAsDataURL(b); }))
-        .then((d) => { if (!cancel) setBustData(d); })
-        .catch(() => {});
+    setSkinStatus('loading');
+    const name = encodeURIComponent(p);
+    const sources = [
+      `https://nmsr.nickac.dev/bust/${name}?width=800`,       // 1) buste NMSR (rendu propre, transparent)
+      `https://nmsr.nickac.dev/bust/${name}?width=800`,       // 2) retry NMSR (429/5xx transitoires)
+      `https://mc-heads.net/body/${name}/800`,                // 3) repli : mc-heads (toujours une image)
+    ];
+    const t = setTimeout(async () => {
+      for (let i = 0; i < sources.length; i++) {
+        if (cancel) return;
+        if (i > 0) await new Promise((r) => setTimeout(r, 400)); // petit répit entre deux essais
+        try {
+          const r = await fetch(sources[i], { mode: 'cors', cache: 'no-store' });
+          if (!r.ok) continue;
+          const b = await r.blob();
+          if (!b.type.startsWith('image/') || b.size < 200) continue; // pas une vraie image -> essai suivant
+          const d = await new Promise<string>((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result as string); fr.onerror = rej; fr.readAsDataURL(b); });
+          if (!cancel) { setBustData(d); setSkinStatus('ok'); }
+          return;
+        } catch { /* source suivante */ }
+      }
+      if (!cancel) setSkinStatus('notfound');
     }, 450);
     return () => { cancel = true; clearTimeout(t); };
   }, [pseudo]);
@@ -360,7 +380,7 @@ export default function DaSection() {
                 {showSkin && bustData
                   // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={bustData} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 18px 30px rgba(0,0,0,.7))' }} />
-                  : <span style={{ fontSize: 9, color: MUT }}>{showSkin && pseudo.trim() ? 'chargement du buste…' : 'render du buste (PNG transparent)'}</span>}
+                  : <span style={{ fontSize: 9, color: skinStatus === 'notfound' ? '#e88' : MUT }}>{!showSkin || !pseudo.trim() ? 'render du buste (PNG transparent)' : skinStatus === 'notfound' ? 'pseudo introuvable — skin indisponible' : 'chargement du buste…'}</span>}
               </div>
               <div style={{ position: 'absolute', right: 48, top: '50%', transform: 'translateY(-50%)', textAlign: 'right', maxWidth: 380 }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#ffffff10', border: `1px solid color-mix(in srgb, ${ACC} 50%, transparent)`, borderRadius: 8, padding: '5px 10px', marginBottom: 14 }}><Mark s={18} brand /><Edit init="Emeria" style={{ fontSize: 13, fontWeight: 700 }} /></div>
