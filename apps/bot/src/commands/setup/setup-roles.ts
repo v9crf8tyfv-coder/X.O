@@ -18,6 +18,7 @@ const STATUT_ROLE = '1540339127784968293';
 const RESET_MONDE_ROLE = '1549077052089442365';
 const RESEAUX_ROLE = '1549452397758124072';
 const CHANGELOGS_ROLE = '1566042943574253658';
+const EVENT_ROLE = '1571243841468633178';
 
 /** Poste un menu de rôles à cliquer (bouton = on prend/retire le rôle). */
 export const setupRoles: SlashCommand = {
@@ -49,6 +50,11 @@ export const setupRoles: SlashCommand = {
         .setLabel('Changelogs')
         .setEmoji('📝')
         .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId(`rolebtn:${EVENT_ROLE}`)
+        .setLabel('Event')
+        .setEmoji('🎉')
+        .setStyle(ButtonStyle.Secondary),
     );
 
     // Container Components V2 : les boutons sont DANS le cadre (comme NG), pas en dessous.
@@ -60,7 +66,8 @@ export const setupRoles: SlashCommand = {
           '🛠️ **Statut** — Être notifié quand le serveur ouvre/ferme\n' +
           '🌍 **Reset Monde** — Être notifié quand la Mine / le Nether / l’End sont reset\n' +
           '📢 **Réseaux** — Être notifié des posts sur les réseaux sociaux\n' +
-          '📝 **Changelogs** — Être notifié des mises à jour et nouveautés du serveur',
+          '📝 **Changelogs** — Être notifié des mises à jour et nouveautés du serveur\n' +
+          '🎉 **Event** — Être notifié quand un event est lancé',
       ))
       .addActionRowComponents(row);
     await publishOrUpdatePanel(interaction.channel as TextChannel, 'panel_roles', { components: [container], flags: MessageFlags.IsComponentsV2 });
