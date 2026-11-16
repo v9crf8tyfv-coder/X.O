@@ -4,6 +4,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getGrade } from '@xo/shared';
 import { GradeBadge } from './GradeBadge';
 
+/** Grade À AFFICHER pour un staff : le vrai grade le plus fort, en IGNORANT les grades internes
+ *  (World Edit, dispatching RP…). On ne retombe sur un interne que si le staff n'a QUE des internes. */
+function displayGrade(grades: string[]): string {
+  const real = grades.filter((g) => !getGrade(g).internal);
+  const pool = real.length ? real : grades;
+  return pool.reduce((t, g) => (getGrade(g).level > getGrade(t).level ? g : t), pool[0] ?? 'joueur');
+}
+
 interface Rec {
   id: string;
   type: string;
@@ -469,14 +477,10 @@ export default function StaffSection({
             .filter((s) => canSeeOwnCard || !isMyCard(s))
             .sort(
               (a, b) =>
-                Math.max(0, ...b.grades.map((g) => getGrade(g).level)) -
-                Math.max(0, ...a.grades.map((g) => getGrade(g).level)),
+                getGrade(displayGrade(b.grades)).level - getGrade(displayGrade(a.grades)).level,
             )
             .map((s) => {
-              const top = s.grades.reduce(
-                (t, g) => (getGrade(g).level > getGrade(t).level ? g : t),
-                s.grades[0] ?? 'joueur',
-              );
+              const top = displayGrade(s.grades);
               return (
                 <button className="pt-row" key={s.id} onClick={() => setSelected(s.id)}>
                   <span className="pt-staff">

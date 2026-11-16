@@ -7,7 +7,10 @@ import { GradeBadge } from './GradeBadge';
 /** Grade le plus élevé (par niveau) d'un staff — pour l'affichage. */
 function topGradeKey(grades: string[]): string {
   if (!grades || grades.length === 0) return 'joueur';
-  return grades.reduce((best, g) => (getGrade(g).level > getGrade(best).level ? g : best), grades[0]!);
+  // Affichage : on ignore les grades INTERNES (World Edit, RP…) sauf si le staff n'a que ça.
+  const real = grades.filter((g) => !getGrade(g).internal);
+  const pool = real.length ? real : grades;
+  return pool.reduce((best, g) => (getGrade(g).level > getGrade(best).level ? g : best), pool[0]!);
 }
 
 interface Row {
