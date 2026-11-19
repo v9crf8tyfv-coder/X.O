@@ -64,6 +64,20 @@ function getPool(): Pool | null {
   return pool;
 }
 
+/** Teste la connexion à la base MySQL (LuckPerms) : SELECT 1. Pour le diagnostic /api/health. */
+export async function pingDb(): Promise<{ ok: boolean; configured: boolean; error?: string }> {
+  const p = getPool();
+  if (!p) return { ok: false, configured: false, error: 'MySQL non configuré (MYSQL_HOST/USER/PASSWORD/DATABASE manquants)' };
+  try {
+    const conn = await p.getConnection();
+    try { await conn.query('SELECT 1'); return { ok: true, configured: true }; }
+    finally { conn.release(); }
+  } catch (e: unknown) {
+    const err = e as { code?: string; message?: string };
+    return { ok: false, configured: true, error: String(err?.code || err?.message || e) };
+  }
+}
+
 /** Formate un UUID (avec ou sans tirets) au format LuckPerms (avec tirets). */
 function dashed(id: string): string | null {
   const raw = id.replace(/-/g, '');
