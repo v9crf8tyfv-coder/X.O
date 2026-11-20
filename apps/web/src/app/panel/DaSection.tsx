@@ -126,6 +126,7 @@ function SGlyph({ net, s = 22, color = '#fff' }: { net: string; s?: number; colo
 export default function DaSection() {
   const [accent, setAccent] = useState(ACC);
   const [pseudo, setPseudo] = useState('');
+  const [appliedPseudo, setAppliedPseudo] = useState(''); // skin chargé seulement quand on clique "Appliquer"
   const [showSkin, setShowSkin] = useState(true);
   const [bustData, setBustData] = useState(''); // buste en data URL (embarqué → présent dans l'export)
   const [skinStatus, setSkinStatus] = useState<'idle' | 'loading' | 'ok' | 'notfound'>('idle');
@@ -138,7 +139,7 @@ export default function DaSection() {
   // de frappe, ou coup de mou temporaire). On réessaie une fois, puis on retombe sur mc-heads
   // (qui renvoie toujours une image) pour qu'il y ait toujours un skin, et sinon on le DIT.
   useEffect(() => {
-    const p = pseudo.trim();
+    const p = appliedPseudo.trim();
     setBustData('');
     if (p.length < 2) { setSkinStatus('idle'); return; }
     let cancel = false;
@@ -164,9 +165,9 @@ export default function DaSection() {
         } catch { /* source suivante */ }
       }
       if (!cancel) setSkinStatus('notfound');
-    }, 450);
+    }, 50);
     return () => { cancel = true; clearTimeout(t); };
-  }, [pseudo]);
+  }, [appliedPseudo]);
 
   useEffect(() => {
     if (!document.getElementById('sora-font')) {
@@ -215,7 +216,8 @@ export default function DaSection() {
         <button className="btn-accent" disabled={busy} onClick={downloadAll} style={{ padding: '10px 18px', borderRadius: 10 }}>{busy ? '…' : 'Télécharger toute la planche'}</button>
         <span style={{ fontSize: 13, fontWeight: 700 }}>Couleur</span>
         <input type="color" value={accent} onChange={(e) => setAccent(e.target.value)} style={{ width: 40, height: 30, borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer' }} />
-        <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} placeholder="Pseudo affiche staff" style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'transparent', color: 'var(--txt)', font: 'inherit' }} />
+        <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') setAppliedPseudo(pseudo.trim()); }} placeholder="Pseudo affiche staff" style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'transparent', color: 'var(--txt)', font: 'inherit' }} />
+        <button onClick={() => setAppliedPseudo(pseudo.trim())} disabled={pseudo.trim().length < 2 || skinStatus === 'loading'} style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--accent, #6a5cff)', color: '#fff', font: 'inherit', fontWeight: 600, cursor: pseudo.trim().length < 2 ? 'default' : 'pointer', opacity: pseudo.trim().length < 2 ? 0.5 : 1 }}>{skinStatus === 'loading' ? 'Chargement…' : 'Appliquer le skin'}</button>
         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}><input type="checkbox" checked={showSkin} onChange={(e) => setShowSkin(e.target.checked)} /> Skin</label>
       </div>
 
@@ -380,7 +382,7 @@ export default function DaSection() {
                 {showSkin && bustData
                   // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={bustData} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 18px 30px rgba(0,0,0,.7))' }} />
-                  : <span style={{ fontSize: 9, color: skinStatus === 'notfound' ? '#e88' : MUT }}>{!showSkin || !pseudo.trim() ? 'render du buste (PNG transparent)' : skinStatus === 'notfound' ? 'pseudo introuvable — skin indisponible' : 'chargement du buste…'}</span>}
+                  : <span style={{ fontSize: 9, color: skinStatus === 'notfound' ? '#e88' : MUT }}>{!showSkin ? 'render du buste (PNG transparent)' : skinStatus === 'idle' ? 'entre un pseudo puis clique « Appliquer le skin »' : skinStatus === 'notfound' ? 'pseudo introuvable — skin indisponible' : 'chargement du buste…'}</span>}
               </div>
               <div style={{ position: 'absolute', right: 48, top: '50%', transform: 'translateY(-50%)', textAlign: 'right', maxWidth: 380 }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#ffffff10', border: `1px solid color-mix(in srgb, ${ACC} 50%, transparent)`, borderRadius: 8, padding: '5px 10px', marginBottom: 14 }}><Mark s={18} brand /><Edit init="Emeria" style={{ fontSize: 13, fontWeight: 700 }} /></div>
