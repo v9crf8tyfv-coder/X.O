@@ -8,7 +8,8 @@ name: Keep panel awake
 on:
   schedule:
     # cron en UTC ; Paris = UTC+1 (hiver). UTC {0,8..23} = Paris {1,9..0h}.
-    - cron: '*/10 0,8-23 * * *'
+    # Toutes les 5 min (les crons GitHub sont souvent en retard -> on vise serré).
+    - cron: '*/5 0,8-23 * * *'
   workflow_dispatch: {}
 
 jobs:
